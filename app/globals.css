@@ -947,6 +947,7 @@ textarea {
 
 .dashboard-table-panel,
 .meal-breakdown-panel,
+.messages-panel,
 .side-panel,
 .event-panel {
   border: 1px solid rgba(57, 74, 78, 0.1);
@@ -956,7 +957,8 @@ textarea {
 }
 
 .dashboard-table-panel,
-.meal-breakdown-panel {
+.meal-breakdown-panel,
+.messages-panel {
   margin-bottom: 22px;
   padding: 20px;
 }
@@ -977,7 +979,7 @@ textarea {
 
 .dashboard-table {
   width: 100%;
-  min-width: 860px;
+  min-width: 980px;
   border-collapse: collapse;
   font-size: 0.95rem;
 }
@@ -1305,12 +1307,32 @@ textarea {
 .meal-breakdown-card button,
 .name-chip,
 .mini-row,
-.drawer-close {
+.drawer-close,
+.download-button {
   appearance: none;
-  border: 0;
-  background: transparent;
   cursor: pointer;
   font: inherit;
+}
+
+.download-button {
+  min-height: 42px;
+  border: 1px solid rgba(75, 181, 199, 0.45);
+  border-radius: 6px;
+  padding: 9px 16px;
+  background: #4bb5c7;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(75, 181, 199, 0.18);
+}
+
+.meal-summary button,
+.details-link,
+.meal-breakdown-card button,
+.name-chip,
+.mini-row,
+.drawer-close {
+  border: 0;
+  background: transparent;
 }
 
 .meal-summary button {
@@ -1386,6 +1408,43 @@ textarea {
   text-align: left;
 }
 
+.message-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.message-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(57, 74, 78, 0.1);
+  border-radius: 8px;
+  background: #fbfcfa;
+}
+
+.message-card div {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.message-card strong {
+  color: #2f3b3f;
+}
+
+.message-card span {
+  flex: 0 0 auto;
+  color: #7b878a;
+  font-size: 0.86rem;
+}
+
+.message-card p {
+  margin: 10px 0 0;
+  color: #5f6b6e;
+  line-height: 1.55;
+}
+
 @media (min-width: 760px) {
   .details-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1429,6 +1488,10 @@ textarea {
   }
 
   .meal-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .message-grid {
     grid-template-columns: 1fr;
   }
 

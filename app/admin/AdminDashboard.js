@@ -57,6 +57,7 @@ function getPeopleFromSubmission(submission) {
       food: submission.primaryFood || "Ninguna",
       role: "Titular",
       needsBus: submission.needsBus,
+      allergies: submission.allergies || "",
       submittedBy,
       submittedAt: submission.createdAt,
       status: "accepted",
@@ -73,6 +74,7 @@ function getPeopleFromSubmission(submission) {
         food: companionFood[index]?.restriction || "Ninguna",
         role: "Acompañante",
         needsBus: submission.needsBus,
+        allergies: submission.allergies || "",
         submittedBy,
         submittedAt: submission.createdAt,
         status: "accepted",
@@ -93,6 +95,7 @@ function getDeclinedRows(submissions) {
       food: "",
       role: "Titular",
       needsBus: false,
+      allergies: "",
       submittedBy: `${submission.firstName} ${submission.lastName}`,
       submittedAt: submission.createdAt,
       status: "declined",
@@ -111,6 +114,40 @@ function getMealGroups(people) {
 
     return groups;
   }, {});
+}
+
+function escapeCsvValue(value) {
+  const stringValue = String(value ?? "");
+
+  if (/[",\n]/.test(stringValue)) {
+    return `"${stringValue.replaceAll('"', '""')}"`;
+  }
+
+  return stringValue;
+}
+
+function downloadCsv(rows) {
+  const headers = ["RSVP Date", "Nombres", "Apellidos", "Respuesta", "Food", "Alergia", "Micro"];
+  const csvRows = rows.map((row) => [
+    formatDate(row.submittedAt),
+    row.firstName,
+    row.lastName,
+    row.status === "accepted" ? "Confirmó" : "No viene",
+    row.food,
+    row.allergies,
+    row.status === "accepted" ? (row.needsBus ? "Sí" : "No") : "",
+  ]);
+  const csv = [headers, ...csvRows]
+    .map((row) => row.map(escapeCsvValue).join(","))
+    .join("\n");
+  const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "rsvp-respuestas.csv";
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function AdminDashboard({ submissions }) {
@@ -133,6 +170,7 @@ export default function AdminDashboard({ submissions }) {
   const acceptedCount = people.length;
   const declinedCount = declinedRows.length;
   const busCount = people.filter((person) => person.needsBus).length;
+  const messages = submissions.filter((submission) => submission.message?.trim());
   const acceptedPercent =
     acceptedCount + declinedCount > 0
       ? Math.round((acceptedCount / (acceptedCount + declinedCount)) * 100)
@@ -163,6 +201,9 @@ export default function AdminDashboard({ submissions }) {
             <p className="dashboard-kicker">Panel privado</p>
             <h1>RSVP Dashboard</h1>
           </div>
+          <button className="download-button" type="button" onClick={() => downloadCsv(tableRows)}>
+            Descargar CSV
+          </button>
         </header>
 
         <section className="dashboard-toolbar" aria-label="Filtros">
@@ -292,6 +333,7 @@ export default function AdminDashboard({ submissions }) {
                   <th>Last name</th>
                   <th>Answer</th>
                   <th>Food selection</th>
+                  <th>Alergia</th>
                   <th>Micro</th>
                   <th>Details</th>
                 </tr>
@@ -308,6 +350,7 @@ export default function AdminDashboard({ submissions }) {
                       </span>
                     </td>
                     <td>{row.food || "-"}</td>
+                    <td>{row.allergies || ""}</td>
                     <td>{row.status === "accepted" ? (row.needsBus ? "Sí" : "No") : "-"}</td>
                     <td>
                       <button
@@ -353,6 +396,31 @@ export default function AdminDashboard({ submissions }) {
               </article>
             ))}
           </div>
+        </section>
+
+        <section className="messages-panel">
+          <div className="table-heading">
+            <h2>Mensajes para los novios</h2>
+            <span>{messages.length} mensajes</span>
+          </div>
+
+          {messages.length > 0 ? (
+            <div className="message-grid">
+              {messages.map((submission) => (
+                <article className="message-card" key={`message-${submission.id}`}>
+                  <div>
+                    <strong>
+                      {submission.firstName} {submission.lastName}
+                    </strong>
+                    <span>{formatDate(submission.createdAt)}</span>
+                  </div>
+                  <p>{submission.message}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="dashboard-empty">Todavía no hay mensajes cargados.</p>
+          )}
         </section>
       </section>
 
