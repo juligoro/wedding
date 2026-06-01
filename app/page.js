@@ -10,6 +10,7 @@ export default function Home() {
               <img className="monogram" src="/logo-juli-tomi-cropped.svg" alt="Juli y Tomi" />
             </div>
             <p className="eyebrow">¡NOS CASAMOS!</p>
+            <p className="hero-date">6 de diciembre 2026</p>
           </div>
         </section>
 
