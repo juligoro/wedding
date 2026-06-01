@@ -9,10 +9,7 @@ export default function Home() {
             <div className="logo-crop" aria-label="Logo Juli y Tomi">
               <img className="monogram" src="/logo-juli-tomi-cropped.svg" alt="Juli y Tomi" />
             </div>
-            <p className="eyebrow">¡Nos Casamos!</p>
-            <a className="button" href="#rsvp">
-              Confirmar asistencia
-            </a>
+            <p className="eyebrow">¡NOS CASAMOS!</p>
           </div>
         </section>
 
@@ -21,7 +18,7 @@ export default function Home() {
             <div className="section-title">
               <h2 id="historia-title">Queremos compartir nuestra felicidad con ustedes</h2>
               <p>
-                Después de tantos momentos compartidos, llegó el día de rodearnos de las
+                Después de tanto soñarlo, llegó el día de rodearnos de las
                 personas que más queremos para dar este gran paso juntos. Los esperamos para
                 vivir esta celebración llena de amor, alegría y emoción.
               </p>

@@ -10,7 +10,7 @@
   --white: #fffdf8;
   --line: rgba(88, 72, 58, 0.18);
   --shadow: 0 22px 70px rgba(66, 52, 40, 0.14);
-  --display-font: "Brown Sugar", "Quattrocento", Georgia, "Times New Roman", serif;
+  --display-font: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --body-font: "Spectral", Georgia, "Times New Roman", serif;
 }
 
@@ -81,7 +81,7 @@ a {
   color: var(--sage-dark);
   font-family: var(--display-font);
   font-size: clamp(2.65rem, 6.4vw, 5.35rem);
-  font-weight: 400;
+  font-weight: 600;
   letter-spacing: 0;
   line-height: 1;
 }
@@ -90,7 +90,7 @@ h1 {
   margin: 12px 0 8px;
   font-family: var(--display-font);
   font-size: clamp(2.8rem, 7.6vw, 6.7rem);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.06;
   letter-spacing: 0;
 }
