@@ -400,6 +400,17 @@ export default function AdminDashboard({ submissions, tables }) {
             <button className="download-button" type="button" onClick={() => downloadCsv(rowsWithTableNames)}>
               Descargar CSV
             </button>
+            <button
+              className="secondary-dashboard-button"
+              type="button"
+              onClick={() => {
+                fetch("/api/admin/logout", { method: "POST" }).finally(() => {
+                  window.location.href = "/admin/login";
+                });
+              }}
+            >
+              Salir
+            </button>
           </div>
         </header>
 
