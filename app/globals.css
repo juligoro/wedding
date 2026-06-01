@@ -1477,6 +1477,60 @@ textarea {
   margin-bottom: 14px;
 }
 
+.bulk-action-bar,
+.bulk-action-hint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid rgba(75, 181, 199, 0.22);
+  border-radius: 8px;
+  background: #edf8fa;
+}
+
+.bulk-action-bar strong {
+  color: #2f3b3f;
+}
+
+.bulk-action-bar select {
+  min-height: 38px;
+  width: min(100%, 210px);
+  border: 1px solid rgba(57, 74, 78, 0.12);
+  border-radius: 6px;
+  background: #ffffff;
+  color: #2f3b3f;
+}
+
+.bulk-action-bar button,
+.bulk-action-hint button {
+  min-height: 38px;
+  border: 1px solid rgba(75, 181, 199, 0.38);
+  border-radius: 6px;
+  padding: 7px 11px;
+  background: #ffffff;
+  color: #25899b;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.bulk-action-bar button:nth-of-type(1) {
+  background: #4bb5c7;
+  color: #ffffff;
+}
+
+.bulk-action-bar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.bulk-action-hint {
+  justify-content: flex-end;
+  border-color: rgba(57, 74, 78, 0.08);
+  background: #fbfcfa;
+}
+
 .table-create-row input,
 .bulk-assign-row select {
   min-height: 42px;

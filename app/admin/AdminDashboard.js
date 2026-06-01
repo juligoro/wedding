@@ -149,6 +149,7 @@ export default function AdminDashboard({ submissions, tables }) {
   const mealGroups = getMealGroups(rowsWithTableNames);
   const mealOptions = Object.keys(mealGroups);
   const selectedRow = rowsWithTableNames.find((row) => row.id === selectedRowId) || null;
+  const selectedRows = rowsWithTableNames.filter((row) => selectedGuestIds.includes(row.id));
   const selectedSubmission =
     submissions.find((submission) => submission.id === selectedRow?.submissionId) || null;
   const selectedSubmissionPeople = selectedSubmission
@@ -206,6 +207,28 @@ export default function AdminDashboard({ submissions, tables }) {
 
       return Array.from(new Set([...current, ...selectedVisibleGuestIds]));
     });
+  }
+
+  async function copySelected(field) {
+    const values = Array.from(new Set(selectedRows.map((row) => row[field]).filter(Boolean)));
+
+    if (values.length === 0) {
+      setTableMessage("No hay datos para copiar en la selección.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(values.join("\n"));
+      setTableMessage(field === "email" ? "Emails copiados." : "WhatsApps copiados.");
+    } catch {
+      setTableMessage("No pudimos copiar al portapapeles.");
+    }
+  }
+
+  function selectUnassignedGuests() {
+    setSelectedGuestIds(unassignedRows.map((row) => row.id));
+    setShowTables(true);
+    setTableMessage(`${unassignedRows.length} invitados sin mesa seleccionados.`);
   }
 
   async function createTable(event) {
@@ -422,6 +445,54 @@ export default function AdminDashboard({ submissions, tables }) {
               {filteredRows.length} de {rowsWithTableNames.length}
             </span>
           </div>
+
+          {selectedGuestIds.length > 0 ? (
+            <div className="bulk-action-bar" role="region" aria-label="Acciones en lote">
+              <strong>{selectedGuestIds.length} seleccionados</strong>
+              <select value={targetTableId} onChange={(event) => setTargetTableId(event.target.value)}>
+                <option value="">Elegir mesa</option>
+                {localTables.map((table) => (
+                  <option key={table.id} value={table.id}>
+                    {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={!targetTableId || isSavingTables}
+                onClick={() => assignGuests(targetTableId)}
+              >
+                Agregar a mesa
+              </button>
+              <button type="button" disabled={isSavingTables} onClick={() => assignGuests(null)}>
+                Quitar mesa
+              </button>
+              <button type="button" onClick={() => downloadCsv(selectedRows)}>
+                Descargar CSV
+              </button>
+              <button type="button" onClick={() => copySelected("email")}>
+                Copiar emails
+              </button>
+              <button type="button" onClick={() => copySelected("whatsapp")}>
+                Copiar WhatsApps
+              </button>
+              <button type="button" disabled>
+                Enviar correo
+              </button>
+              <button type="button" disabled>
+                Editar
+              </button>
+              <button type="button" onClick={() => setSelectedGuestIds([])}>
+                Limpiar
+              </button>
+            </div>
+          ) : (
+            <div className="bulk-action-hint">
+              <button type="button" onClick={selectUnassignedGuests}>
+                Seleccionar sin mesa ({unassignedRows.length})
+              </button>
+            </div>
+          )}
 
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
