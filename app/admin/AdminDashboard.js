@@ -537,19 +537,19 @@ export default function AdminDashboard({ submissions, tables }) {
                 disabled={!targetTableId || isSavingTables}
                 onClick={() => assignGuests(targetTableId)}
               >
-                Agregar a mesa
+                A mesa
               </button>
               <button type="button" disabled={isSavingTables} onClick={() => assignGuests(null)}>
-                Quitar mesa
+                Sin mesa
               </button>
               <button type="button" onClick={() => downloadCsv(selectedRows)}>
-                Descargar CSV
+                CSV
               </button>
               <button type="button" onClick={() => copySelected("email")}>
-                Copiar emails
+                Emails
               </button>
               <button type="button" onClick={() => copySelected("whatsapp")}>
-                Copiar WhatsApps
+                WhatsApps
               </button>
               <input
                 className="bulk-tag-input"
@@ -558,10 +558,10 @@ export default function AdminDashboard({ submissions, tables }) {
                 placeholder="Tag"
               />
               <button type="button" disabled={isSavingTables} onClick={addTagToSelected}>
-                Agregar tag
+                Tag
               </button>
               <button type="button" disabled>
-                Enviar correo
+                Correo
               </button>
               <button type="button" disabled>
                 Editar
