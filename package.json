@@ -1,0 +1,21 @@
+{
+  "name": "juli-tomi-wedding",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:wasm": "NEXT_TEST_WASM=1 NEXT_TEST_WASM_DIR=node_modules/@next/swc-wasm-nodejs next dev",
+    "build": "next build",
+    "build:wasm": "NEXT_TEST_WASM=1 NEXT_TEST_WASM_DIR=node_modules/@next/swc-wasm-nodejs next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@next/swc-wasm-nodejs": "^15.5.18"
+  }
+}
