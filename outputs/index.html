@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Juli & Tomi | Nos casamos</title>
+    <meta
+      name="description"
+      content="Landing de casamiento de Juli y Tomi con confirmacion de asistencia."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quattrocento:wght@400;700&family=Spectral:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #f2e9d0;
+        --paper-soft: #eadfc4;
+        --linen: #ded1b7;
+        --sage: #6f8062;
+        --sage-dark: #40513c;
+        --earth: #9d7658;
+        --ink: #3c332d;
+        --muted: #74665a;
+        --white: #fffdf8;
+        --line: rgba(88, 72, 58, 0.18);
+        --shadow: 0 22px 70px rgba(66, 52, 40, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--paper);
+        font-family: "Spectral", Georgia, "Times New Roman", serif;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        overflow: hidden;
+      }
+
+      .hero {
+        min-height: 92svh;
+        position: relative;
+        display: grid;
+        place-items: center;
+        padding: 28px 20px 54px;
+      }
+
+      .hero-inner {
+        width: min(100%, 980px);
+        text-align: center;
+        position: relative;
+        z-index: 1;
+      }
+
+      .logo-crop {
+        width: min(72vw, 390px);
+        aspect-ratio: 1.04;
+        margin: 0 auto 6px;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .monogram {
+        width: 100%;
+        max-width: none;
+        display: block;
+        mix-blend-mode: multiply;
+        filter: drop-shadow(0 16px 26px rgba(80, 62, 45, 0.08));
+      }
+
+      .eyebrow {
+        margin: 0;
+        color: var(--sage-dark);
+        font-family: "Quattrocento", Georgia, "Times New Roman", serif;
+        font-size: clamp(2.65rem, 6.4vw, 5.35rem);
+        font-weight: 400;
+        letter-spacing: 0;
+        line-height: 1;
+      }
+
+      h1 {
+        margin: 12px 0 8px;
+        font-family: "Quattrocento", Georgia, "Times New Roman", serif;
+        font-size: clamp(2.8rem, 7.6vw, 6.7rem);
+        font-weight: 500;
+        line-height: 0.92;
+        letter-spacing: 0;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 52px;
+        border: 1px solid var(--sage-dark);
+        border-radius: 999px;
+        padding: 14px 24px;
+        background: var(--sage-dark);
+        color: var(--white);
+        text-decoration: none;
+        font-weight: 700;
+        box-shadow: 0 14px 28px rgba(64, 81, 60, 0.22);
+      }
+
+      .hero .button {
+        min-height: auto;
+        margin-top: clamp(42px, 8vh, 86px);
+        border: 0;
+        padding: 7px 10px;
+        background: transparent;
+        color: var(--sage-dark);
+        font-size: 0.92rem;
+        font-weight: 500;
+        box-shadow: none;
+      }
+
+      .button.secondary {
+        background: transparent;
+        color: var(--sage-dark);
+        box-shadow: none;
+      }
+
+      .section {
+        padding: 76px 20px;
+      }
+
+      .section.alt {
+        background: rgba(255, 253, 248, 0.54);
+        border-block: 1px solid var(--line);
+      }
+
+      .wrap {
+        width: min(100%, 1120px);
+        margin: 0 auto;
+      }
+
+      .section-title {
+        max-width: 760px;
+        margin: 0 auto 38px;
+        text-align: center;
+      }
+
+      .section-title h2 {
+        margin: 0;
+        font-family: "Quattrocento", Georgia, "Times New Roman", serif;
+        font-size: clamp(2.4rem, 6vw, 5.2rem);
+        font-weight: 500;
+        line-height: 1;
+      }
+
+      .section-title p {
+        margin: 20px 0 0;
+        color: var(--muted);
+        font-size: 1.08rem;
+        line-height: 1.8;
+      }
+
+      .signature {
+        margin-top: 24px;
+        color: var(--earth);
+        font-family: "Quattrocento", Georgia, "Times New Roman", serif;
+        font-size: clamp(1.8rem, 4vw, 3rem);
+      }
+
+      .details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .photo-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 18px;
+        align-items: stretch;
+      }
+
+      .photo-frame {
+        min-height: 420px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, rgba(111, 128, 98, 0.10), rgba(157, 118, 88, 0.14)),
+          repeating-linear-gradient(135deg, rgba(255, 253, 248, 0.42) 0 12px, rgba(244, 234, 219, 0.32) 12px 24px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .photo-stack {
+        display: grid;
+        gap: 18px;
+      }
+
+      .photo-stack .photo-frame {
+        min-height: 201px;
+      }
+
+      .photo-frame img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+      }
+
+      .detail {
+        min-height: 220px;
+        padding: 28px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 253, 248, 0.7);
+        box-shadow: 0 12px 34px rgba(78, 62, 48, 0.08);
+        border-top: 4px solid rgba(111, 128, 98, 0.54);
+      }
+
+      .detail h3 {
+        margin: 0 0 14px;
+        font-family: "Quattrocento", Georgia, "Times New Roman", serif;
+        font-size: 1.65rem;
+        font-weight: 500;
+      }
+
+      .detail p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .note {
+        display: block;
+        margin-top: 14px;
+        color: var(--earth);
+        font-style: italic;
+      }
+
+      .rsvp-layout {
+        display: grid;
+        grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.25fr);
+        gap: 30px;
+        align-items: start;
+      }
+
+      .rsvp-intro {
+        position: sticky;
+        top: 22px;
+        padding: 30px;
+        border-radius: 8px;
+        background: var(--sage-dark);
+        color: var(--white);
+        box-shadow: var(--shadow);
+      }
+
+      .rsvp-intro h2 {
+        margin: 0 0 14px;
+        font-family: "Quattrocento", Georgia, "Times New Roman", serif;
+        font-size: clamp(2.2rem, 5vw, 4rem);
+        font-weight: 500;
+        line-height: 1;
+      }
+
+      .rsvp-intro p {
+        margin: 0;
+        color: rgba(255, 253, 248, 0.82);
+        line-height: 1.75;
+      }
+
+      form {
+        padding: 30px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 253, 248, 0.82);
+        box-shadow: var(--shadow);
+      }
+
+      fieldset {
+        margin: 0 0 26px;
+        padding: 0;
+        border: 0;
+      }
+
+      legend {
+        width: 100%;
+        margin-bottom: 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+        font-family: "Quattrocento", Georgia, "Times New Roman", serif;
+        font-size: 1.38rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .full {
+        grid-column: 1 / -1;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid rgba(88, 72, 58, 0.22);
+        border-radius: 6px;
+        background: var(--white);
+        color: var(--ink);
+        padding: 13px 14px;
+        outline: none;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        border-color: var(--sage-dark);
+        box-shadow: 0 0 0 3px rgba(111, 128, 98, 0.18);
+      }
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+
+      .choice-group {
+        display: grid;
+        gap: 10px;
+      }
+
+      .choice {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: rgba(251, 248, 240, 0.74);
+        color: var(--ink);
+      }
+
+      .choice input {
+        width: auto;
+        margin-top: 3px;
+      }
+
+      .guest-card {
+        margin-top: 16px;
+        padding: 18px;
+        border: 1px solid rgba(111, 128, 98, 0.26);
+        border-radius: 8px;
+        background: rgba(244, 234, 219, 0.48);
+      }
+
+      .guest-card h4 {
+        margin: 0 0 14px;
+        font-size: 1rem;
+        color: var(--sage-dark);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      .submit {
+        cursor: pointer;
+      }
+
+      .success {
+        margin-top: 18px;
+        padding: 18px;
+        border: 1px solid rgba(111, 128, 98, 0.34);
+        border-radius: 8px;
+        background: #eef3e8;
+        color: var(--sage-dark);
+        line-height: 1.65;
+      }
+
+      .footer {
+        padding: 34px 20px 44px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .footer strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+        font-family: "Quattrocento", Georgia, "Times New Roman", serif;
+        font-size: 1.65rem;
+        font-weight: 500;
+      }
+
+      @media (max-width: 880px) {
+        .details-grid,
+        .photo-grid,
+        .rsvp-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .photo-frame,
+        .photo-stack .photo-frame {
+          min-height: 280px;
+        }
+
+        .rsvp-intro {
+          position: static;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .hero {
+          min-height: 90svh;
+          padding-top: 18px;
+        }
+
+        .logo-crop {
+          width: min(64vw, 280px);
+          margin-bottom: 8px;
+        }
+
+        .section {
+          padding: 58px 16px;
+        }
+
+        form,
+        .rsvp-intro,
+        .detail {
+          padding: 22px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .eyebrow {
+          font-size: clamp(2.6rem, 12.5vw, 4rem);
+        }
+
+        h1 {
+          font-size: clamp(2.6rem, 12vw, 4.2rem);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero" aria-label="Inicio">
+        <div class="hero-inner">
+          <div class="logo-crop" aria-label="Logo Juli y Tomi">
+            <img class="monogram" src="logo-juli-tomi-cropped.svg" alt="Juli y Tomi" />
+          </div>
+          <p class="eyebrow">¡Nos Casamos!</p>
+          <a class="button" href="#rsvp">Confirmar asistencia</a>
+        </div>
+      </section>
+
+      <section class="section alt" aria-labelledby="historia-title">
+        <div class="wrap">
+          <div class="section-title">
+            <h2 id="historia-title">Queremos compartir nuestra felicidad con ustedes</h2>
+            <p>
+              Después de tantos momentos compartidos, llegó el día de rodearnos de las
+              personas que más queremos para dar este gran paso juntos. Los esperamos para
+              vivir esta celebración llena de amor, alegría y emoción.
+            </p>
+            <div class="signature">Juli y Tomi</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="fotos-title">
+        <div class="wrap">
+          <h2 id="fotos-title" class="hidden">Fotos</h2>
+          <div class="photo-grid">
+            <!-- Reemplazar cada marco por una imagen, por ejemplo:
+              <div class="photo-frame"><img src="fotos/juli-tomi-1.jpg" alt="Juli y Tomi" /></div>
+            -->
+            <div class="photo-frame" aria-label="Foto principal de Juli y Tomi"></div>
+            <div class="photo-stack">
+              <div class="photo-frame" aria-label="Foto secundaria de Juli y Tomi"></div>
+              <div class="photo-frame" aria-label="Otra foto de Juli y Tomi"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section alt" aria-labelledby="detalles-title">
+        <div class="wrap">
+          <div class="section-title">
+            <h2 id="detalles-title">La celebración</h2>
+          </div>
+          <div class="details-grid">
+            <article class="detail">
+              <h3>Ceremonia + Recepción</h3>
+              <p>
+                Domingo 6 de diciembre de 2026, desde las 14 hs, en Del Viso,
+                Buenos Aires.
+                <span class="note">La dirección exacta llega cuando confirmás asistencia.</span>
+              </p>
+            </article>
+            <article class="detail">
+              <h3>Dresscode</h3>
+              <p>
+                La ceremonia es afuera y va a hacer calor. Venite con ropa elegante,
+                pero fresca. Dejemos el blanco solo para la novia.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="rsvp" aria-labelledby="rsvp-title">
+        <div class="wrap rsvp-layout">
+          <aside class="rsvp-intro">
+            <h2 id="rsvp-title">RSVP</h2>
+            <p>
+              Confirmá tu asistencia y completá la información para recibir los detalles.
+            </p>
+          </aside>
+
+          <form id="rsvpForm">
+            <fieldset>
+              <legend>Datos personales</legend>
+              <div class="grid">
+                <label>Nombre
+                  <input name="nombre" autocomplete="given-name" required />
+                </label>
+                <label>Apellido
+                  <input name="apellido" autocomplete="family-name" required />
+                </label>
+                <label>Email
+                  <input type="email" name="email" autocomplete="email" required />
+                </label>
+                <label>WhatsApp
+                  <input name="whatsapp" autocomplete="tel" required />
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Asistencia</legend>
+              <div class="choice-group">
+                <label class="choice">
+                  <input type="radio" name="asistencia" value="si" required />
+                  Sí, confirmo asistencia
+                </label>
+                <label class="choice">
+                  <input type="radio" name="asistencia" value="no" />
+                  No voy a poder asistir
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset id="guestSection">
+              <legend>Invitados</legend>
+              <div class="grid">
+                <label class="full">Cantidad de acompañantes
+                  <select id="guestCount" name="acompanantes">
+                    <option value="0">Solo yo</option>
+                    <option value="1">+1 acompañante</option>
+                    <option value="2">+2 acompañantes</option>
+                    <option value="3">+3 acompañantes</option>
+                    <option value="4">+4 acompañantes</option>
+                  </select>
+                </label>
+              </div>
+              <div id="guestFields"></div>
+            </fieldset>
+
+            <fieldset id="foodSection">
+              <legend>Restricciones alimentarias</legend>
+              <div id="foodFields"></div>
+              <label class="full">Alergias o aclaraciones adicionales
+                <textarea name="alergias" placeholder="Escribí cualquier alergia o detalle importante."></textarea>
+              </label>
+            </fieldset>
+
+            <fieldset id="mobilitySection">
+              <legend>Movilidad</legend>
+              <p class="note">
+                Hay barra libre y no queremos que manejes si tomaste. Vamos a compartir
+                las opciones de paradas del micro a CABA para quienes lo necesiten.
+              </p>
+              <p>¿Necesitan micro? Esta respuesta aplica para todos los acompañantes juntos.</p>
+              <div class="choice-group">
+                <label class="choice">
+                  <input type="radio" name="micro" value="si" required />
+                  Sí, necesitamos micro
+                </label>
+                <label class="choice">
+                  <input type="radio" name="micro" value="no" required />
+                  No necesitamos micro
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Mensaje</legend>
+              <label>Mensaje para los novios
+                <textarea name="mensaje" placeholder="Opcional"></textarea>
+              </label>
+            </fieldset>
+
+            <div class="form-actions">
+              <button class="button submit" type="submit">Enviar RSVP</button>
+              <a class="button secondary" href="#detalles-title">Ver detalles</a>
+            </div>
+            <div id="successMessage" class="success hidden" role="status"></div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <strong>Juli &amp; Tomi</strong>
+      Nos vemos para celebrar.
+    </footer>
+
+    <script>
+      const menuOptions = ["Ninguna", "Sin gluten", "Kosher", "Vegetariano", "Vegano", "Menu infantil"];
+      const guestCount = document.querySelector("#guestCount");
+      const guestFields = document.querySelector("#guestFields");
+      const foodFields = document.querySelector("#foodFields");
+      const form = document.querySelector("#rsvpForm");
+      const success = document.querySelector("#successMessage");
+      const guestSection = document.querySelector("#guestSection");
+      const foodSection = document.querySelector("#foodSection");
+      const mobilitySection = document.querySelector("#mobilitySection");
+
+      function foodSelect(name, label) {
+        return `
+          <label>${label}
+            <select name="${name}" required>
+              ${menuOptions.map((option) => `<option value="${option}">${option}</option>`).join("")}
+            </select>
+          </label>
+        `;
+      }
+
+      function renderGuests() {
+        const count = Number(guestCount.value);
+        guestFields.innerHTML = "";
+        foodFields.innerHTML = `<div class="grid">${foodSelect("comida_titular", "Restricción alimentaria de quien confirma")}</div>`;
+
+        if (count > 0) {
+          const guestInputs = Array.from({ length: count }, (_, index) => `
+            <label>Nombre y Apellido de acompañante ${index + 1}
+              <input name="acompanante_${index + 1}" required />
+            </label>
+          `).join("");
+
+          const foodInputs = Array.from({ length: count }, (_, index) =>
+            foodSelect(`comida_acompanante_${index + 1}`, `Restricción alimentaria de acompañante ${index + 1}`)
+          ).join("");
+
+          guestFields.innerHTML = `<div class="guest-card"><h4>Acompañantes</h4><div class="grid">${guestInputs}</div></div>`;
+          foodFields.innerHTML += `<div class="guest-card"><h4>Alimentación por acompañante</h4><div class="grid">${foodInputs}</div></div>`;
+        }
+        syncRequiredFields();
+      }
+
+      function setAttendanceMode(value) {
+        const attending = value !== "no";
+        [guestSection, foodSection, mobilitySection].forEach((section) => {
+          section.classList.toggle("hidden", !attending);
+        });
+        syncRequiredFields();
+      }
+
+      function syncRequiredFields() {
+        const attending = form.elements.asistencia.value === "si";
+        const conditionalRequired = form.querySelectorAll(
+          "#guestSection select, #guestSection input, #foodSection select, #mobilitySection input"
+        );
+
+        conditionalRequired.forEach((field) => {
+          field.required = attending;
+          field.disabled = !attending;
+        });
+      }
+
+      document.querySelectorAll('input[name="asistencia"]').forEach((input) => {
+        input.addEventListener("change", (event) => setAttendanceMode(event.target.value));
+      });
+
+      guestCount.addEventListener("change", renderGuests);
+      renderGuests();
+      syncRequiredFields();
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(form).entries());
+        localStorage.setItem("rsvp-juli-tomi", JSON.stringify(data));
+        const accepted = data.asistencia === "si";
+        success.classList.remove("hidden");
+        const microText = data.micro === "si" ? "Queda anotado que necesitan micro." : data.micro === "no" ? "Queda anotado que no necesitan micro." : "Podés contarnos más adelante si necesitan micro.";
+        success.innerHTML = accepted
+          ? `<strong>Gracias por confirmar.</strong><br />Te vamos a enviar la dirección exacta y los detalles finales más cerca de la fecha.<br /><br /><strong>Movilidad:</strong> ${microText}`
+          : "<strong>Gracias por avisarnos.</strong><br />Vamos a extrañarte mucho ese día.";
+        success.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    </script>
+  </body>
+</html>
