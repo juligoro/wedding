@@ -115,6 +115,7 @@ export default function AdminDashboard({ submissions, tables }) {
   const [busFilter, setBusFilter] = useState("all");
   const [summaryView, setSummaryView] = useState("accepted");
   const [selectedRowId, setSelectedRowId] = useState(null);
+  const [showTables, setShowTables] = useState(false);
   const [selectedGuestIds, setSelectedGuestIds] = useState([]);
   const [localTables, setLocalTables] = useState(tables);
   const [tableAssignments, setTableAssignments] = useState({});
@@ -290,9 +291,18 @@ export default function AdminDashboard({ submissions, tables }) {
             <p className="dashboard-kicker">Panel privado</p>
             <h1>RSVP Dashboard</h1>
           </div>
-          <button className="download-button" type="button" onClick={() => downloadCsv(rowsWithTableNames)}>
-            Descargar CSV
-          </button>
+          <div className="dashboard-header-actions">
+            <button
+              className={showTables ? "secondary-dashboard-button active" : "secondary-dashboard-button"}
+              type="button"
+              onClick={() => setShowTables((current) => !current)}
+            >
+              Mesas
+            </button>
+            <button className="download-button" type="button" onClick={() => downloadCsv(rowsWithTableNames)}>
+              Descargar CSV
+            </button>
+          </div>
         </header>
 
         <section className="dashboard-toolbar" aria-label="Filtros">
@@ -405,75 +415,6 @@ export default function AdminDashboard({ submissions, tables }) {
           )}
         </section>
 
-        <section className="tables-panel">
-          <div className="table-heading">
-            <h2>Mesas</h2>
-            <span>{unassignedRows.length} confirmados sin mesa</span>
-          </div>
-
-          <form className="table-create-row" onSubmit={createTable}>
-            <input
-              value={newTableName}
-              onChange={(event) => setNewTableName(event.target.value)}
-              placeholder="Nombre de mesa"
-            />
-            <button type="submit" disabled={isSavingTables}>
-              Crear mesa
-            </button>
-          </form>
-
-          <div className="bulk-assign-row">
-            <strong>{selectedGuestIds.length} seleccionados</strong>
-            <select value={targetTableId} onChange={(event) => setTargetTableId(event.target.value)}>
-              <option value="">Elegir mesa</option>
-              {localTables.map((table) => (
-                <option key={table.id} value={table.id}>
-                  {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
-                </option>
-              ))}
-            </select>
-            <button type="button" disabled={!targetTableId || isSavingTables} onClick={() => assignGuests(targetTableId)}>
-              Asignar
-            </button>
-            <button type="button" disabled={isSavingTables} onClick={() => assignGuests(null)}>
-              Sacar de mesa
-            </button>
-          </div>
-
-          {tableMessage ? <p className="table-message">{tableMessage}</p> : null}
-
-          <div className="table-card-grid">
-            {localTables.map((table) => (
-              <article className="seat-card" key={table.id}>
-                <div>
-                  <h3>{table.name}</h3>
-                  <strong>
-                    {tableCounts[table.id] || 0}/{table.capacity}
-                  </strong>
-                </div>
-                <ul>
-                  {acceptedRows
-                    .filter((row) => row.tableId === table.id)
-                    .map((row) => (
-                      <li key={`table-${table.id}-${row.id}`}>{row.name}</li>
-                    ))}
-                </ul>
-              </article>
-            ))}
-            <article className="seat-card unassigned">
-              <div>
-                <h3>Sin mesa</h3>
-                <strong>{unassignedRows.length}</strong>
-              </div>
-              <ul>
-                {unassignedRows.map((row) => (
-                  <li key={`unassigned-${row.id}`}>{row.name}</li>
-                ))}
-              </ul>
-            </article>
-          </div>
-        </section>
-
         <section className="dashboard-table-panel">
           <div className="table-heading">
             <h2>Respuestas filtradas</h2>
@@ -553,6 +494,81 @@ export default function AdminDashboard({ submissions, tables }) {
             <p className="dashboard-empty">No hay respuestas que coincidan con esos filtros.</p>
           ) : null}
         </section>
+
+        {showTables ? (
+          <section className="tables-panel">
+            <div className="table-heading">
+              <h2>Mesas</h2>
+              <span>{unassignedRows.length} confirmados sin mesa</span>
+            </div>
+
+            <form className="table-create-row" onSubmit={createTable}>
+              <input
+                value={newTableName}
+                onChange={(event) => setNewTableName(event.target.value)}
+                placeholder="Nombre de mesa"
+              />
+              <button type="submit" disabled={isSavingTables}>
+                Crear mesa
+              </button>
+            </form>
+
+            <div className="bulk-assign-row">
+              <strong>{selectedGuestIds.length} seleccionados</strong>
+              <select value={targetTableId} onChange={(event) => setTargetTableId(event.target.value)}>
+                <option value="">Elegir mesa</option>
+                {localTables.map((table) => (
+                  <option key={table.id} value={table.id}>
+                    {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={!targetTableId || isSavingTables}
+                onClick={() => assignGuests(targetTableId)}
+              >
+                Asignar
+              </button>
+              <button type="button" disabled={isSavingTables} onClick={() => assignGuests(null)}>
+                Sacar de mesa
+              </button>
+            </div>
+
+            {tableMessage ? <p className="table-message">{tableMessage}</p> : null}
+
+            <div className="table-card-grid">
+              {localTables.map((table) => (
+                <article className="seat-card" key={table.id}>
+                  <div>
+                    <h3>{table.name}</h3>
+                    <strong>
+                      {tableCounts[table.id] || 0}/{table.capacity}
+                    </strong>
+                  </div>
+                  <ul>
+                    {acceptedRows
+                      .filter((row) => row.tableId === table.id)
+                      .map((row) => (
+                        <li key={`table-${table.id}-${row.id}`}>{row.name}</li>
+                      ))}
+                  </ul>
+                </article>
+              ))}
+              <article className="seat-card unassigned">
+                <div>
+                  <h3>Sin mesa</h3>
+                  <strong>{unassignedRows.length}</strong>
+                </div>
+                <ul>
+                  {unassignedRows.map((row) => (
+                    <li key={`unassigned-${row.id}`}>{row.name}</li>
+                  ))}
+                </ul>
+              </article>
+            </div>
+          </section>
+        ) : null}
 
         <section className="meal-breakdown-panel">
           <div className="table-heading">

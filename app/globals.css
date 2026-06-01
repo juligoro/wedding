@@ -1213,6 +1213,13 @@ textarea {
   align-items: flex-start;
 }
 
+.dashboard-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .dashboard-toolbar {
   align-items: flex-end;
 }
@@ -1316,7 +1323,8 @@ textarea {
   font: inherit;
 }
 
-.download-button {
+.download-button,
+.secondary-dashboard-button {
   min-height: 42px;
   border: 1px solid rgba(75, 181, 199, 0.45);
   border-radius: 6px;
@@ -1325,6 +1333,19 @@ textarea {
   color: #ffffff;
   font-weight: 800;
   box-shadow: 0 8px 20px rgba(75, 181, 199, 0.18);
+}
+
+.secondary-dashboard-button {
+  border-color: rgba(57, 74, 78, 0.14);
+  background: #ffffff;
+  color: #566569;
+  box-shadow: 0 4px 16px rgba(51, 63, 66, 0.05);
+}
+
+.secondary-dashboard-button.active {
+  border-color: rgba(75, 181, 199, 0.45);
+  background: #edf8fa;
+  color: #25899b;
 }
 
 .meal-summary button,
