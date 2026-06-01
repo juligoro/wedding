@@ -58,6 +58,8 @@ function getPeopleFromSubmission(submission) {
       role: "Titular",
       needsBus: submission.needsBus,
       allergies: submission.allergies || "",
+      email: submission.email,
+      whatsapp: submission.whatsapp,
       submittedBy,
       submittedAt: submission.createdAt,
       status: "accepted",
@@ -75,6 +77,8 @@ function getPeopleFromSubmission(submission) {
         role: "Acompañante",
         needsBus: submission.needsBus,
         allergies: submission.allergies || "",
+        email: submission.email,
+        whatsapp: submission.whatsapp,
         submittedBy,
         submittedAt: submission.createdAt,
         status: "accepted",
@@ -96,6 +100,8 @@ function getDeclinedRows(submissions) {
       role: "Titular",
       needsBus: false,
       allergies: "",
+      email: submission.email,
+      whatsapp: submission.whatsapp,
       submittedBy: `${submission.firstName} ${submission.lastName}`,
       submittedAt: submission.createdAt,
       status: "declined",
@@ -127,7 +133,17 @@ function escapeCsvValue(value) {
 }
 
 function downloadCsv(rows) {
-  const headers = ["RSVP Date", "Nombres", "Apellidos", "Respuesta", "Food", "Alergia", "Micro"];
+  const headers = [
+    "RSVP Date",
+    "Nombres",
+    "Apellidos",
+    "Respuesta",
+    "Food",
+    "Alergia",
+    "Micro",
+    "Mail",
+    "WhatsApp",
+  ];
   const csvRows = rows.map((row) => [
     formatDate(row.submittedAt),
     row.firstName,
@@ -136,6 +152,8 @@ function downloadCsv(rows) {
     row.food,
     row.allergies,
     row.status === "accepted" ? (row.needsBus ? "Sí" : "No") : "",
+    row.email,
+    row.whatsapp,
   ]);
   const csv = [headers, ...csvRows]
     .map((row) => row.map(escapeCsvValue).join(","))
@@ -179,7 +197,9 @@ export default function AdminDashboard({ submissions }) {
   const filteredRows = tableRows.filter((row) => {
     const normalizedQuery = query.trim().toLowerCase();
     const matchesQuery = normalizedQuery
-      ? `${row.name} ${row.submittedBy} ${row.food}`.toLowerCase().includes(normalizedQuery)
+      ? `${row.name} ${row.submittedBy} ${row.food} ${row.email} ${row.whatsapp}`
+          .toLowerCase()
+          .includes(normalizedQuery)
       : true;
     const matchesStatus = statusFilter === "all" || row.status === statusFilter;
     const matchesMeal = mealFilter === "all" || row.food === mealFilter;
@@ -335,6 +355,8 @@ export default function AdminDashboard({ submissions }) {
                   <th>Food selection</th>
                   <th>Alergia</th>
                   <th>Micro</th>
+                  <th>Mail</th>
+                  <th>WhatsApp</th>
                   <th>Details</th>
                 </tr>
               </thead>
@@ -352,6 +374,8 @@ export default function AdminDashboard({ submissions }) {
                     <td>{row.food || "-"}</td>
                     <td>{row.allergies || ""}</td>
                     <td>{row.status === "accepted" ? (row.needsBus ? "Sí" : "No") : "-"}</td>
+                    <td>{row.email}</td>
+                    <td>{row.whatsapp}</td>
                     <td>
                       <button
                         className="details-link"
@@ -517,6 +541,14 @@ export default function AdminDashboard({ submissions }) {
               <div>
                 <dt>Micro</dt>
                 <dd>{selectedRow.status === "accepted" ? (selectedRow.needsBus ? "Sí" : "No") : "No aplica"}</dd>
+              </div>
+              <div>
+                <dt>Mail</dt>
+                <dd>{selectedRow.email}</dd>
+              </div>
+              <div>
+                <dt>WhatsApp</dt>
+                <dd>{selectedRow.whatsapp}</dd>
               </div>
               <div>
                 <dt>Respondió</dt>
