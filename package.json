@@ -8,14 +8,21 @@
     "build": "next build",
     "build:wasm": "NEXT_TEST_WASM=1 NEXT_TEST_WASM_DIR=node_modules/@next/swc-wasm-nodejs next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:setup": "node scripts/setup-db.mjs",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@next/swc-wasm-nodejs": "^15.5.18"
+    "@next/swc-wasm-nodejs": "^15.5.18",
+    "prisma": "^6.19.3"
   }
 }

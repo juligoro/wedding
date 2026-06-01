@@ -1,5 +1,11 @@
 work/
 .DS_Store
+.env
 node_modules/
 .next/
 out/
+prisma/dev.db
+prisma/dev.db-journal
+lib/generated/prisma/
+
+/app/generated/prisma

@@ -1,0 +1,27 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Rsvp {
+  id                 Int      @id @default(autoincrement())
+  firstName          String
+  lastName           String
+  email              String
+  whatsapp           String
+  attending          Boolean
+  companionCount     Int      @default(0)
+  companions         String   @default("[]")
+  primaryFood        String?
+  companionFood      String   @default("[]")
+  allergies          String?
+  needsBus           Boolean?
+  message            String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

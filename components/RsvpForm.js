@@ -22,7 +22,9 @@ function FoodSelect({ name, label, required }) {
 export default function RsvpForm() {
   const [attendance, setAttendance] = useState("");
   const [guestCount, setGuestCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const isAttending = attendance === "si";
   const companionIndexes = useMemo(
@@ -36,24 +38,51 @@ export default function RsvpForm() {
     }
   }, [isAttending]);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
-    localStorage.setItem("rsvp-juli-tomi", JSON.stringify(data));
+    setIsSubmitting(true);
+    setSuccessMessage("");
+    setErrorMessage("");
 
-    if (data.asistencia === "si") {
-      const microText =
-        data.micro === "si"
-          ? "Queda anotado que necesitan micro."
-          : "Queda anotado que no necesitan micro.";
+    try {
+      const response = await fetch("/api/rsvp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-      setSuccessMessage(
-        `Gracias por confirmar.|Te vamos a enviar la dirección exacta y los detalles finales más cerca de la fecha.|Movilidad: ${microText}`,
-      );
-    } else {
-      setSuccessMessage("Gracias por avisarnos.|Vamos a extrañarte mucho ese día.");
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || "No pudimos guardar la confirmación.");
+      }
+
+      localStorage.setItem("rsvp-juli-tomi", JSON.stringify(data));
+
+      if (data.asistencia === "si") {
+        const microText =
+          data.micro === "si"
+            ? "Queda anotado que necesitan micro."
+            : "Queda anotado que no necesitan micro.";
+
+        setSuccessMessage(
+          `Gracias por confirmar.|Te vamos a enviar la dirección exacta y los detalles finales más cerca de la fecha.|Movilidad: ${microText}`,
+        );
+      } else {
+        setSuccessMessage("Gracias por avisarnos.|Vamos a extrañarte mucho ese día.");
+      }
+
+      form.reset();
+      setAttendance("");
+      setGuestCount(0);
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -211,8 +240,8 @@ export default function RsvpForm() {
       </fieldset>
 
       <div className="form-actions">
-        <button className="button submit" type="submit">
-          Enviar RSVP
+        <button className="button submit" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Enviando..." : "Enviar RSVP"}
         </button>
         <a className="button secondary" href="#detalles-title">
           Ver detalles
@@ -228,6 +257,12 @@ export default function RsvpForm() {
               <p key={line}>{line}</p>
             ),
           )}
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <div className="error" role="alert">
+          {errorMessage}
         </div>
       ) : null}
     </form>
