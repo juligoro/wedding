@@ -50,7 +50,7 @@ export default function Home() {
             </div>
             <div className="details-grid">
               <article className="detail">
-                <h3>Ceremonia + Recepción</h3>
+                <h3>Ceremonia + Fiesta</h3>
                 <p>
                   Domingo 6 de diciembre de 2026, desde las 14 hs, en Del Viso,
                   Buenos Aires.
