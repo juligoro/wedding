@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { buildGuestsFromRsvp } from "@/lib/guests";
 import { prisma } from "@/lib/prisma";
 
 function getText(data, key) {
@@ -65,6 +66,13 @@ export async function POST(request) {
         needsBus: attending ? data.micro === "si" : null,
         message: getText(data, "mensaje") || null,
       },
+    });
+
+    await prisma.guest.createMany({
+      data: buildGuestsFromRsvp(rsvp).map((guest) => ({
+        ...guest,
+        rsvpId: rsvp.id,
+      })),
     });
 
     return NextResponse.json({ id: rsvp.id }, { status: 201 });

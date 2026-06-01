@@ -5,13 +5,10 @@ import { DatabaseSync } from "node:sqlite";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const dbPath = join(root, "prisma", "dev.db");
-const migrationPath = join(
-  root,
-  "prisma",
-  "migrations",
-  "20260601151000_init_rsvp",
-  "migration.sql",
-);
+const migrationPaths = [
+  join(root, "prisma", "migrations", "20260601151000_init_rsvp", "migration.sql"),
+  join(root, "prisma", "migrations", "20260601193000_add_guest_tables", "migration.sql"),
+];
 
 await mkdir(dirname(dbPath), { recursive: true });
 
@@ -21,7 +18,17 @@ const exists = db
   .get();
 
 if (!exists) {
-  db.exec(await readFile(migrationPath, "utf8"));
+  for (const migrationPath of migrationPaths) {
+    db.exec(await readFile(migrationPath, "utf8"));
+  }
+} else {
+  const guestExists = db
+    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'Guest'")
+    .get();
+
+  if (!guestExists) {
+    db.exec(await readFile(migrationPaths[1], "utf8"));
+  }
 }
 
 db.close();

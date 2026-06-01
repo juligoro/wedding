@@ -24,4 +24,37 @@ model Rsvp {
   message            String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  guests             Guest[]
+}
+
+model SeatingTable {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  capacity  Int      @default(10)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  guests    Guest[]
+}
+
+model Guest {
+  id          Int           @id @default(autoincrement())
+  rsvpId      Int
+  tableId     Int?
+  firstName   String
+  lastName    String?
+  fullName    String
+  role        String
+  attending   Boolean      @default(true)
+  food        String?
+  allergies   String?
+  needsBus    Boolean?
+  email       String
+  whatsapp    String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  rsvp        Rsvp          @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  table       SeatingTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+
+  @@index([rsvpId])
+  @@index([tableId])
 }

@@ -2,18 +2,6 @@
 
 import { useMemo, useState } from "react";
 
-function parseJson(value, fallback) {
-  if (!value) {
-    return fallback;
-  }
-
-  try {
-    return JSON.parse(value);
-  } catch {
-    return fallback;
-  }
-}
-
 function formatDate(date) {
   return new Intl.DateTimeFormat("es-AR", {
     day: "2-digit",
@@ -27,99 +15,6 @@ function formatDateTime(date) {
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(date));
-}
-
-function splitName(name) {
-  const [firstName = name, ...lastNameParts] = name.trim().split(/\s+/);
-
-  return {
-    firstName,
-    lastName: lastNameParts.join(" "),
-  };
-}
-
-function getPeopleFromSubmission(submission) {
-  if (!submission.attending) {
-    return [];
-  }
-
-  const companions = parseJson(submission.companions, []);
-  const companionFood = parseJson(submission.companionFood, []);
-  const submittedBy = `${submission.firstName} ${submission.lastName}`;
-
-  return [
-    {
-      id: `${submission.id}-titular`,
-      submissionId: submission.id,
-      firstName: submission.firstName,
-      lastName: submission.lastName,
-      name: submittedBy,
-      food: submission.primaryFood || "Ninguna",
-      role: "Titular",
-      needsBus: submission.needsBus,
-      allergies: submission.allergies || "",
-      email: submission.email,
-      whatsapp: submission.whatsapp,
-      submittedBy,
-      submittedAt: submission.createdAt,
-      status: "accepted",
-    },
-    ...companions.map((name, index) => {
-      const parsedName = splitName(name);
-
-      return {
-        id: `${submission.id}-acompanante-${index + 1}`,
-        submissionId: submission.id,
-        firstName: parsedName.firstName,
-        lastName: parsedName.lastName,
-        name,
-        food: companionFood[index]?.restriction || "Ninguna",
-        role: "Acompañante",
-        needsBus: submission.needsBus,
-        allergies: submission.allergies || "",
-        email: submission.email,
-        whatsapp: submission.whatsapp,
-        submittedBy,
-        submittedAt: submission.createdAt,
-        status: "accepted",
-      };
-    }),
-  ];
-}
-
-function getDeclinedRows(submissions) {
-  return submissions
-    .filter((submission) => !submission.attending)
-    .map((submission) => ({
-      id: `${submission.id}-declined`,
-      submissionId: submission.id,
-      firstName: submission.firstName,
-      lastName: submission.lastName,
-      name: `${submission.firstName} ${submission.lastName}`,
-      food: "",
-      role: "Titular",
-      needsBus: false,
-      allergies: "",
-      email: submission.email,
-      whatsapp: submission.whatsapp,
-      submittedBy: `${submission.firstName} ${submission.lastName}`,
-      submittedAt: submission.createdAt,
-      status: "declined",
-    }));
-}
-
-function getMealGroups(people) {
-  return people.reduce((groups, person) => {
-    const key = person.food || "Ninguna";
-
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-
-    groups[key].push(person);
-
-    return groups;
-  }, {});
 }
 
 function escapeCsvValue(value) {
@@ -143,17 +38,19 @@ function downloadCsv(rows) {
     "Micro",
     "Mail",
     "WhatsApp",
+    "Mesa",
   ];
   const csvRows = rows.map((row) => [
     formatDate(row.submittedAt),
     row.firstName,
     row.lastName,
-    row.status === "accepted" ? "Confirmó" : "No viene",
+    row.attending ? "Confirmó" : "No viene",
     row.food,
     row.allergies,
-    row.status === "accepted" ? (row.needsBus ? "Sí" : "No") : "",
+    row.attending ? (row.needsBus ? "Sí" : "No") : "",
     row.email,
     row.whatsapp,
+    row.tableName,
   ]);
   const csv = [headers, ...csvRows]
     .map((row) => row.map(escapeCsvValue).join(","))
@@ -168,40 +65,115 @@ function downloadCsv(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function AdminDashboard({ submissions }) {
+function getRows(submissions, tableAssignments) {
+  return submissions.flatMap((submission) =>
+    submission.guests.map((guest) => {
+      const tableId = tableAssignments[guest.id] ?? guest.tableId;
+
+      return {
+        id: guest.id,
+        submissionId: submission.id,
+        firstName: guest.firstName,
+        lastName: guest.lastName || "",
+        name: guest.fullName,
+        food: guest.food || "",
+        role: guest.role,
+        needsBus: guest.needsBus,
+        allergies: guest.allergies || "",
+        email: guest.email,
+        whatsapp: guest.whatsapp,
+        submittedBy: `${submission.firstName} ${submission.lastName}`,
+        submittedAt: submission.createdAt,
+        attending: guest.attending,
+        tableId,
+        tableName: guest.table?.id === tableId ? guest.table.name : "",
+      };
+    }),
+  );
+}
+
+function getMealGroups(rows) {
+  return rows
+    .filter((row) => row.attending)
+    .reduce((groups, person) => {
+      const key = person.food || "Ninguna";
+
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+
+      groups[key].push(person);
+
+      return groups;
+    }, {});
+}
+
+export default function AdminDashboard({ submissions, tables }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [mealFilter, setMealFilter] = useState("all");
   const [busFilter, setBusFilter] = useState("all");
   const [summaryView, setSummaryView] = useState("accepted");
   const [selectedRowId, setSelectedRowId] = useState(null);
+  const [selectedGuestIds, setSelectedGuestIds] = useState([]);
+  const [localTables, setLocalTables] = useState(tables);
+  const [tableAssignments, setTableAssignments] = useState({});
+  const [newTableName, setNewTableName] = useState("");
+  const [targetTableId, setTargetTableId] = useState("");
+  const [tableMessage, setTableMessage] = useState("");
+  const [isSavingTables, setIsSavingTables] = useState(false);
 
-  const people = useMemo(() => submissions.flatMap(getPeopleFromSubmission), [submissions]);
-  const declinedRows = useMemo(() => getDeclinedRows(submissions), [submissions]);
-  const tableRows = useMemo(() => [...people, ...declinedRows], [people, declinedRows]);
-  const mealGroups = useMemo(() => getMealGroups(people), [people]);
+  const rows = useMemo(() => getRows(submissions, tableAssignments), [submissions, tableAssignments]);
+  const tableNameById = useMemo(
+    () => Object.fromEntries(localTables.map((table) => [table.id, table.name])),
+    [localTables],
+  );
+  const tableCounts = useMemo(() => {
+    const counts = Object.fromEntries(localTables.map((table) => [table.id, 0]));
+
+    rows.forEach((row) => {
+      if (row.attending && row.tableId) {
+        counts[row.tableId] = (counts[row.tableId] || 0) + 1;
+      }
+    });
+
+    return counts;
+  }, [localTables, rows]);
+  const rowsWithTableNames = rows.map((row) => ({
+    ...row,
+    tableName: row.tableId ? tableNameById[row.tableId] || "" : "",
+  }));
+  const acceptedRows = rowsWithTableNames.filter((row) => row.attending);
+  const declinedRows = rowsWithTableNames.filter((row) => !row.attending);
+  const mealGroups = getMealGroups(rowsWithTableNames);
   const mealOptions = Object.keys(mealGroups);
-  const selectedRow = tableRows.find((row) => row.id === selectedRowId) || null;
+  const selectedRow = rowsWithTableNames.find((row) => row.id === selectedRowId) || null;
   const selectedSubmission =
     submissions.find((submission) => submission.id === selectedRow?.submissionId) || null;
-  const selectedSubmissionPeople = selectedSubmission ? getPeopleFromSubmission(selectedSubmission) : [];
-  const acceptedCount = people.length;
+  const selectedSubmissionPeople = selectedSubmission
+    ? rowsWithTableNames.filter((row) => row.submissionId === selectedSubmission.id)
+    : [];
+  const acceptedCount = acceptedRows.length;
   const declinedCount = declinedRows.length;
-  const busCount = people.filter((person) => person.needsBus).length;
+  const busCount = acceptedRows.filter((person) => person.needsBus).length;
+  const unassignedRows = acceptedRows.filter((person) => !person.tableId);
   const messages = submissions.filter((submission) => submission.message?.trim());
   const acceptedPercent =
     acceptedCount + declinedCount > 0
       ? Math.round((acceptedCount / (acceptedCount + declinedCount)) * 100)
       : 0;
 
-  const filteredRows = tableRows.filter((row) => {
+  const filteredRows = rowsWithTableNames.filter((row) => {
     const normalizedQuery = query.trim().toLowerCase();
     const matchesQuery = normalizedQuery
-      ? `${row.name} ${row.submittedBy} ${row.food} ${row.email} ${row.whatsapp}`
+      ? `${row.name} ${row.submittedBy} ${row.food} ${row.email} ${row.whatsapp} ${row.tableName}`
           .toLowerCase()
           .includes(normalizedQuery)
       : true;
-    const matchesStatus = statusFilter === "all" || row.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "accepted" && row.attending) ||
+      (statusFilter === "declined" && !row.attending);
     const matchesMeal = mealFilter === "all" || row.food === mealFilter;
     const matchesBus =
       busFilter === "all" ||
@@ -211,7 +183,104 @@ export default function AdminDashboard({ submissions }) {
     return matchesQuery && matchesStatus && matchesMeal && matchesBus;
   });
 
-  const summaryNames = summaryView === "accepted" ? people : declinedRows;
+  const summaryNames = summaryView === "accepted" ? acceptedRows : declinedRows;
+  const selectedVisibleGuestIds = filteredRows
+    .filter((row) => row.attending)
+    .map((row) => row.id);
+  const allVisibleSelected =
+    selectedVisibleGuestIds.length > 0 &&
+    selectedVisibleGuestIds.every((guestId) => selectedGuestIds.includes(guestId));
+
+  function toggleGuest(guestId) {
+    setSelectedGuestIds((current) =>
+      current.includes(guestId) ? current.filter((id) => id !== guestId) : [...current, guestId],
+    );
+  }
+
+  function toggleVisibleGuests() {
+    setSelectedGuestIds((current) => {
+      if (allVisibleSelected) {
+        return current.filter((guestId) => !selectedVisibleGuestIds.includes(guestId));
+      }
+
+      return Array.from(new Set([...current, ...selectedVisibleGuestIds]));
+    });
+  }
+
+  async function createTable(event) {
+    event.preventDefault();
+    setIsSavingTables(true);
+    setTableMessage("");
+
+    try {
+      const response = await fetch("/api/admin/tables", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: newTableName }),
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        throw new Error(body.error || "No pudimos crear la mesa.");
+      }
+
+      setLocalTables((current) => [...current, { ...body.table, guests: [] }]);
+      setTargetTableId(String(body.table.id));
+      setNewTableName("");
+      setTableMessage(`Mesa ${body.table.name} creada.`);
+    } catch (error) {
+      setTableMessage(error.message);
+    } finally {
+      setIsSavingTables(false);
+    }
+  }
+
+  async function assignGuests(tableId) {
+    if (selectedGuestIds.length === 0) {
+      setTableMessage("Seleccioná al menos un invitado confirmado.");
+      return;
+    }
+
+    setIsSavingTables(true);
+    setTableMessage("");
+
+    try {
+      const numericTableId = tableId === null ? null : Number(tableId);
+      const response = await fetch("/api/admin/guests/assign-table", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          guestIds: selectedGuestIds,
+          tableId: numericTableId,
+        }),
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        throw new Error(body.error || "No pudimos asignar la mesa.");
+      }
+
+      setTableAssignments((current) => {
+        const next = { ...current };
+
+        selectedGuestIds.forEach((guestId) => {
+          next[guestId] = numericTableId;
+        });
+
+        return next;
+      });
+      setSelectedGuestIds([]);
+      setTableMessage(numericTableId ? "Mesa asignada." : "Invitados desasignados.");
+    } catch (error) {
+      setTableMessage(error.message);
+    } finally {
+      setIsSavingTables(false);
+    }
+  }
 
   return (
     <main className={selectedRow ? "admin-dashboard has-detail" : "admin-dashboard"}>
@@ -221,7 +290,7 @@ export default function AdminDashboard({ submissions }) {
             <p className="dashboard-kicker">Panel privado</p>
             <h1>RSVP Dashboard</h1>
           </div>
-          <button className="download-button" type="button" onClick={() => downloadCsv(tableRows)}>
+          <button className="download-button" type="button" onClick={() => downloadCsv(rowsWithTableNames)}>
             Descargar CSV
           </button>
         </header>
@@ -336,11 +405,80 @@ export default function AdminDashboard({ submissions }) {
           )}
         </section>
 
+        <section className="tables-panel">
+          <div className="table-heading">
+            <h2>Mesas</h2>
+            <span>{unassignedRows.length} confirmados sin mesa</span>
+          </div>
+
+          <form className="table-create-row" onSubmit={createTable}>
+            <input
+              value={newTableName}
+              onChange={(event) => setNewTableName(event.target.value)}
+              placeholder="Nombre de mesa"
+            />
+            <button type="submit" disabled={isSavingTables}>
+              Crear mesa
+            </button>
+          </form>
+
+          <div className="bulk-assign-row">
+            <strong>{selectedGuestIds.length} seleccionados</strong>
+            <select value={targetTableId} onChange={(event) => setTargetTableId(event.target.value)}>
+              <option value="">Elegir mesa</option>
+              {localTables.map((table) => (
+                <option key={table.id} value={table.id}>
+                  {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
+                </option>
+              ))}
+            </select>
+            <button type="button" disabled={!targetTableId || isSavingTables} onClick={() => assignGuests(targetTableId)}>
+              Asignar
+            </button>
+            <button type="button" disabled={isSavingTables} onClick={() => assignGuests(null)}>
+              Sacar de mesa
+            </button>
+          </div>
+
+          {tableMessage ? <p className="table-message">{tableMessage}</p> : null}
+
+          <div className="table-card-grid">
+            {localTables.map((table) => (
+              <article className="seat-card" key={table.id}>
+                <div>
+                  <h3>{table.name}</h3>
+                  <strong>
+                    {tableCounts[table.id] || 0}/{table.capacity}
+                  </strong>
+                </div>
+                <ul>
+                  {acceptedRows
+                    .filter((row) => row.tableId === table.id)
+                    .map((row) => (
+                      <li key={`table-${table.id}-${row.id}`}>{row.name}</li>
+                    ))}
+                </ul>
+              </article>
+            ))}
+            <article className="seat-card unassigned">
+              <div>
+                <h3>Sin mesa</h3>
+                <strong>{unassignedRows.length}</strong>
+              </div>
+              <ul>
+                {unassignedRows.map((row) => (
+                  <li key={`unassigned-${row.id}`}>{row.name}</li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </section>
+
         <section className="dashboard-table-panel">
           <div className="table-heading">
             <h2>Respuestas filtradas</h2>
             <span>
-              {filteredRows.length} de {tableRows.length}
+              {filteredRows.length} de {rowsWithTableNames.length}
             </span>
           </div>
 
@@ -348,6 +486,14 @@ export default function AdminDashboard({ submissions }) {
             <table className="dashboard-table">
               <thead>
                 <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={toggleVisibleGuests}
+                      aria-label="Seleccionar confirmados visibles"
+                    />
+                  </th>
                   <th>RSVP date</th>
                   <th>First name</th>
                   <th>Last name</th>
@@ -357,25 +503,37 @@ export default function AdminDashboard({ submissions }) {
                   <th>Micro</th>
                   <th>Mail</th>
                   <th>WhatsApp</th>
+                  <th>Mesa</th>
                   <th>Details</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRows.map((row) => (
                   <tr className={row.id === selectedRowId ? "is-selected" : ""} key={row.id}>
+                    <td>
+                      {row.attending ? (
+                        <input
+                          type="checkbox"
+                          checked={selectedGuestIds.includes(row.id)}
+                          onChange={() => toggleGuest(row.id)}
+                          aria-label={`Seleccionar ${row.name}`}
+                        />
+                      ) : null}
+                    </td>
                     <td>{formatDate(row.submittedAt)}</td>
                     <td>{row.firstName}</td>
                     <td>{row.lastName || "-"}</td>
                     <td>
-                      <span className={row.status === "accepted" ? "answer accept" : "answer decline"}>
-                        {row.status === "accepted" ? "Confirmó" : "No viene"}
+                      <span className={row.attending ? "answer accept" : "answer decline"}>
+                        {row.attending ? "Confirmó" : "No viene"}
                       </span>
                     </td>
                     <td>{row.food || "-"}</td>
                     <td>{row.allergies || ""}</td>
-                    <td>{row.status === "accepted" ? (row.needsBus ? "Sí" : "No") : "-"}</td>
+                    <td>{row.attending ? (row.needsBus ? "Sí" : "No") : "-"}</td>
                     <td>{row.email}</td>
                     <td>{row.whatsapp}</td>
+                    <td>{row.tableName || (row.attending ? "Sin mesa" : "-")}</td>
                     <td>
                       <button
                         className="details-link"
@@ -482,7 +640,7 @@ export default function AdminDashboard({ submissions }) {
                 <dt>Micro</dt>
                 <dd>
                   {selectedSubmission.needsBus
-                    ? `${selectedSubmissionPeople.length} personas`
+                    ? `${selectedSubmissionPeople.filter((person) => person.attending).length} personas`
                     : "No"}
                 </dd>
               </div>
@@ -499,7 +657,7 @@ export default function AdminDashboard({ submissions }) {
                     key={person.id}
                   >
                     <span>{person.name}</span>
-                    <small>{person.food}</small>
+                    <small>{person.tableName || person.food || "No aplica"}</small>
                   </button>
                 ))}
               </div>
@@ -523,7 +681,7 @@ export default function AdminDashboard({ submissions }) {
           <section className="side-panel">
             <div className="side-heading">
               <h2>Respuesta</h2>
-              <span className={selectedRow.status === "accepted" ? "answer accept" : "answer decline"}>
+              <span className={selectedRow.attending ? "answer accept" : "answer decline"}>
                 {selectedRow.role}
               </span>
             </div>
@@ -532,15 +690,19 @@ export default function AdminDashboard({ submissions }) {
             <dl className="detail-list">
               <div>
                 <dt>Estado</dt>
-                <dd>{selectedRow.status === "accepted" ? "Confirmó asistencia" : "No asiste"}</dd>
+                <dd>{selectedRow.attending ? "Confirmó asistencia" : "No asiste"}</dd>
               </div>
               <div>
                 <dt>Comida</dt>
                 <dd>{selectedRow.food || "No aplica"}</dd>
               </div>
               <div>
+                <dt>Mesa</dt>
+                <dd>{selectedRow.tableName || (selectedRow.attending ? "Sin mesa" : "No aplica")}</dd>
+              </div>
+              <div>
                 <dt>Micro</dt>
-                <dd>{selectedRow.status === "accepted" ? (selectedRow.needsBus ? "Sí" : "No") : "No aplica"}</dd>
+                <dd>{selectedRow.attending ? (selectedRow.needsBus ? "Sí" : "No") : "No aplica"}</dd>
               </div>
               <div>
                 <dt>Mail</dt>

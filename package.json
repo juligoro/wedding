@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:setup": "node scripts/setup-db.mjs",
+    "db:backfill-guests": "node scripts/backfill-guests.mjs",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

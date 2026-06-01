@@ -6,8 +6,30 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const rsvps = await prisma.rsvp.findMany({
+    include: {
+      guests: {
+        include: {
+          table: true,
+        },
+        orderBy: {
+          id: "asc",
+        },
+      },
+    },
     orderBy: {
       createdAt: "desc",
+    },
+  });
+  const tables = await prisma.seatingTable.findMany({
+    include: {
+      guests: {
+        orderBy: {
+          fullName: "asc",
+        },
+      },
+    },
+    orderBy: {
+      name: "asc",
     },
   });
 
@@ -15,7 +37,29 @@ export default async function AdminPage() {
     ...rsvp,
     createdAt: rsvp.createdAt.toISOString(),
     updatedAt: rsvp.updatedAt.toISOString(),
+    guests: rsvp.guests.map((guest) => ({
+      ...guest,
+      createdAt: guest.createdAt.toISOString(),
+      updatedAt: guest.updatedAt.toISOString(),
+      table: guest.table
+        ? {
+            ...guest.table,
+            createdAt: guest.table.createdAt.toISOString(),
+            updatedAt: guest.table.updatedAt.toISOString(),
+          }
+        : null,
+    })),
+  }));
+  const seatingTables = tables.map((table) => ({
+    ...table,
+    createdAt: table.createdAt.toISOString(),
+    updatedAt: table.updatedAt.toISOString(),
+    guests: table.guests.map((guest) => ({
+      ...guest,
+      createdAt: guest.createdAt.toISOString(),
+      updatedAt: guest.updatedAt.toISOString(),
+    })),
   }));
 
-  return <AdminDashboard submissions={submissions} />;
+  return <AdminDashboard submissions={submissions} tables={seatingTables} />;
 }
