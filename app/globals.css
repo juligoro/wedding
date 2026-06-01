@@ -1197,6 +1197,195 @@ textarea {
   line-height: 1.55;
 }
 
+.admin-dashboard {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-dashboard.has-detail {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 430px);
+}
+
+.dashboard-header {
+  align-items: flex-start;
+}
+
+.dashboard-toolbar {
+  align-items: flex-end;
+}
+
+.search-shell {
+  display: grid;
+  gap: 6px;
+  align-items: stretch;
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #4bb5c7;
+  font-style: normal;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.search-shell input {
+  min-height: 42px;
+  border: 1px solid rgba(57, 74, 78, 0.12);
+  border-radius: 6px;
+  background: #ffffff;
+  color: #2f3b3f;
+  box-shadow: 0 4px 16px rgba(51, 63, 66, 0.05);
+}
+
+.search-shell input::placeholder {
+  color: #a4afb1;
+  font-style: italic;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.filter-row label {
+  min-width: 152px;
+  gap: 6px;
+  color: #4bb5c7;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.filter-row select {
+  min-height: 42px;
+  border-color: rgba(57, 74, 78, 0.12);
+  background: #ffffff;
+  color: #2f3b3f;
+}
+
+.summary-card.primary {
+  border: 0;
+  border-right: 1px solid rgba(57, 74, 78, 0.1);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.summary-card.primary.active {
+  border-radius: 8px;
+  background: #edf8fa;
+}
+
+.summary-card.primary strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 2.15rem;
+  line-height: 1;
+}
+
+.decline-mark {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 9px solid #ee624f;
+  border-radius: 50%;
+  color: #ee624f;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.meal-summary button,
+.details-link,
+.meal-breakdown-card button,
+.name-chip,
+.mini-row,
+.drawer-close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.meal-summary button {
+  width: 100%;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+}
+
+.summary-names-panel {
+  margin-bottom: 22px;
+  padding: 18px 20px;
+  border: 1px solid rgba(57, 74, 78, 0.1);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(51, 63, 66, 0.06);
+}
+
+.name-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.name-chip {
+  min-height: 34px;
+  border: 1px solid rgba(57, 74, 78, 0.12);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: #fbfcfa;
+  color: #3b4548;
+  font-weight: 700;
+}
+
+.name-chip.active,
+.name-chip:hover {
+  border-color: rgba(75, 181, 199, 0.5);
+  background: #edf8fa;
+  color: #25899b;
+}
+
+.details-link,
+.meal-breakdown-card button {
+  color: #4bb5c7;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.dashboard-side {
+  display: block;
+}
+
+.drawer-close {
+  min-height: 36px;
+  margin: 0 0 14px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(57, 74, 78, 0.14);
+  border-radius: 6px;
+  padding: 7px 12px;
+  background: #f7f9f9;
+  color: #566569;
+  font-weight: 800;
+}
+
+.mini-row {
+  width: 100%;
+  text-align: left;
+}
+
 @media (min-width: 760px) {
   .details-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1212,6 +1401,37 @@ textarea {
 }
 
 @media (max-width: 880px) {
+  .admin-dashboard,
+  .admin-dashboard.has-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-side {
+    position: static;
+    min-height: auto;
+    border-left: 0;
+    border-top: 1px solid rgba(57, 74, 78, 0.12);
+  }
+
+  .dashboard-toolbar,
+  .dashboard-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-row {
+    justify-content: flex-start;
+  }
+
+  .summary-card.primary {
+    border-right: 0;
+    border-bottom: 1px solid rgba(57, 74, 78, 0.1);
+  }
+
+  .meal-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
   .admin-metrics,
   .admin-grid,
   .response-grid {
