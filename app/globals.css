@@ -1480,39 +1480,49 @@ textarea {
 .bulk-action-bar,
 .bulk-action-hint {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
   align-items: center;
   margin: 0 0 16px;
-  padding: 12px;
+  padding: 8px 10px;
   border: 1px solid rgba(75, 181, 199, 0.22);
   border-radius: 8px;
   background: #edf8fa;
+  overflow-x: auto;
 }
 
 .bulk-action-bar strong {
+  flex: 0 0 auto;
   color: #2f3b3f;
+  font-size: 0.86rem;
 }
 
-.bulk-action-bar select {
-  min-height: 38px;
-  width: min(100%, 210px);
+.bulk-action-bar select,
+.bulk-tag-input {
+  min-height: 32px;
+  width: 160px;
+  flex: 0 0 auto;
   border: 1px solid rgba(57, 74, 78, 0.12);
   border-radius: 6px;
+  padding: 5px 9px;
   background: #ffffff;
   color: #2f3b3f;
+  font-size: 0.84rem;
 }
 
 .bulk-action-bar button,
 .bulk-action-hint button {
-  min-height: 38px;
+  min-height: 32px;
+  flex: 0 0 auto;
   border: 1px solid rgba(75, 181, 199, 0.38);
   border-radius: 6px;
-  padding: 7px 11px;
+  padding: 5px 9px;
   background: #ffffff;
   color: #25899b;
   cursor: pointer;
+  font-size: 0.82rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .bulk-action-bar button:nth-of-type(1) {
@@ -1527,8 +1537,20 @@ textarea {
 
 .bulk-action-hint {
   justify-content: flex-end;
+  flex-wrap: wrap;
   border-color: rgba(57, 74, 78, 0.08);
   background: #fbfcfa;
+}
+
+.tag-list {
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  color: #25899b;
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 
 .table-create-row input,

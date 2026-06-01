@@ -50,6 +50,7 @@ model Guest {
   needsBus    Boolean?
   email       String
   whatsapp    String
+  tags        String        @default("[]")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   rsvp        Rsvp          @relation(fields: [rsvpId], references: [id], onDelete: Cascade)

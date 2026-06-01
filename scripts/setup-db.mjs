@@ -8,6 +8,7 @@ const dbPath = join(root, "prisma", "dev.db");
 const migrationPaths = [
   join(root, "prisma", "migrations", "20260601151000_init_rsvp", "migration.sql"),
   join(root, "prisma", "migrations", "20260601193000_add_guest_tables", "migration.sql"),
+  join(root, "prisma", "migrations", "20260601201000_add_guest_tags", "migration.sql"),
 ];
 
 await mkdir(dirname(dbPath), { recursive: true });
@@ -28,6 +29,13 @@ if (!exists) {
 
   if (!guestExists) {
     db.exec(await readFile(migrationPaths[1], "utf8"));
+  }
+
+  const guestColumns = db.prepare("PRAGMA table_info('Guest')").all();
+  const hasTags = guestColumns.some((column) => column.name === "tags");
+
+  if (!hasTags) {
+    db.exec(await readFile(migrationPaths[2], "utf8"));
   }
 }
 

@@ -27,6 +27,18 @@ function escapeCsvValue(value) {
   return stringValue;
 }
 
+function parseJson(value, fallback) {
+  if (!value) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
 function downloadCsv(rows) {
   const headers = [
     "RSVP Date",
@@ -82,6 +94,7 @@ function getRows(submissions, tableAssignments) {
         allergies: guest.allergies || "",
         email: guest.email,
         whatsapp: guest.whatsapp,
+        tags: parseJson(guest.tags, []),
         submittedBy: `${submission.firstName} ${submission.lastName}`,
         submittedAt: submission.createdAt,
         attending: guest.attending,
@@ -121,6 +134,8 @@ export default function AdminDashboard({ submissions, tables }) {
   const [tableAssignments, setTableAssignments] = useState({});
   const [newTableName, setNewTableName] = useState("");
   const [targetTableId, setTargetTableId] = useState("");
+  const [bulkTag, setBulkTag] = useState("");
+  const [guestTags, setGuestTags] = useState({});
   const [tableMessage, setTableMessage] = useState("");
   const [isSavingTables, setIsSavingTables] = useState(false);
 
@@ -143,6 +158,7 @@ export default function AdminDashboard({ submissions, tables }) {
   const rowsWithTableNames = rows.map((row) => ({
     ...row,
     tableName: row.tableId ? tableNameById[row.tableId] || "" : "",
+    tags: guestTags[row.id] || row.tags,
   }));
   const acceptedRows = rowsWithTableNames.filter((row) => row.attending);
   const declinedRows = rowsWithTableNames.filter((row) => !row.attending);
@@ -165,25 +181,33 @@ export default function AdminDashboard({ submissions, tables }) {
       ? Math.round((acceptedCount / (acceptedCount + declinedCount)) * 100)
       : 0;
 
-  const filteredRows = rowsWithTableNames.filter((row) => {
-    const normalizedQuery = query.trim().toLowerCase();
-    const matchesQuery = normalizedQuery
-      ? `${row.name} ${row.submittedBy} ${row.food} ${row.email} ${row.whatsapp} ${row.tableName}`
-          .toLowerCase()
-          .includes(normalizedQuery)
-      : true;
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "accepted" && row.attending) ||
-      (statusFilter === "declined" && !row.attending);
-    const matchesMeal = mealFilter === "all" || row.food === mealFilter;
-    const matchesBus =
-      busFilter === "all" ||
-      (busFilter === "yes" && row.needsBus) ||
-      (busFilter === "no" && !row.needsBus);
+  const filteredRows = rowsWithTableNames
+    .filter((row) => {
+      const normalizedQuery = query.trim().toLowerCase();
+      const matchesQuery = normalizedQuery
+        ? `${row.name} ${row.submittedBy} ${row.food} ${row.email} ${row.whatsapp} ${row.tableName} ${row.tags.join(" ")}`
+            .toLowerCase()
+            .includes(normalizedQuery)
+        : true;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "accepted" && row.attending) ||
+        (statusFilter === "declined" && !row.attending);
+      const matchesMeal = mealFilter === "all" || row.food === mealFilter;
+      const matchesBus =
+        busFilter === "all" ||
+        (busFilter === "yes" && row.needsBus) ||
+        (busFilter === "no" && !row.needsBus);
 
-    return matchesQuery && matchesStatus && matchesMeal && matchesBus;
-  });
+      return matchesQuery && matchesStatus && matchesMeal && matchesBus;
+    })
+    .sort((a, b) => {
+      if (a.attending !== b.attending) {
+        return a.attending ? -1 : 1;
+      }
+
+      return a.name.localeCompare(b.name);
+    });
 
   const summaryNames = summaryView === "accepted" ? acceptedRows : declinedRows;
   const selectedVisibleGuestIds = filteredRows
@@ -299,6 +323,57 @@ export default function AdminDashboard({ submissions, tables }) {
       });
       setSelectedGuestIds([]);
       setTableMessage(numericTableId ? "Mesa asignada." : "Invitados desasignados.");
+    } catch (error) {
+      setTableMessage(error.message);
+    } finally {
+      setIsSavingTables(false);
+    }
+  }
+
+  async function addTagToSelected() {
+    if (selectedGuestIds.length === 0) {
+      setTableMessage("Seleccioná al menos un invitado.");
+      return;
+    }
+
+    const tag = bulkTag.trim();
+
+    if (!tag) {
+      setTableMessage("Escribí un tag.");
+      return;
+    }
+
+    setIsSavingTables(true);
+    setTableMessage("");
+
+    try {
+      const response = await fetch("/api/admin/guests/tags", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          guestIds: selectedGuestIds,
+          tag,
+        }),
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        throw new Error(body.error || "No pudimos agregar el tag.");
+      }
+
+      setGuestTags((current) => {
+        const next = { ...current };
+
+        selectedRows.forEach((row) => {
+          next[row.id] = Array.from(new Set([...(next[row.id] || row.tags), tag]));
+        });
+
+        return next;
+      });
+      setBulkTag("");
+      setTableMessage(`Tag "${tag}" agregado.`);
     } catch (error) {
       setTableMessage(error.message);
     } finally {
@@ -476,6 +551,15 @@ export default function AdminDashboard({ submissions, tables }) {
               <button type="button" onClick={() => copySelected("whatsapp")}>
                 Copiar WhatsApps
               </button>
+              <input
+                className="bulk-tag-input"
+                value={bulkTag}
+                onChange={(event) => setBulkTag(event.target.value)}
+                placeholder="Tag"
+              />
+              <button type="button" disabled={isSavingTables} onClick={addTagToSelected}>
+                Agregar tag
+              </button>
               <button type="button" disabled>
                 Enviar correo
               </button>
@@ -506,7 +590,6 @@ export default function AdminDashboard({ submissions, tables }) {
                       aria-label="Seleccionar confirmados visibles"
                     />
                   </th>
-                  <th>RSVP date</th>
                   <th>First name</th>
                   <th>Last name</th>
                   <th>Answer</th>
@@ -516,6 +599,8 @@ export default function AdminDashboard({ submissions, tables }) {
                   <th>Mail</th>
                   <th>WhatsApp</th>
                   <th>Mesa</th>
+                  <th>Tags</th>
+                  <th>RSVP date</th>
                   <th>Details</th>
                 </tr>
               </thead>
@@ -532,7 +617,6 @@ export default function AdminDashboard({ submissions, tables }) {
                         />
                       ) : null}
                     </td>
-                    <td>{formatDate(row.submittedAt)}</td>
                     <td>{row.firstName}</td>
                     <td>{row.lastName || "-"}</td>
                     <td>
@@ -546,6 +630,12 @@ export default function AdminDashboard({ submissions, tables }) {
                     <td>{row.email}</td>
                     <td>{row.whatsapp}</td>
                     <td>{row.tableName || (row.attending ? "Sin mesa" : "-")}</td>
+                    <td>
+                      {row.tags.length > 0 ? (
+                        <span className="tag-list">{row.tags.join(", ")}</span>
+                      ) : null}
+                    </td>
+                    <td>{formatDate(row.submittedAt)}</td>
                     <td>
                       <button
                         className="details-link"
