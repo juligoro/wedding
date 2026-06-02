@@ -6,10 +6,16 @@ const couplePhotos = [
   { src: "/couple-photos/img-9509.jpg", alt: "Juli y Tomi de viaje" },
   { src: "/couple-photos/img-0502.jpg", alt: "Juli y Tomi sonriendo al sol" },
   { src: "/couple-photos/img-2668.jpg", alt: "Juli y Tomi junto al puente" },
+  { src: "/couple-photos/img-9502.jpg", alt: "Juli y Tomi junto al lago" },
   { src: "/couple-photos/img-9370.jpg", alt: "Juli y Tomi juntos" },
   { src: "/couple-photos/img-3042.jpg", alt: "Juli y Tomi celebrando" },
   { src: "/couple-photos/img-3745.jpg", alt: "Juli y Tomi de paseo" },
+  { src: "/couple-photos/img-2369.jpg", alt: "Juli y Tomi de viaje juntos" },
+  { src: "/couple-photos/img-6869.jpg", alt: "Juli y Tomi compartiendo una sonrisa" },
+  { src: "/couple-photos/img-8653.jpg", alt: "Juli y Tomi en una escapada" },
+  { src: "/couple-photos/img-9063.jpg", alt: "Juli y Tomi abrazados" },
 ];
+const carouselPhotos = [...couplePhotos, couplePhotos[0]];
 
 export default function Home() {
   return (
@@ -43,12 +49,18 @@ export default function Home() {
           <h2 id="fotos-title" className="hidden">
             Fotos
           </h2>
-          <div className="couple-photo-grid">
-            {couplePhotos.map((photo, index) => (
-              <figure className={`couple-photo photo-${index + 1}`} key={photo.src}>
-                <img src={photo.src} alt={photo.alt} loading={index === 0 ? "eager" : "lazy"} />
-              </figure>
-            ))}
+          <div className="photo-carousel">
+            <div className="photo-carousel-track">
+              {carouselPhotos.map((photo, index) => (
+                <figure
+                  className="photo-carousel-slide"
+                  key={`${photo.src}-${index}`}
+                  aria-hidden={index === couplePhotos.length}
+                >
+                  <img src={photo.src} alt={photo.alt} loading={index < 2 ? "eager" : "lazy"} />
+                </figure>
+              ))}
+            </div>
           </div>
         </section>
 
