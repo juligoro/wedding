@@ -105,9 +105,9 @@ export default function Home() {
             <aside className="rsvp-intro">
               <h2 id="rsvp-title">RSVP</h2>
               <p>
-                Confirmá tu asistencia hasta el 31 de octubre.
+                Confirmá tu asistencia y la de tu grupo familiar hasta el 31 de octubre.
                 <br />
-                Vas a recibir los detalles y dirección por correo.
+                Vas a recibir los detalles por correo.
               </p>
             </aside>
             <RsvpForm />
