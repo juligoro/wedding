@@ -2,7 +2,6 @@ import "./globals.css";
 
 export const metadata = {
   title: "Juli & Tomi | Nos casamos",
-  description: "Landing de casamiento de Juli y Tomi con confirmacion de asistencia.",
 };
 
 export default function RootLayout({ children }) {
