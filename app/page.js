@@ -49,18 +49,21 @@ export default function Home() {
           <h2 id="fotos-title" className="hidden">
             Fotos
           </h2>
-          <div className="photo-carousel">
-            <div className="photo-carousel-track">
-              {carouselPhotos.map((photo, index) => (
-                <figure
-                  className="photo-carousel-slide"
-                  key={`${photo.src}-${index}`}
-                  aria-hidden={index === couplePhotos.length}
-                >
-                  <img src={photo.src} alt={photo.alt} loading={index < 2 ? "eager" : "lazy"} />
-                </figure>
-              ))}
+          <div className="photo-print">
+            <div className="photo-carousel">
+              <div className="photo-carousel-track">
+                {carouselPhotos.map((photo, index) => (
+                  <figure
+                    className="photo-carousel-slide"
+                    key={`${photo.src}-${index}`}
+                    aria-hidden={index === couplePhotos.length}
+                  >
+                    <img src={photo.src} alt={photo.alt} loading={index < 2 ? "eager" : "lazy"} />
+                  </figure>
+                ))}
+              </div>
             </div>
+            <img className="photo-print-logo" src="/logo-juli-tomi-cropped.svg" alt="Juli y Tomi" />
           </div>
         </section>
 

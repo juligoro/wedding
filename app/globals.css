@@ -195,9 +195,19 @@ h1 {
   overflow: hidden;
 }
 
-.photo-carousel {
+.photo-print {
   width: min(85vw, 520px);
   height: 85svh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: clamp(12px, 2.6svh, 24px);
+  padding: clamp(16px, 4vw, 30px) clamp(16px, 4vw, 30px) clamp(18px, 4.4vw, 34px);
+  background: #f7f5ef;
+  box-shadow: 14px 18px 28px rgba(42, 36, 30, 0.24);
+}
+
+.photo-carousel {
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -220,6 +230,13 @@ h1 {
   display: block;
   object-fit: cover;
   object-position: center;
+}
+
+.photo-print-logo {
+  width: min(28%, 118px);
+  justify-self: center;
+  display: block;
+  mix-blend-mode: multiply;
 }
 
 @keyframes photo-carousel {
@@ -1749,7 +1766,7 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .photo-carousel {
+  .photo-print {
     width: min(85vw, 680px);
   }
 
