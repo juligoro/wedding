@@ -49,7 +49,7 @@ const copy = {
     date: "December 6, 2026",
     introTitle: "We want to share our happiness with you",
     introText:
-      "After dreaming about this moment for so long, the day has finally come to be surrounded by the people we love most as we take this big step together. We can't wait to celebrate with love, joy, and emotion.",
+      "After dreaming about this moment for so long, the day is finally here! We can’t wait to be surrounded by the people we love most as we take this big step together and celebrate with all the love, laughter, and joy in our hearts.",
     signature: "Juli and Tomi",
     photosTitle: "Photos",
     detailsTitle: "The celebration",
