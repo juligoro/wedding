@@ -28,19 +28,15 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="section" aria-labelledby="fotos-title">
-          <div className="wrap">
-            <h2 id="fotos-title" className="hidden">
-              Fotos
-            </h2>
-            <div className="photo-grid">
-              <div className="photo-frame" aria-label="Foto principal de Juli y Tomi" />
-              <div className="photo-stack">
-                <div className="photo-frame" aria-label="Foto secundaria de Juli y Tomi" />
-                <div className="photo-frame" aria-label="Otra foto de Juli y Tomi" />
-              </div>
-            </div>
-          </div>
+        <section className="photo-section" aria-labelledby="fotos-title">
+          <h2 id="fotos-title" className="hidden">
+            Fotos
+          </h2>
+          <img
+            className="photo-section-art"
+            src="/wedding-photo-section.svg"
+            alt="Collage de Juli y Tomi"
+          />
         </section>
 
         <section className="section alt" aria-labelledby="detalles-title">
