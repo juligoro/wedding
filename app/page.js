@@ -1,19 +1,19 @@
 import RsvpForm from "@/components/RsvpForm";
 
 const couplePhotos = [
-  { src: "/couple-photos/img-6634.jpg", alt: "Juli y Tomi abrazados frente al mar" },
-  { src: "/couple-photos/img-9679.jpg", alt: "Juli y Tomi con vista a la ciudad" },
-  { src: "/couple-photos/img-9509.jpg", alt: "Juli y Tomi de viaje" },
-  { src: "/couple-photos/img-0502.jpg", alt: "Juli y Tomi sonriendo al sol" },
-  { src: "/couple-photos/img-2668.jpg", alt: "Juli y Tomi junto al puente" },
-  { src: "/couple-photos/img-9502.jpg", alt: "Juli y Tomi junto al lago" },
-  { src: "/couple-photos/img-9370.jpg", alt: "Juli y Tomi juntos" },
-  { src: "/couple-photos/img-3042.jpg", alt: "Juli y Tomi celebrando" },
-  { src: "/couple-photos/img-3745.jpg", alt: "Juli y Tomi de paseo" },
-  { src: "/couple-photos/img-2369.jpg", alt: "Juli y Tomi de viaje juntos" },
-  { src: "/couple-photos/img-6869.jpg", alt: "Juli y Tomi compartiendo una sonrisa" },
-  { src: "/couple-photos/img-8653.jpg", alt: "Juli y Tomi en una escapada" },
-  { src: "/couple-photos/img-9063.jpg", alt: "Juli y Tomi abrazados" },
+  { src: "/couple-photos/img-6634.jpg", alt: "Juli y Tomi abrazados frente al mar", position: "45% 72%" },
+  { src: "/couple-photos/img-9679.jpg", alt: "Juli y Tomi con vista a la ciudad", position: "50% 72%" },
+  { src: "/couple-photos/img-9509.jpg", alt: "Juli y Tomi de viaje", position: "50% 60%" },
+  { src: "/couple-photos/img-0502.jpg", alt: "Juli y Tomi sonriendo al sol", position: "52% 64%" },
+  { src: "/couple-photos/img-2668.jpg", alt: "Juli y Tomi junto al puente", position: "26% 74%" },
+  { src: "/couple-photos/img-9502.jpg", alt: "Juli y Tomi junto al lago", position: "36% 75%" },
+  { src: "/couple-photos/img-9370.jpg", alt: "Juli y Tomi juntos", position: "50% 68%" },
+  { src: "/couple-photos/img-3042.jpg", alt: "Juli y Tomi celebrando", position: "50% 72%" },
+  { src: "/couple-photos/img-3745.jpg", alt: "Juli y Tomi de paseo", position: "50% 68%" },
+  { src: "/couple-photos/img-2369.jpg", alt: "Juli y Tomi de viaje juntos", position: "50% 78%" },
+  { src: "/couple-photos/img-6869.jpg", alt: "Juli y Tomi compartiendo una sonrisa", position: "50% 76%" },
+  { src: "/couple-photos/img-8653.jpg", alt: "Juli y Tomi en una escapada", position: "50% 68%" },
+  { src: "/couple-photos/img-9063.jpg", alt: "Juli y Tomi abrazados", position: "42% 60%" },
 ];
 const carouselPhotos = [...couplePhotos, couplePhotos[0]];
 
@@ -58,7 +58,12 @@ export default function Home() {
                     key={`${photo.src}-${index}`}
                     aria-hidden={index === couplePhotos.length}
                   >
-                    <img src={photo.src} alt={photo.alt} loading={index < 2 ? "eager" : "lazy"} />
+                    <img
+                      src={photo.src}
+                      alt={photo.alt}
+                      loading={index < 2 ? "eager" : "lazy"}
+                      style={{ objectPosition: photo.position }}
+                    />
                   </figure>
                 ))}
               </div>
