@@ -19,8 +19,6 @@ const carouselPhotos = [...couplePhotos, couplePhotos[0]];
 
 const copy = {
   es: {
-    localeHref: "/en",
-    localeLabel: "EN",
     homeAria: "Inicio",
     heroLabel: "¡NOS CASAMOS!",
     date: "6 de diciembre 2026",
@@ -42,8 +40,6 @@ const copy = {
     footer: "Nos vemos para celebrar.",
   },
   en: {
-    localeHref: "/",
-    localeLabel: "ES",
     homeAria: "Home",
     heroLabel: "WE'RE GETTING MARRIED!",
     date: "December 6, 2026",
@@ -73,9 +69,6 @@ export default function WeddingLanding({ locale = "es" }) {
     <>
       <main className="page">
         <section className="hero" aria-label={text.homeAria}>
-          <a className="language-link" href={text.localeHref}>
-            {text.localeLabel}
-          </a>
           <div className="hero-inner">
             <div className="logo-crop" aria-label="Logo Juli y Tomi">
               <img className="monogram" src="/logo-juli-tomi-cropped.svg" alt="Juli y Tomi" />
