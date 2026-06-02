@@ -214,7 +214,7 @@ h1 {
 .photo-carousel-track {
   height: 100%;
   display: flex;
-  animation: photo-carousel 13s steps(13, end) infinite;
+  animation: photo-carousel 19.5s steps(13, end) infinite;
   will-change: transform;
 }
 
