@@ -104,7 +104,11 @@ export default function Home() {
           <div className="wrap rsvp-layout">
             <aside className="rsvp-intro">
               <h2 id="rsvp-title">RSVP</h2>
-              <p>Confirmá tu asistencia y completá la información para recibir los detalles hasta el 31 de octubre.</p>
+              <p>
+                Confirmá tu asistencia hasta el 31 de octubre.
+                <br />
+                Vas a recibir los detalles y dirección por correo.
+              </p>
             </aside>
             <RsvpForm />
           </div>
