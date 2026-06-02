@@ -185,6 +185,47 @@ h1 {
   gap: 18px;
 }
 
+.countdown {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  width: min(100%, 560px);
+  margin: 26px auto 0;
+}
+
+.countdown-unit {
+  display: grid;
+  place-items: center;
+  min-height: 86px;
+  border: 1px solid rgba(111, 128, 98, 0.24);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.68);
+  box-shadow: 0 12px 28px rgba(78, 62, 48, 0.06);
+}
+
+.countdown-unit strong {
+  color: var(--sage-dark);
+  font-family: var(--display-font);
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  font-weight: 500;
+  line-height: 0.95;
+}
+
+.countdown-unit span {
+  color: var(--muted);
+  font-size: clamp(0.76rem, 2.8vw, 0.95rem);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.countdown-done {
+  margin: 24px 0 0;
+  color: var(--sage-dark);
+  font-size: 1.18rem;
+  font-weight: 600;
+}
+
 .photo-section {
   width: 100%;
   min-height: 100svh;

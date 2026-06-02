@@ -1,3 +1,4 @@
+import Countdown from "@/components/Countdown";
 import RsvpForm from "@/components/RsvpForm";
 
 const couplePhotos = [
@@ -119,6 +120,7 @@ export default function WeddingLanding({ locale = "es" }) {
           <div className="wrap">
             <div className="section-title">
               <h2 id="detalles-title">{text.detailsTitle}</h2>
+              <Countdown locale={locale} />
             </div>
             <div className="details-grid">
               <article className="detail">
