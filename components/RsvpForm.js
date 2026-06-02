@@ -75,7 +75,7 @@ const copy = {
     allergiesPlaceholder: "Write any allergies or important details.",
     mobility: "Transportation",
     mobilityNote:
-      "There will be an open bar, and we do not want anyone driving after drinking. We will share shuttle stop options from Buenos Aires City for whoever needs them.",
+      "There will be an open bar, and we do not want anyone driving after drinking. We will share shuttle stop options from/to Buenos Aires City for whoever needs them.",
     busQuestion: "Do you need the shuttle? This answer applies to your full group.",
     busAccept: "Yes, we need the shuttle",
     busDecline: "No, we do not need the shuttle",
