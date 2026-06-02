@@ -52,8 +52,9 @@ export default function Home() {
               <article className="detail">
                 <h3>Ceremonia + Fiesta</h3>
                 <p>
-                  Domingo 6 de diciembre de 2026, desde las 14 hs, en Del Viso,
-                  Buenos Aires.
+                  Domingo 6 de diciembre de 2026, desde las 14 hs.
+                  <br />
+                  Del Viso, Buenos Aires.
                   <span className="note">
                     La dirección exacta llega cuando confirmás asistencia.
                   </span>
