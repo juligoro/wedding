@@ -1,5 +1,16 @@
 import RsvpForm from "@/components/RsvpForm";
 
+const couplePhotos = [
+  { src: "/couple-photos/img-6634.jpg", alt: "Juli y Tomi abrazados frente al mar" },
+  { src: "/couple-photos/img-9679.jpg", alt: "Juli y Tomi con vista a la ciudad" },
+  { src: "/couple-photos/img-9509.jpg", alt: "Juli y Tomi de viaje" },
+  { src: "/couple-photos/img-0502.jpg", alt: "Juli y Tomi sonriendo al sol" },
+  { src: "/couple-photos/img-2668.jpg", alt: "Juli y Tomi junto al puente" },
+  { src: "/couple-photos/img-9370.jpg", alt: "Juli y Tomi juntos" },
+  { src: "/couple-photos/img-3042.jpg", alt: "Juli y Tomi celebrando" },
+  { src: "/couple-photos/img-3745.jpg", alt: "Juli y Tomi de paseo" },
+];
+
 export default function Home() {
   return (
     <>
@@ -32,11 +43,13 @@ export default function Home() {
           <h2 id="fotos-title" className="hidden">
             Fotos
           </h2>
-          <img
-            className="photo-section-art"
-            src="/wedding-photo-section.svg"
-            alt="Collage de Juli y Tomi"
-          />
+          <div className="couple-photo-grid">
+            {couplePhotos.map((photo, index) => (
+              <figure className={`couple-photo photo-${index + 1}`} key={photo.src}>
+                <img src={photo.src} alt={photo.alt} loading={index === 0 ? "eager" : "lazy"} />
+              </figure>
+            ))}
+          </div>
         </section>
 
         <section className="section alt" aria-labelledby="detalles-title">
