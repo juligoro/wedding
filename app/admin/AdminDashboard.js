@@ -135,6 +135,8 @@ export default function AdminDashboard({ submissions, tables }) {
   const [tableAssignments, setTableAssignments] = useState({});
   const [newTableName, setNewTableName] = useState("");
   const [targetTableId, setTargetTableId] = useState("");
+  const [quickAddTableId, setQuickAddTableId] = useState("");
+  const [tableGuestQuery, setTableGuestQuery] = useState("");
   const [editingTableId, setEditingTableId] = useState(null);
   const [editingTableName, setEditingTableName] = useState("");
   const [draggedGuestId, setDraggedGuestId] = useState(null);
@@ -184,6 +186,13 @@ export default function AdminDashboard({ submissions, tables }) {
     acceptedCount + declinedCount > 0
       ? Math.round((acceptedCount / (acceptedCount + declinedCount)) * 100)
       : 0;
+  const quickAddCandidates = tableGuestQuery.trim()
+    ? acceptedRows
+        .filter((row) =>
+          `${row.name} ${row.food} ${row.tableName}`.toLowerCase().includes(tableGuestQuery.trim().toLowerCase()),
+        )
+        .slice(0, 8)
+    : [];
 
   const filteredRows = rowsWithTableNames
     .filter((row) => {
@@ -329,6 +338,7 @@ export default function AdminDashboard({ submissions, tables }) {
 
       setLocalTables((current) => [...current, { ...body.table, guests: [] }]);
       setTargetTableId(String(body.table.id));
+      setQuickAddTableId(String(body.table.id));
       setNewTableName("");
       setTableMessage(`Mesa ${body.table.name} creada.`);
     } catch (error) {
@@ -382,6 +392,7 @@ export default function AdminDashboard({ submissions, tables }) {
         return next;
       });
       setSelectedGuestIds((current) => current.filter((guestId) => !uniqueGuestIds.includes(guestId)));
+      setTableGuestQuery("");
       setTableMessage(numericTableId ? "Mesa asignada." : "Invitados desasignados.");
     } catch (error) {
       setTableMessage(error.message);
@@ -837,6 +848,65 @@ export default function AdminDashboard({ submissions, tables }) {
               <button type="button" disabled={isSavingTables} onClick={() => assignGuests(null)}>
                 Sacar de mesa
               </button>
+            </div>
+
+            <div className="table-quick-add">
+              <div>
+                <label>
+                  Buscar invitado
+                  <input
+                    value={tableGuestQuery}
+                    onChange={(event) => setTableGuestQuery(event.target.value)}
+                    placeholder="Escribí un nombre"
+                  />
+                </label>
+                <label>
+                  Agregar a mesa
+                  <select
+                    value={quickAddTableId}
+                    onChange={(event) => setQuickAddTableId(event.target.value)}
+                  >
+                    <option value="">Elegir mesa</option>
+                    {localTables.map((table) => (
+                      <option key={table.id} value={table.id}>
+                        {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {tableGuestQuery.trim() ? (
+                <div className="quick-add-results">
+                  {quickAddCandidates.length > 0 ? (
+                    quickAddCandidates.map((row) => {
+                      const canAdd = quickAddTableId && canAssignToTable(quickAddTableId, [row.id]);
+
+                      return (
+                        <button
+                          className="quick-add-person"
+                          type="button"
+                          key={`quick-add-${row.id}`}
+                          disabled={!canAdd || isSavingTables}
+                          onClick={() => assignGuests(quickAddTableId, [row.id])}
+                        >
+                          <span>{row.name}</span>
+                          <small>{row.tableName || "Sin mesa"} · {row.food || "Sin restricción"}</small>
+                          <strong>
+                            {quickAddTableId
+                              ? canAdd
+                                ? "Agregar"
+                                : "Mesa llena"
+                              : "Elegí mesa"}
+                          </strong>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p>No encontramos invitados con ese nombre.</p>
+                  )}
+                </div>
+              ) : null}
             </div>
 
             {tableMessage ? <p className="table-message">{tableMessage}</p> : null}
