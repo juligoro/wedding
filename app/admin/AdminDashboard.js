@@ -134,6 +134,9 @@ export default function AdminDashboard({ submissions, tables }) {
   const [tableAssignments, setTableAssignments] = useState({});
   const [newTableName, setNewTableName] = useState("");
   const [targetTableId, setTargetTableId] = useState("");
+  const [editingTableId, setEditingTableId] = useState(null);
+  const [editingTableName, setEditingTableName] = useState("");
+  const [draggedGuestId, setDraggedGuestId] = useState(null);
   const [bulkTag, setBulkTag] = useState("");
   const [guestTags, setGuestTags] = useState({});
   const [tableMessage, setTableMessage] = useState("");
@@ -285,8 +288,10 @@ export default function AdminDashboard({ submissions, tables }) {
     }
   }
 
-  async function assignGuests(tableId) {
-    if (selectedGuestIds.length === 0) {
+  async function assignGuests(tableId, guestIds = selectedGuestIds) {
+    const uniqueGuestIds = Array.from(new Set(guestIds.map(Number).filter(Number.isInteger)));
+
+    if (uniqueGuestIds.length === 0) {
       setTableMessage("Seleccioná al menos un invitado confirmado.");
       return;
     }
@@ -302,7 +307,7 @@ export default function AdminDashboard({ submissions, tables }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          guestIds: selectedGuestIds,
+          guestIds: uniqueGuestIds,
           tableId: numericTableId,
         }),
       });
@@ -315,19 +320,78 @@ export default function AdminDashboard({ submissions, tables }) {
       setTableAssignments((current) => {
         const next = { ...current };
 
-        selectedGuestIds.forEach((guestId) => {
+        uniqueGuestIds.forEach((guestId) => {
           next[guestId] = numericTableId;
         });
 
         return next;
       });
-      setSelectedGuestIds([]);
+      setSelectedGuestIds((current) => current.filter((guestId) => !uniqueGuestIds.includes(guestId)));
       setTableMessage(numericTableId ? "Mesa asignada." : "Invitados desasignados.");
     } catch (error) {
       setTableMessage(error.message);
     } finally {
       setIsSavingTables(false);
     }
+  }
+
+  async function renameTable(event) {
+    event.preventDefault();
+
+    if (!editingTableId) {
+      return;
+    }
+
+    setIsSavingTables(true);
+    setTableMessage("");
+
+    try {
+      const response = await fetch("/api/admin/tables", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: editingTableId,
+          name: editingTableName,
+        }),
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        throw new Error(body.error || "No pudimos actualizar la mesa.");
+      }
+
+      setLocalTables((current) =>
+        current.map((table) => (table.id === body.table.id ? { ...table, name: body.table.name } : table)),
+      );
+      setEditingTableId(null);
+      setEditingTableName("");
+      setTableMessage(`Mesa ${body.table.name} actualizada.`);
+    } catch (error) {
+      setTableMessage(error.message);
+    } finally {
+      setIsSavingTables(false);
+    }
+  }
+
+  function startEditingTable(table) {
+    setEditingTableId(table.id);
+    setEditingTableName(table.name);
+  }
+
+  function handleGuestDrop(event, tableId) {
+    event.preventDefault();
+    const rawGuestId = event.dataTransfer.getData("text/plain") || draggedGuestId;
+    const guestId = rawGuestId ? Number(rawGuestId) : null;
+
+    setDraggedGuestId(null);
+
+    if (!Number.isInteger(guestId)) {
+      return;
+    }
+
+    assignGuests(tableId, [guestId]);
   }
 
   async function addTagToSelected() {
@@ -710,34 +774,122 @@ export default function AdminDashboard({ submissions, tables }) {
             {tableMessage ? <p className="table-message">{tableMessage}</p> : null}
 
             <div className="table-card-grid">
-              {localTables.map((table) => (
-                <article className="seat-card" key={table.id}>
+              <article
+                className="seat-card unassigned drop-zone"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => handleGuestDrop(event, null)}
+              >
+                <div className="seat-card-head">
                   <div>
-                    <h3>{table.name}</h3>
+                    <h3>Sin mesa</h3>
+                    <p>Click para seleccionar y mover en bloque</p>
+                  </div>
+                  <strong>{unassignedRows.length}</strong>
+                </div>
+                <button
+                  className="seat-card-action"
+                  type="button"
+                  disabled={selectedGuestIds.length === 0 || isSavingTables}
+                  onClick={() => assignGuests(null)}
+                >
+                  Sacar selección de mesa
+                </button>
+                <ul className="seat-guest-list">
+                  {unassignedRows.map((row) => (
+                    <li key={`unassigned-${row.id}`}>
+                      <button
+                        className={selectedGuestIds.includes(row.id) ? "seat-guest active" : "seat-guest"}
+                        type="button"
+                        draggable
+                        onClick={() => toggleGuest(row.id)}
+                        onDragStart={(event) => {
+                          setDraggedGuestId(row.id);
+                          event.dataTransfer.setData("text/plain", String(row.id));
+                        }}
+                        onDragEnd={() => setDraggedGuestId(null)}
+                      >
+                        <span>{row.name}</span>
+                        <small>{row.food || "Sin restricción"}</small>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+
+              {localTables.map((table) => (
+                <article
+                  className="seat-card drop-zone"
+                  key={table.id}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => handleGuestDrop(event, table.id)}
+                >
+                  <div className="seat-card-head">
+                    {editingTableId === table.id ? (
+                      <form className="seat-edit-form" onSubmit={renameTable}>
+                        <input
+                          value={editingTableName}
+                          onChange={(event) => setEditingTableName(event.target.value)}
+                          aria-label="Nombre de mesa"
+                        />
+                        <button type="submit" disabled={isSavingTables}>
+                          Guardar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingTableId(null);
+                            setEditingTableName("");
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </form>
+                    ) : (
+                      <div>
+                        <h3>{table.name}</h3>
+                        <p>Arrastrá invitados o mové la selección</p>
+                      </div>
+                    )}
                     <strong>
                       {tableCounts[table.id] || 0}/{table.capacity}
                     </strong>
                   </div>
-                  <ul>
+                  <div className="seat-card-actions">
+                    <button
+                      type="button"
+                      disabled={selectedGuestIds.length === 0 || isSavingTables}
+                      onClick={() => assignGuests(table.id)}
+                    >
+                      Mover selección acá
+                    </button>
+                    <button type="button" onClick={() => startEditingTable(table)}>
+                      Editar nombre
+                    </button>
+                  </div>
+                  <ul className="seat-guest-list">
                     {acceptedRows
                       .filter((row) => row.tableId === table.id)
                       .map((row) => (
-                        <li key={`table-${table.id}-${row.id}`}>{row.name}</li>
+                        <li key={`table-${table.id}-${row.id}`}>
+                          <button
+                            className={selectedGuestIds.includes(row.id) ? "seat-guest active" : "seat-guest"}
+                            type="button"
+                            draggable
+                            onClick={() => toggleGuest(row.id)}
+                            onDragStart={(event) => {
+                              setDraggedGuestId(row.id);
+                              event.dataTransfer.setData("text/plain", String(row.id));
+                            }}
+                            onDragEnd={() => setDraggedGuestId(null)}
+                          >
+                            <span>{row.name}</span>
+                            <small>{row.food || "Sin restricción"}</small>
+                          </button>
+                        </li>
                       ))}
                   </ul>
                 </article>
               ))}
-              <article className="seat-card unassigned">
-                <div>
-                  <h3>Sin mesa</h3>
-                  <strong>{unassignedRows.length}</strong>
-                </div>
-                <ul>
-                  {unassignedRows.map((row) => (
-                    <li key={`unassigned-${row.id}`}>{row.name}</li>
-                  ))}
-                </ul>
-              </article>
             </div>
           </section>
         ) : null}
