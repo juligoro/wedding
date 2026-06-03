@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function formatDate(date) {
   return new Intl.DateTimeFormat("es-AR", {
@@ -122,6 +122,7 @@ function getMealGroups(rows) {
 }
 
 export default function AdminDashboard({ submissions, tables }) {
+  const tablesPanelRef = useRef(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [mealFilter, setMealFilter] = useState("all");
@@ -220,6 +221,55 @@ export default function AdminDashboard({ submissions, tables }) {
     selectedVisibleGuestIds.length > 0 &&
     selectedVisibleGuestIds.every((guestId) => selectedGuestIds.includes(guestId));
 
+  useEffect(() => {
+    if (!showTables) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      tablesPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, [showTables]);
+
+  function getTableById(tableId) {
+    return localTables.find((table) => table.id === Number(tableId)) || null;
+  }
+
+  function getSeatsNeeded(tableId, guestIds) {
+    return guestIds.filter((guestId) => {
+      const row = rowsWithTableNames.find((person) => person.id === Number(guestId));
+
+      return row?.attending && row.tableId !== Number(tableId);
+    }).length;
+  }
+
+  function canAssignToTable(tableId, guestIds = selectedGuestIds) {
+    if (tableId === null || guestIds.length === 0) {
+      return true;
+    }
+
+    const table = getTableById(tableId);
+
+    if (!table) {
+      return false;
+    }
+
+    return (tableCounts[table.id] || 0) + getSeatsNeeded(table.id, guestIds) <= table.capacity;
+  }
+
+  function getCapacityMessage(tableId) {
+    const table = getTableById(tableId);
+
+    if (!table) {
+      return "Mesa inválida.";
+    }
+
+    return `La mesa ${table.name} admite hasta ${table.capacity} personas.`;
+  }
+
   function toggleGuest(guestId) {
     setSelectedGuestIds((current) =>
       current.includes(guestId) ? current.filter((id) => id !== guestId) : [...current, guestId],
@@ -293,6 +343,11 @@ export default function AdminDashboard({ submissions, tables }) {
 
     if (uniqueGuestIds.length === 0) {
       setTableMessage("Seleccioná al menos un invitado confirmado.");
+      return;
+    }
+
+    if (!canAssignToTable(tableId, uniqueGuestIds)) {
+      setTableMessage(getCapacityMessage(tableId));
       return;
     }
 
@@ -388,6 +443,11 @@ export default function AdminDashboard({ submissions, tables }) {
     setDraggedGuestId(null);
 
     if (!Number.isInteger(guestId)) {
+      return;
+    }
+
+    if (!canAssignToTable(tableId, [guestId])) {
+      setTableMessage(getCapacityMessage(tableId));
       return;
     }
 
@@ -602,14 +662,18 @@ export default function AdminDashboard({ submissions, tables }) {
               <select value={targetTableId} onChange={(event) => setTargetTableId(event.target.value)}>
                 <option value="">Elegir mesa</option>
                 {localTables.map((table) => (
-                  <option key={table.id} value={table.id}>
+                  <option
+                    key={table.id}
+                    value={table.id}
+                    disabled={!canAssignToTable(table.id, selectedGuestIds)}
+                  >
                     {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
                   </option>
                 ))}
               </select>
               <button
                 type="button"
-                disabled={!targetTableId || isSavingTables}
+                disabled={!targetTableId || isSavingTables || !canAssignToTable(targetTableId, selectedGuestIds)}
                 onClick={() => assignGuests(targetTableId)}
               >
                 A mesa
@@ -732,7 +796,7 @@ export default function AdminDashboard({ submissions, tables }) {
         </section>
 
         {showTables ? (
-          <section className="tables-panel">
+          <section className="tables-panel" ref={tablesPanelRef}>
             <div className="table-heading">
               <h2>Mesas</h2>
               <span>{unassignedRows.length} confirmados sin mesa</span>
@@ -754,14 +818,18 @@ export default function AdminDashboard({ submissions, tables }) {
               <select value={targetTableId} onChange={(event) => setTargetTableId(event.target.value)}>
                 <option value="">Elegir mesa</option>
                 {localTables.map((table) => (
-                  <option key={table.id} value={table.id}>
+                  <option
+                    key={table.id}
+                    value={table.id}
+                    disabled={!canAssignToTable(table.id, selectedGuestIds)}
+                  >
                     {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
                   </option>
                 ))}
               </select>
               <button
                 type="button"
-                disabled={!targetTableId || isSavingTables}
+                disabled={!targetTableId || isSavingTables || !canAssignToTable(targetTableId, selectedGuestIds)}
                 onClick={() => assignGuests(targetTableId)}
               >
                 Asignar
@@ -818,9 +886,15 @@ export default function AdminDashboard({ submissions, tables }) {
 
               {localTables.map((table) => (
                 <article
-                  className="seat-card drop-zone"
+                  className={
+                    (tableCounts[table.id] || 0) >= table.capacity ? "seat-card drop-zone is-full" : "seat-card drop-zone"
+                  }
                   key={table.id}
-                  onDragOver={(event) => event.preventDefault()}
+                  onDragOver={(event) => {
+                    if (draggedGuestId && canAssignToTable(table.id, [draggedGuestId])) {
+                      event.preventDefault();
+                    }
+                  }}
                   onDrop={(event) => handleGuestDrop(event, table.id)}
                 >
                   <div className="seat-card-head">
@@ -857,7 +931,11 @@ export default function AdminDashboard({ submissions, tables }) {
                   <div className="seat-card-actions">
                     <button
                       type="button"
-                      disabled={selectedGuestIds.length === 0 || isSavingTables}
+                      disabled={
+                        selectedGuestIds.length === 0 ||
+                        isSavingTables ||
+                        !canAssignToTable(table.id, selectedGuestIds)
+                      }
                       onClick={() => assignGuests(table.id)}
                     >
                       Mover selección acá
