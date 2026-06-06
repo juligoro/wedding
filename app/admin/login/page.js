@@ -1,3 +1,5 @@
+import "../admin.css";
+
 export const metadata = {
   title: "Admin | Login",
 };

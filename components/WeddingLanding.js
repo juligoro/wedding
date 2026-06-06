@@ -1,5 +1,8 @@
 import Countdown from "@/components/Countdown";
+import PhotoGallery from "@/components/PhotoGallery";
+import Reveal from "@/components/Reveal";
 import RsvpForm from "@/components/RsvpForm";
+import { Divider, Icon, Sprig } from "@/components/Botanical";
 
 const couplePhotos = [
   { src: "/couple-photos/img-6634.jpg", alt: "Juli y Tomi abrazados frente al mar", position: "45% 72%" },
@@ -16,50 +19,103 @@ const couplePhotos = [
   { src: "/couple-photos/img-8653.jpg", alt: "Juli y Tomi en una escapada", position: "50% 68%" },
   { src: "/couple-photos/img-9063.jpg", alt: "Juli y Tomi abrazados", position: "42% 60%" },
 ];
-const carouselPhotos = [...couplePhotos, couplePhotos[0]];
 
 const copy = {
   es: {
+    brand: "Juli & Tomi",
     homeAria: "Inicio",
-    heroLabel: "¡NOS CASAMOS!",
-    date: "6 de diciembre 2026",
-    introTitle: "Queremos compartir nuestra felicidad con ustedes",
+    langCode: "EN",
+    langHref: "/en",
+    langLabel: "Ver en inglés",
+    heroLabel: "¡Nos casamos!",
+    date: "6 de diciembre de 2026",
+    location: "Del Viso, Buenos Aires",
+    scrollCue: "Deslizá",
     introText:
       "Después de tanto soñarlo, llegó el día de rodearnos de las personas que más queremos para dar este gran paso juntos. Los esperamos para vivir esta celebración llena de amor, alegría y emoción.",
-    signature: "Juli y Tomi",
-    photosTitle: "Fotos",
-    detailsTitle: "La celebración",
-    eventTitle: "Ceremonia + Fiesta",
-    eventDetails: "Domingo 6 de diciembre de 2026, desde las 14 hs.",
-    eventPlace: "Del Viso, Buenos Aires.",
-    eventNote: "La dirección exacta llega cuando confirmás asistencia.",
-    dressTitle: "Dresscode",
-    dressText:
-      "La ceremonia es afuera y va a hacer calor. Venite con ropa elegante, pero fresca. Dejemos el blanco solo para la novia.",
+    signature: "Juli & Tomi",
+    galleryAria: "Nuestras fotos",
+    galleryLabels: {
+      label: "Galería de fotos",
+      prev: "Foto anterior",
+      next: "Foto siguiente",
+      go: "Ver foto",
+    },
+    detailsAria: "La celebración",
+    cards: [
+      {
+        icon: "calendar",
+        title: "Ceremonia + Fiesta",
+        lines: ["Domingo 6 de diciembre de 2026", "Desde las 14 hs."],
+      },
+      {
+        icon: "pin",
+        title: "Lugar",
+        lines: ["Del Viso, Buenos Aires."],
+        note: "La dirección exacta llega cuando confirmás asistencia.",
+      },
+      {
+        icon: "dress",
+        title: "Dresscode",
+        lines: [
+          "La ceremonia es afuera y va a hacer calor. Venite con ropa elegante, pero fresca.",
+        ],
+        note: "Dejemos el blanco solo para la novia.",
+      },
+    ],
+    rsvpHeading: "Confirmá tu asistencia",
     rsvpText: "Confirmá tu asistencia y la de tu grupo familiar hasta el 31 de octubre.",
     rsvpSubtext: "Vas a recibir los detalles por correo.",
-    footer: "Nos vemos para celebrar.",
+    footerThanks: "Nos vemos para celebrar.",
+    footerBack: "Volver arriba",
   },
   en: {
+    brand: "Juli & Tomi",
     homeAria: "Home",
-    heroLabel: "WE'RE GETTING MARRIED!",
+    langCode: "ES",
+    langHref: "/",
+    langLabel: "View in Spanish",
+    heroLabel: "We're getting married!",
     date: "December 6, 2026",
-    introTitle: "We want to share our happiness with you",
+    location: "Del Viso, Buenos Aires",
+    scrollCue: "Scroll",
     introText:
       "After dreaming about this moment for so long, the day is finally here! We can’t wait to be surrounded by the people we love most as we take this big step together and celebrate with all the love, laughter, and joy in our hearts.",
-    signature: "Juli and Tomi",
-    photosTitle: "Photos",
-    detailsTitle: "The celebration",
-    eventTitle: "Ceremony + Party",
-    eventDetails: "Sunday, December 6, 2026, from 2:00 PM.",
-    eventPlace: "Del Viso, Buenos Aires.",
-    eventNote: "The exact address will be sent after you confirm your attendance.",
-    dressTitle: "Dress code",
-    dressText:
-      "The ceremony will be outdoors and the weather will be warm. Please wear something elegant but fresh. White is reserved for the bride.",
+    signature: "Juli & Tomi",
+    galleryAria: "Our photos",
+    galleryLabels: {
+      label: "Photo gallery",
+      prev: "Previous photo",
+      next: "Next photo",
+      go: "View photo",
+    },
+    detailsAria: "The celebration",
+    cards: [
+      {
+        icon: "calendar",
+        title: "Ceremony + Party",
+        lines: ["Sunday, December 6, 2026", "From 2:00 PM."],
+      },
+      {
+        icon: "pin",
+        title: "Venue",
+        lines: ["Del Viso, Buenos Aires."],
+        note: "The exact address will be sent after you confirm your attendance.",
+      },
+      {
+        icon: "dress",
+        title: "Dress code",
+        lines: [
+          "The ceremony will be outdoors and the weather will be warm. Please wear something elegant but fresh.",
+        ],
+        note: "White is reserved for the bride.",
+      },
+    ],
+    rsvpHeading: "Confirm your attendance",
     rsvpText: "Please confirm your attendance and your family group's attendance by October 31.",
     rsvpSubtext: "You will receive the details by email.",
-    footer: "See you there to celebrate.",
+    footerThanks: "See you there to celebrate.",
+    footerBack: "Back to top",
   },
 };
 
@@ -68,96 +124,100 @@ export default function WeddingLanding({ locale = "es" }) {
 
   return (
     <>
-      <main className="page">
+      <a className="lang-switch" href={text.langHref} aria-label={text.langLabel}>
+        {text.langCode}
+      </a>
+
+      <main className="page" id="top">
         <section className="hero" aria-label={text.homeAria}>
+          <div className="hero-bg" aria-hidden="true">
+            <span className="hero-glow" />
+            <span className="hero-grain" />
+          </div>
+          <Sprig className="hero-sprig left" />
+          <Sprig className="hero-sprig right" flip />
+
           <div className="hero-inner">
-            <div className="logo-crop" aria-label="Logo Juli y Tomi">
-              <img className="monogram" src="/logo-juli-tomi-cropped.svg" alt="Juli y Tomi" />
+            <div className="logo-crop">
+              <img className="monogram" src="/logo-juli-tomi-cropped.svg" alt={text.brand} />
             </div>
-            <p className="eyebrow">{text.heroLabel}</p>
-            <p className="hero-date">{text.date}</p>
+            <h1 className="hero-eyebrow">{text.heroLabel}</h1>
+            <div className="hero-meta">
+              <span className="hero-date">{text.date}</span>
+            </div>
           </div>
         </section>
 
-        <section className="section alt" aria-labelledby="historia-title">
+        <section className="section section-story" id="historia" aria-label={text.homeAria}>
           <div className="wrap">
-            <div className="section-title">
-              <h2 id="historia-title">{text.introTitle}</h2>
-              <p>{text.introText}</p>
-              <div className="signature">{text.signature}</div>
-            </div>
+            <Reveal className="story-body">
+              <p className="lede">{text.introText}</p>
+              <p className="signature">{text.signature}</p>
+            </Reveal>
+            <Reveal delay={150}>
+              <Divider />
+            </Reveal>
           </div>
         </section>
 
-        <section className="photo-section" aria-labelledby="fotos-title">
-          <h2 id="fotos-title" className="hidden">
-            {text.photosTitle}
-          </h2>
-          <div className="photo-print">
-            <div className="photo-carousel">
-              <div className="photo-carousel-track">
-                {carouselPhotos.map((photo, index) => (
-                  <figure
-                    className="photo-carousel-slide"
-                    key={`${photo.src}-${index}`}
-                    aria-hidden={index === couplePhotos.length}
-                  >
-                    <img
-                      src={photo.src}
-                      alt={photo.alt}
-                      loading={index < 2 ? "eager" : "lazy"}
-                      style={{ objectPosition: photo.position }}
-                    />
-                  </figure>
-                ))}
-              </div>
-            </div>
-            <img className="photo-print-logo" src="/logo-juli-tomi-cropped.svg" alt="Juli y Tomi" />
-          </div>
-        </section>
-
-        <section className="section alt" aria-labelledby="detalles-title">
+        <section className="section section-gallery" id="fotos" aria-label={text.galleryAria}>
           <div className="wrap">
-            <div className="section-title">
-              <h2 id="detalles-title">{text.detailsTitle}</h2>
+            <Reveal variant="scale">
+              <PhotoGallery photos={couplePhotos} labels={text.galleryLabels} />
+            </Reveal>
+          </div>
+        </section>
+
+        <section className="section section-details" id="detalles" aria-label={text.detailsAria}>
+          <div className="wrap">
+            <Reveal>
               <Countdown locale={locale} />
-            </div>
+            </Reveal>
+
             <div className="details-grid">
-              <article className="detail">
-                <h3>{text.eventTitle}</h3>
-                <p>
-                  {text.eventDetails}
-                  <br />
-                  {text.eventPlace}
-                  <span className="note">{text.eventNote}</span>
-                </p>
-              </article>
-              <article className="detail">
-                <h3>{text.dressTitle}</h3>
-                <p>{text.dressText}</p>
-              </article>
+              {text.cards.map((card, i) => (
+                <Reveal as="article" className="detail-card" key={card.title} delay={i * 110}>
+                  <span className="detail-icon">
+                    <Icon name={card.icon} />
+                  </span>
+                  <h3>{card.title}</h3>
+                  <div className="detail-lines">
+                    {card.lines.map((line) => (
+                      <p key={line}>{line}</p>
+                    ))}
+                  </div>
+                  {card.note ? <p className="note">{card.note}</p> : null}
+                </Reveal>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="section" id="rsvp" aria-labelledby="rsvp-title">
+        <section className="section section-rsvp" id="rsvp" aria-label={text.rsvpHeading}>
           <div className="wrap rsvp-layout">
-            <aside className="rsvp-intro">
-              <h2 id="rsvp-title">RSVP</h2>
-              <p>
-                {text.rsvpText}
-                <br />
-                {text.rsvpSubtext}
-              </p>
-            </aside>
-            <RsvpForm locale={locale} />
+            <Reveal as="aside" className="rsvp-intro">
+              <h2 id="rsvp-title">{text.rsvpHeading}</h2>
+              <p className="rsvp-lead">{text.rsvpText}</p>
+              <p className="rsvp-sub">{text.rsvpSubtext}</p>
+              <Sprig className="rsvp-sprig" />
+            </Reveal>
+            <Reveal delay={120}>
+              <RsvpForm locale={locale} />
+            </Reveal>
           </div>
         </section>
       </main>
 
       <footer className="footer">
-        <strong>Juli &amp; Tomi</strong>
-        {text.footer}
+        <div className="footer-inner">
+          <img className="footer-mark" src="/logo-juli-tomi-cropped.svg" alt="" aria-hidden="true" />
+          <strong className="footer-names">{text.brand}</strong>
+          <span className="footer-date">{text.date}</span>
+          <p className="footer-thanks">{text.footerThanks}</p>
+          <a className="footer-back" href="#top">
+            {text.footerBack}
+          </a>
+        </div>
       </footer>
     </>
   );

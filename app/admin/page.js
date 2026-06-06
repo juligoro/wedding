@@ -1,4 +1,5 @@
 import AdminDashboard from "./AdminDashboard";
+import "./admin.css";
 
 import { prisma } from "@/lib/prisma";
 

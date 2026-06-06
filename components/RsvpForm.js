@@ -17,8 +17,8 @@ const copy = {
     busYes: "Queda anotado que necesitan micro.",
     busNo: "Queda anotado que no necesitan micro.",
     attendingSuccess:
-      "Gracias por confirmar.|Te vamos a enviar la dirección exacta y los detalles finales más cerca de la fecha.|Movilidad: {microText}",
-    declinedSuccess: "Gracias por avisarnos.|Vamos a extrañarte mucho ese día.",
+      "¡Qué alegría que vengas!|Te vamos a enviar la dirección exacta y los detalles finales más cerca de la fecha.|Movilidad: {microText}",
+    declinedSuccess: "Gracias por avisarnos.|Te vamos a extrañar muchísimo ese día.",
     personalData: "Datos personales",
     firstName: "Nombre",
     lastName: "Apellido",
@@ -54,8 +54,8 @@ const copy = {
     busYes: "We noted that you need the shuttle.",
     busNo: "We noted that you do not need the shuttle.",
     attendingSuccess:
-      "Thank you for confirming.|We will email you the exact address and final details closer to the date.|Transportation: {microText}",
-    declinedSuccess: "Thank you for letting us know.|We will miss you that day.",
+      "Yay! We can't wait to see you.|We will email you the exact address and final details closer to the date.|Transportation: {microText}",
+    declinedSuccess: "Thank you for letting us know.|We will miss you so much that day.",
     personalData: "Personal information",
     firstName: "First name",
     lastName: "Last name",
@@ -103,17 +103,30 @@ function getCompanionOption(locale, count) {
   return `+${count} ${count === 1 ? "acompañante" : "acompañantes"}`;
 }
 
-function FoodSelect({ name, label, required, locale }) {
+function SelectShell({ children }) {
   return (
-    <label>
-      {label}
-      <select name={name} required={required}>
-        {menuOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.labels[locale]}
-          </option>
-        ))}
-      </select>
+    <span className="select-shell">
+      {children}
+      <svg className="select-caret" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 10 L12 15 L17 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+}
+
+function FoodSelect({ name, label, required, locale, full }) {
+  return (
+    <label className={full ? "full" : undefined}>
+      <span className="field-label">{label}</span>
+      <SelectShell>
+        <select name={name} required={required}>
+          {menuOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.labels[locale]}
+            </option>
+          ))}
+        </select>
+      </SelectShell>
     </label>
   );
 }
@@ -164,14 +177,9 @@ export default function RsvpForm({ locale = "es" }) {
       localStorage.setItem("rsvp-juli-tomi", JSON.stringify(data));
 
       if (data.asistencia === "si") {
-        const microText =
-          data.micro === "si"
-            ? text.busYes
-            : text.busNo;
+        const microText = data.micro === "si" ? text.busYes : text.busNo;
 
-        setSuccessMessage(
-          format(text.attendingSuccess, { microText }),
-        );
+        setSuccessMessage(format(text.attendingSuccess, { microText }));
       } else {
         setSuccessMessage(text.declinedSuccess);
       }
@@ -187,33 +195,39 @@ export default function RsvpForm({ locale = "es" }) {
   }
 
   return (
-    <form id="rsvpForm" onSubmit={handleSubmit}>
+    <form id="rsvpForm" className="rsvp-form" onSubmit={handleSubmit}>
       <fieldset>
-        <legend>{text.personalData}</legend>
+        <legend>
+          <span className="legend-num">01</span>
+          {text.personalData}
+        </legend>
         <div className="grid">
           <label>
-            {text.firstName}
+            <span className="field-label">{text.firstName}</span>
             <input name="nombre" autoComplete="given-name" required />
           </label>
           <label>
-            {text.lastName}
+            <span className="field-label">{text.lastName}</span>
             <input name="apellido" autoComplete="family-name" required />
           </label>
           <label>
-            Email
+            <span className="field-label">Email</span>
             <input type="email" name="email" autoComplete="email" required />
           </label>
           <label>
-            WhatsApp
+            <span className="field-label">WhatsApp</span>
             <input name="whatsapp" autoComplete="tel" required />
           </label>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend>{text.attendance}</legend>
-        <div className="choice-group">
-          <label className="choice">
+        <legend>
+          <span className="legend-num">02</span>
+          {text.attendance}
+        </legend>
+        <div className="choice-group two">
+          <label className={`choice ${attendance === "si" ? "is-checked" : ""}`}>
             <input
               type="radio"
               name="asistencia"
@@ -222,9 +236,10 @@ export default function RsvpForm({ locale = "es" }) {
               checked={attendance === "si"}
               onChange={(event) => setAttendance(event.target.value)}
             />
-            {text.accept}
+            <span className="choice-mark" aria-hidden="true" />
+            <span className="choice-text">{text.accept}</span>
           </label>
-          <label className="choice">
+          <label className={`choice ${attendance === "no" ? "is-checked" : ""}`}>
             <input
               type="radio"
               name="asistencia"
@@ -232,31 +247,37 @@ export default function RsvpForm({ locale = "es" }) {
               checked={attendance === "no"}
               onChange={(event) => setAttendance(event.target.value)}
             />
-            {text.decline}
+            <span className="choice-mark" aria-hidden="true" />
+            <span className="choice-text">{text.decline}</span>
           </label>
         </div>
       </fieldset>
 
       {isAttending ? (
-        <>
+        <div className="rsvp-conditional">
           <fieldset id="guestSection">
-            <legend>{text.guests}</legend>
+            <legend>
+              <span className="legend-num">03</span>
+              {text.guests}
+            </legend>
             <div className="grid">
               <label className="full">
-                {text.guestCount}
-                <select
-                  id="guestCount"
-                  name="acompanantes"
-                  value={guestCount}
-                  required
-                  onChange={(event) => setGuestCount(Number(event.target.value))}
-                >
-                  <option value="0">{text.onlyMe}</option>
-                  <option value="1">{getCompanionOption(locale, 1)}</option>
-                  <option value="2">{getCompanionOption(locale, 2)}</option>
-                  <option value="3">{getCompanionOption(locale, 3)}</option>
-                  <option value="4">{getCompanionOption(locale, 4)}</option>
-                </select>
+                <span className="field-label">{text.guestCount}</span>
+                <SelectShell>
+                  <select
+                    id="guestCount"
+                    name="acompanantes"
+                    value={guestCount}
+                    required
+                    onChange={(event) => setGuestCount(Number(event.target.value))}
+                  >
+                    <option value="0">{text.onlyMe}</option>
+                    <option value="1">{getCompanionOption(locale, 1)}</option>
+                    <option value="2">{getCompanionOption(locale, 2)}</option>
+                    <option value="3">{getCompanionOption(locale, 3)}</option>
+                    <option value="4">{getCompanionOption(locale, 4)}</option>
+                  </select>
+                </SelectShell>
               </label>
             </div>
 
@@ -266,7 +287,7 @@ export default function RsvpForm({ locale = "es" }) {
                 <div className="grid">
                   {companionIndexes.map((index) => (
                     <label key={index}>
-                      {format(text.companionName, { index })}
+                      <span className="field-label">{format(text.companionName, { index })}</span>
                       <input name={`acompanante_${index}`} required />
                     </label>
                   ))}
@@ -276,14 +297,12 @@ export default function RsvpForm({ locale = "es" }) {
           </fieldset>
 
           <fieldset id="foodSection">
-            <legend>{text.food}</legend>
+            <legend>
+              <span className="legend-num">04</span>
+              {text.food}
+            </legend>
             <div className="grid">
-              <FoodSelect
-                name="comida_titular"
-                label={text.primaryFood}
-                required
-                locale={locale}
-              />
+              <FoodSelect name="comida_titular" label={text.primaryFood} required locale={locale} full />
             </div>
 
             {companionIndexes.length > 0 ? (
@@ -304,58 +323,70 @@ export default function RsvpForm({ locale = "es" }) {
             ) : null}
 
             <label className="full">
-              {text.allergies}
-              <textarea
-                name="alergias"
-                placeholder={text.allergiesPlaceholder}
-              />
+              <span className="field-label">{text.allergies}</span>
+              <textarea name="alergias" placeholder={text.allergiesPlaceholder} />
             </label>
           </fieldset>
 
           <fieldset id="mobilitySection">
-            <legend>{text.mobility}</legend>
-            <p className="note">{text.mobilityNote}</p>
-            <p>{text.busQuestion}</p>
-            <div className="choice-group">
+            <legend>
+              <span className="legend-num">05</span>
+              {text.mobility}
+            </legend>
+            <p className="field-note">{text.mobilityNote}</p>
+            <p className="field-question">{text.busQuestion}</p>
+            <div className="choice-group two">
               <label className="choice">
                 <input type="radio" name="micro" value="si" required />
-                {text.busAccept}
+                <span className="choice-mark" aria-hidden="true" />
+                <span className="choice-text">{text.busAccept}</span>
               </label>
               <label className="choice">
                 <input type="radio" name="micro" value="no" required />
-                {text.busDecline}
+                <span className="choice-mark" aria-hidden="true" />
+                <span className="choice-text">{text.busDecline}</span>
               </label>
             </div>
           </fieldset>
-        </>
+        </div>
       ) : null}
 
       <fieldset>
-        <legend>{text.message}</legend>
+        <legend>
+          <span className="legend-num">{isAttending ? "06" : "03"}</span>
+          {text.message}
+        </legend>
         <label>
-          {text.messageLabel}
+          <span className="field-label">{text.messageLabel}</span>
           <textarea name="mensaje" placeholder={text.optional} />
         </label>
       </fieldset>
 
       <div className="form-actions">
         <button className="button submit" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? text.sending : text.submit}
+          <span>{isSubmitting ? text.sending : text.submit}</span>
         </button>
-        <a className="button secondary" href="#detalles-title">
+        <a className="button secondary" href="#detalles">
           {text.details}
         </a>
       </div>
 
       {successMessage ? (
         <div className="success" role="status">
-          {successMessage.split("|").map((line, index) =>
-            index === 0 ? (
-              <strong key={line}>{line}</strong>
-            ) : (
-              <p key={line}>{line}</p>
-            ),
-          )}
+          <span className="success-heart" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 20.5 C12 20.5 3.8 14.2 3.8 8.6 C3.8 5.7 6 3.6 8.7 3.6 C10.4 3.6 11.6 4.7 12 5.4 C12.4 4.7 13.6 3.6 15.3 3.6 C18 3.6 20.2 5.7 20.2 8.6 C20.2 14.2 12 20.5 12 20.5 Z"
+                fill="currentColor"
+                stroke="none"
+              />
+            </svg>
+          </span>
+          <div className="success-body">
+            {successMessage.split("|").map((line, index) =>
+              index === 0 ? <strong key={line}>{line}</strong> : <p key={line}>{line}</p>,
+            )}
+          </div>
         </div>
       ) : null}
 

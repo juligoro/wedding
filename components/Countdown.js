@@ -6,6 +6,7 @@ const weddingTime = new Date("2026-12-06T17:00:00.000Z").getTime();
 
 const labels = {
   es: {
+    kicker: "Cuenta regresiva",
     countdown: "Cuenta regresiva para el casamiento",
     done: "¡Llegó el día!",
     days: "días",
@@ -14,6 +15,7 @@ const labels = {
     seconds: "segundos",
   },
   en: {
+    kicker: "Counting down",
     countdown: "Wedding countdown",
     done: "The day is here!",
     days: "days",
@@ -63,13 +65,19 @@ export default function Countdown({ locale = "es" }) {
   }
 
   return (
-    <div className="countdown" aria-label={text.countdown}>
-      {units.map(([unit, value]) => (
-        <div className="countdown-unit" key={unit}>
-          <strong>{value === undefined ? "--" : String(value).padStart(2, "0")}</strong>
-          <span>{text[unit]}</span>
-        </div>
-      ))}
+    <div className="countdown-wrap">
+      <span className="countdown-kicker">{text.kicker}</span>
+      <div className="countdown" aria-label={text.countdown}>
+        {units.map(([unit, value], i) => (
+          <div className="countdown-unit" key={unit}>
+            <strong key={value === undefined ? "x" : value}>
+              {value === undefined ? "--" : String(value).padStart(2, "0")}
+            </strong>
+            <span>{text[unit]}</span>
+            {i < units.length - 1 ? <i className="countdown-sep" aria-hidden="true" /> : null}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
