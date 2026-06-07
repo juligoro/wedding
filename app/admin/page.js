@@ -33,6 +33,11 @@ export default async function AdminPage() {
       name: "asc",
     },
   });
+  const inviteeRecords = await prisma.invitee.findMany({
+    orderBy: {
+      fullName: "asc",
+    },
+  });
 
   const submissions = rsvps.map((rsvp) => ({
     ...rsvp,
@@ -62,5 +67,13 @@ export default async function AdminPage() {
     })),
   }));
 
-  return <AdminDashboard submissions={submissions} tables={seatingTables} />;
+  const invitees = inviteeRecords.map((invitee) => ({
+    ...invitee,
+    createdAt: invitee.createdAt.toISOString(),
+    updatedAt: invitee.updatedAt.toISOString(),
+  }));
+
+  return (
+    <AdminDashboard submissions={submissions} tables={seatingTables} invitees={invitees} />
+  );
 }

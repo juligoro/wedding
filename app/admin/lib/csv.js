@@ -47,3 +47,32 @@ export function downloadCsv(rows) {
   link.click();
   URL.revokeObjectURL(url);
 }
+
+export function downloadInviteesCsv(items, filename = "invitados-sin-responder.csv") {
+  const headers = ["Nombre", "Grupo", "Email", "WhatsApp", "Personas", "Estado", "Contactado"];
+  const statusLabels = {
+    accepted: "Confirmó",
+    declined: "No viene",
+    pending: "Sin responder",
+  };
+  const csvRows = items.map((item) => [
+    item.fullName,
+    item.household || "",
+    item.email || "",
+    item.whatsapp || "",
+    item.party || 1,
+    statusLabels[item.status] || "Sin responder",
+    item.contacted ? "Sí" : "No",
+  ]);
+  const csv = [headers, ...csvRows]
+    .map((row) => row.map(escapeCsvValue).join(","))
+    .join("\n");
+  const blob = new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}

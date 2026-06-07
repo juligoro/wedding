@@ -3,6 +3,7 @@
 import "./admin.css";
 
 import { AdminProvider, useAdmin } from "./AdminContext";
+import FollowUpView from "./components/FollowUpView";
 import GuestDrawer from "./components/GuestDrawer";
 import GuestsView from "./components/GuestsView";
 import MessagesView from "./components/MessagesView";
@@ -18,6 +19,8 @@ function ActiveSection() {
       return <GuestsView />;
     case "seating":
       return <SeatingView />;
+    case "follow":
+      return <FollowUpView />;
     case "messages":
       return <MessagesView />;
     default:
@@ -39,9 +42,9 @@ function Shell() {
   );
 }
 
-export default function AdminDashboard({ submissions, tables }) {
+export default function AdminDashboard({ submissions, tables, invitees }) {
   return (
-    <AdminProvider submissions={submissions} tables={tables}>
+    <AdminProvider submissions={submissions} tables={tables} invitees={invitees}>
       <Shell />
     </AdminProvider>
   );

@@ -36,6 +36,23 @@ model SeatingTable {
   guests    Guest[]
 }
 
+model Invitee {
+  id            Int      @id @default(autoincrement())
+  fullName      String
+  normalized    String
+  household     String?
+  email         String?
+  whatsapp      String?
+  party         Int      @default(1)
+  notes         String?
+  contacted     Boolean  @default(false)
+  manualGuestId Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([normalized])
+}
+
 model Guest {
   id          Int           @id @default(autoincrement())
   rsvpId      Int

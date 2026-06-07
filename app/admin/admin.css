@@ -1182,3 +1182,101 @@ button.stat-card:hover:not(:disabled) {
     margin: 0;
   }
 }
+
+/* ==========================================================================
+   Seguimiento — invite list reconciliation
+   ========================================================================== */
+
+.import-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.import-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.import-form input[type="file"] {
+  flex: 1 1 240px;
+  font-size: 0.9rem;
+}
+
+.import-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.import-message {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.badge.pending {
+  background: #f6efe0;
+  color: #9a6b15;
+}
+
+.stat-card.tone-pending .stat-value {
+  color: #9a6b15;
+}
+
+.match-cell {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.match-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.match-badge.conf-exact,
+.match-badge.conf-tokens,
+.match-badge.conf-email {
+  border-color: transparent;
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.match-badge.conf-manual {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.match-badge.conf-partial {
+  border-color: transparent;
+  background: #f6efe0;
+  color: #9a6b15;
+}
+
+.cell-sub {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.chip.static {
+  border: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.link-button.danger {
+  color: var(--no);
+}

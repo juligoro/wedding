@@ -6,6 +6,7 @@ const SECTIONS = [
   { id: "overview", label: "Resumen" },
   { id: "guests", label: "Invitados" },
   { id: "seating", label: "Mesas" },
+  { id: "follow", label: "Seguimiento" },
   { id: "messages", label: "Mensajes" },
 ];
 
@@ -18,12 +19,14 @@ export default function Sidebar() {
     unassignedRows,
     messages,
     rowsWithTableNames,
+    pendingInvitees,
   } = useAdmin();
 
   const counts = {
     overview: null,
     guests: rowsWithTableNames.length,
     seating: unassignedRows.length,
+    follow: pendingInvitees.length || null,
     messages: messages.length,
   };
 

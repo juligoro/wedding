@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { createContext, useContext, useMemo, useState } from "react";
 
 import { filterAndSortRows, getMealGroups, getRows } from "./lib/rows";
+import { reconcile } from "./lib/match";
 
 const AdminContext = createContext(null);
 
@@ -16,7 +18,8 @@ export function useAdmin() {
   return value;
 }
 
-export function AdminProvider({ submissions, tables, children }) {
+export function AdminProvider({ submissions, tables, invitees = [], children }) {
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState("overview");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -39,6 +42,12 @@ export function AdminProvider({ submissions, tables, children }) {
   const [guestTags, setGuestTags] = useState({});
   const [tableMessage, setTableMessage] = useState("");
   const [isSavingTables, setIsSavingTables] = useState(false);
+  const [inviteeEdits, setInviteeEdits] = useState({});
+  const [inviteeMessage, setInviteeMessage] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importMode, setImportMode] = useState("replace");
+  const [followFilter, setFollowFilter] = useState("pending");
+  const [followQuery, setFollowQuery] = useState("");
 
   const rows = useMemo(
     () => getRows(submissions, tableAssignments, guestEdits),
@@ -81,6 +90,36 @@ export function AdminProvider({ submissions, tables, children }) {
   const busCount = acceptedRows.filter((person) => person.needsBus).length;
   const unassignedRows = acceptedRows.filter((person) => !person.tableId);
   const messages = submissions.filter((submission) => submission.message?.trim());
+  const localInvitees = invitees.map((invitee) => ({
+    ...invitee,
+    ...(inviteeEdits[invitee.id] || {}),
+  }));
+  const reconciliation = reconcile(localInvitees, rowsWithTableNames);
+  const filteredInvitees = reconciliation.items
+    .filter((item) => {
+      if (followFilter === "all") {
+        return true;
+      }
+
+      if (followFilter === "responded") {
+        return item.status !== "pending";
+      }
+
+      return item.status === followFilter;
+    })
+    .filter((item) => {
+      const normalizedQuery = followQuery.trim().toLowerCase();
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      return `${item.fullName} ${item.household || ""} ${item.email || ""} ${item.whatsapp || ""}`
+        .toLowerCase()
+        .includes(normalizedQuery);
+    })
+    .sort((a, b) => a.fullName.localeCompare(b.fullName));
+  const pendingInvitees = reconciliation.items.filter((item) => item.status === "pending");
   const acceptedPercent =
     acceptedCount + declinedCount > 0
       ? Math.round((acceptedCount / (acceptedCount + declinedCount)) * 100)
@@ -412,6 +451,103 @@ export function AdminProvider({ submissions, tables, children }) {
     }
   }
 
+  async function importInvitees(file) {
+    if (!file) {
+      setInviteeMessage("Elegí un archivo .xlsx o .csv.");
+      return;
+    }
+
+    setIsImporting(true);
+    setInviteeMessage("");
+
+    try {
+      const formData = new FormData();
+
+      formData.append("file", file);
+      formData.append("mode", importMode);
+
+      const response = await fetch("/api/admin/invitees/import", {
+        method: "POST",
+        body: formData,
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        throw new Error(body.error || "No pudimos procesar el archivo.");
+      }
+
+      setInviteeEdits({});
+      const detected = body.detected?.nombre ? ` Columna de nombre: ${body.detected.nombre}.` : "";
+      const skipped = body.skipped ? ` ${body.skipped} ya estaban en la lista.` : "";
+
+      setInviteeMessage(`${body.imported} invitados importados.${skipped}${detected}`);
+      router.refresh();
+    } catch (error) {
+      setInviteeMessage(error.message);
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
+  async function patchInvitee(id, fields) {
+    setInviteeEdits((current) => ({
+      ...current,
+      [id]: { ...(current[id] || {}), ...fields },
+    }));
+
+    try {
+      const response = await fetch("/api/admin/invitees", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...fields }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json();
+
+        throw new Error(body.error || "No pudimos actualizar al invitado.");
+      }
+    } catch (error) {
+      setInviteeMessage(error.message);
+      router.refresh();
+    }
+  }
+
+  function toggleContacted(id, contacted) {
+    patchInvitee(id, { contacted });
+  }
+
+  function setManualMatch(id, manualGuestId) {
+    patchInvitee(id, { manualGuestId: manualGuestId ? Number(manualGuestId) : null });
+  }
+
+  async function clearInvitees() {
+    setIsImporting(true);
+    setInviteeMessage("");
+
+    try {
+      const response = await fetch("/api/admin/invitees", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json();
+
+        throw new Error(body.error || "No pudimos vaciar la lista.");
+      }
+
+      setInviteeEdits({});
+      setInviteeMessage("Lista vaciada.");
+      router.refresh();
+    } catch (error) {
+      setInviteeMessage(error.message);
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
   const value = {
     submissions,
     // sections
@@ -454,6 +590,23 @@ export function AdminProvider({ submissions, tables, children }) {
     tableMessage,
     setTableMessage,
     isSavingTables,
+    // invitee follow-up
+    reconciliation,
+    filteredInvitees,
+    pendingInvitees,
+    inviteeMessage,
+    setInviteeMessage,
+    isImporting,
+    importMode,
+    setImportMode,
+    followFilter,
+    setFollowFilter,
+    followQuery,
+    setFollowQuery,
+    importInvitees,
+    toggleContacted,
+    setManualMatch,
+    clearInvitees,
     // derived
     rowsWithTableNames,
     acceptedRows,
