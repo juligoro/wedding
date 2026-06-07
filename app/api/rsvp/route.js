@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { sendRsvpConfirmation } from "@/lib/email";
 import { buildGuestsFromRsvp } from "@/lib/guests";
 import { prisma } from "@/lib/prisma";
 
@@ -74,6 +75,17 @@ export async function POST(request) {
         rsvpId: rsvp.id,
       })),
     });
+
+    if (attending) {
+      const locale = data.locale === "en" ? "en" : "es";
+
+      // Best-effort: a mail failure must not fail the RSVP.
+      try {
+        await sendRsvpConfirmation({ rsvp, locale });
+      } catch (emailError) {
+        console.error("RSVP confirmation email failed", emailError);
+      }
+    }
 
     return NextResponse.json({ id: rsvp.id }, { status: 201 });
   } catch (error) {
