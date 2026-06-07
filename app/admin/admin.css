@@ -24,7 +24,7 @@
   --radius-sm: 7px;
   --shadow: 0 1px 2px rgba(38, 36, 31, 0.04), 0 8px 24px rgba(38, 36, 31, 0.05);
 
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--label-font, "Jost", "Helvetica Neue", Arial, sans-serif);
   color: var(--ink);
 }
 
@@ -169,7 +169,7 @@
 
 .sidebar-brand h1 {
   margin: 6px 0 4px;
-  font-family: "Cormorant Garamond", "Spectral", serif;
+  font-family: var(--display-font, "Cormorant Garamond", "Spectral", serif);
   font-size: 1.7rem;
   font-weight: 600;
   line-height: 1.05;
@@ -254,7 +254,7 @@
 
 .view-header h2 {
   margin: 0;
-  font-family: "Cormorant Garamond", "Spectral", serif;
+  font-family: var(--display-font, "Cormorant Garamond", "Spectral", serif);
   font-size: 2rem;
   font-weight: 600;
 }
@@ -1097,7 +1097,7 @@ button.stat-card:hover:not(:disabled) {
 
 .admin-login-card h1 {
   margin: 8px 0 22px;
-  font-family: "Cormorant Garamond", "Spectral", serif;
+  font-family: var(--display-font, "Cormorant Garamond", "Spectral", serif);
   font-size: 1.9rem;
   font-weight: 600;
 }
