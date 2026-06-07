@@ -17,7 +17,7 @@ const copy = {
     busYes: "Queda anotado que necesitan micro.",
     busNo: "Queda anotado que no necesitan micro.",
     attendingSuccess:
-      "¡Qué alegría que vengas!|Te vamos a enviar la dirección exacta y los detalles finales más cerca de la fecha.|Movilidad: {microText}",
+      "¡Qué alegría que vengas!|Te enviamos un correo con la confirmación y la dirección completa.|Movilidad: {microText}",
     declinedSuccess: "Gracias por avisarnos.|Te vamos a extrañar muchísimo ese día.",
     personalData: "Datos personales",
     firstName: "Nombre",
@@ -54,7 +54,7 @@ const copy = {
     busYes: "We noted that you need the shuttle.",
     busNo: "We noted that you do not need the shuttle.",
     attendingSuccess:
-      "Yay! We can't wait to see you.|We will email you the exact address and final details closer to the date.|Transportation: {microText}",
+      "Yay! We can't wait to see you.|We've just emailed you a confirmation with the full address.|Transportation: {microText}",
     declinedSuccess: "Thank you for letting us know.|We will miss you so much that day.",
     personalData: "Personal information",
     firstName: "First name",
