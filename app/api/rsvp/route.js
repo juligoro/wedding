@@ -78,10 +78,13 @@ export async function POST(request) {
 
     if (attending) {
       const locale = data.locale === "en" ? "en" : "es";
+      const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+      const proto = request.headers.get("x-forwarded-proto") || "https";
+      const baseUrl = host ? `${proto}://${host}` : "";
 
       // Best-effort: a mail failure must not fail the RSVP.
       try {
-        await sendRsvpConfirmation({ rsvp, locale });
+        await sendRsvpConfirmation({ rsvp, locale, baseUrl });
       } catch (emailError) {
         console.error("RSVP confirmation email failed", emailError);
       }
