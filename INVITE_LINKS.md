@@ -44,7 +44,7 @@ de miembros. `Rsvp`: `+inviteeId` (FK → Invitee, `onDelete: SetNull`) para el
 vínculo **exacto** respuesta↔hogar. El matcheo difuso existente queda como red de
 seguridad.
 
-**Estado general:** 🟡 En progreso
+**Estado general:** ✅ Completo (las 7 fases + extras). A verificar en local/prod.
 
 | Fase | Descripción | Estado |
 |------|-------------|--------|
@@ -53,8 +53,8 @@ seguridad.
 | 3 | Ruta pública `/i/[token]` | ✅ typecheck limpio |
 | 4 | RsvpForm con tarjetas por persona | ✅ typecheck limpio |
 | 5 | API RSVP + `buildGuestsFromRsvp` por persona | ✅ typecheck limpio |
-| 6 | Link como única entrada (`/`, `/en`) | ⏳ |
-| 7 | Admin: columnas Link + Mensaje completo | 🟡 Hecho · falta verificación local |
+| 6 | Link como única entrada (`/`, `/en`) | 🟡 Hecho · falta verificación local |
+| 7 | Admin: columnas Link + Mensaje completo | ✅ typecheck limpio |
 
 Leyenda: ✅ hecho · 🟡 en progreso · ⏳ pendiente
 
@@ -210,8 +210,17 @@ in situ + alta al final.
       (cubre altas manuales una vez que responden, y cualquier hogar que ya
       respondió aunque no esté en la planilla).
 
-## Fase 6 — Solo el link (pendiente)
-Reemplazar el formulario abierto en `/` y `/en` por una nota; reversible.
+## Fase 6 — Solo el link 🟡
+
+- [x] `WeddingLanding`: si **no** hay `invitee` (rutas públicas `/` y `/en`), el
+      formulario se reemplaza por una **nota "Confirmá con tu link personalizado"**
+      (ES/EN). Con `invitee` (ruta `/i/[token]`) sigue mostrando el formulario.
+- [x] `RsvpForm` queda intacto (su modo abierto sigue ahí, sin usarse) →
+      reactivar el RSVP abierto es volver a renderizar `<RsvpForm>` sin `invitee`.
+- [x] Estilos `.rsvp-notice` en `globals.css`.
+
+**Verificación:** `/` y `/en` muestran la nota (sin formulario); `/i/<token>`
+muestra el formulario por persona.
 
 ## Fase 7 — Admin 🟡
 

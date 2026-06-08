@@ -32,6 +32,9 @@ interface LandingCopy {
   rsvpHeading: string;
   rsvpText: string;
   rsvpSubtext: string;
+  rsvpNoticeTitle: string;
+  rsvpNoticeBody: string;
+  rsvpNoticeHelp: string;
   footerThanks: string;
   footerBack: string;
 }
@@ -98,6 +101,10 @@ const copy: Record<string, LandingCopy> = {
     rsvpHeading: "Confirmá tu asistencia",
     rsvpText: "Confirmá tu asistencia y la de tu grupo familiar hasta el 31 de octubre.",
     rsvpSubtext: "Vas a recibir los detalles por correo.",
+    rsvpNoticeTitle: "Confirmá con tu link personalizado",
+    rsvpNoticeBody:
+      "Te enviamos un link único por WhatsApp o correo para que confirmes tu asistencia y la de tu grupo. Abrí ese link para responder.",
+    rsvpNoticeHelp: "¿No lo encontrás? Escribinos y te lo reenviamos.",
     footerThanks: "Nos vemos para celebrar.",
     footerBack: "Volver arriba",
   },
@@ -146,6 +153,10 @@ const copy: Record<string, LandingCopy> = {
     rsvpHeading: "Confirm your attendance",
     rsvpText: "Please confirm your attendance and your family group's attendance by October 31.",
     rsvpSubtext: "You will receive the details by email.",
+    rsvpNoticeTitle: "RSVP with your personal link",
+    rsvpNoticeBody:
+      "We sent you a unique link by WhatsApp or email to confirm your attendance and your group's. Open that link to reply.",
+    rsvpNoticeHelp: "Can't find it? Message us and we'll resend it.",
     footerThanks: "See you there to celebrate.",
     footerBack: "Back to top",
   },
@@ -246,7 +257,15 @@ export default function WeddingLanding({
               <Sprig className="rsvp-sprig" />
             </Reveal>
             <Reveal delay={120}>
-              <RsvpForm locale={locale} invitee={invitee} />
+              {invitee ? (
+                <RsvpForm locale={locale} invitee={invitee} />
+              ) : (
+                <div className="rsvp-notice">
+                  <h3>{text.rsvpNoticeTitle}</h3>
+                  <p>{text.rsvpNoticeBody}</p>
+                  <p className="rsvp-notice-help">{text.rsvpNoticeHelp}</p>
+                </div>
+              )}
             </Reveal>
           </div>
         </section>

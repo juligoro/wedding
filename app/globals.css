@@ -1344,3 +1344,29 @@ img {
 .member-card > .full {
   margin-top: 14px;
 }
+
+/* Link-only notice that replaces the open RSVP form on the public landing. */
+.rsvp-notice {
+  padding: clamp(28px, 3.4vw, 44px);
+  border-radius: 14px;
+  background: linear-gradient(160deg, var(--paper-tint), var(--paper-deep));
+  box-shadow: var(--shadow);
+}
+.rsvp-notice h3 {
+  margin: 0 0 14px;
+  font-family: var(--display-font);
+  font-weight: 500;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  line-height: 1;
+  color: var(--sage-deep);
+}
+.rsvp-notice p {
+  margin: 0 0 12px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.rsvp-notice-help {
+  margin: 0;
+  font-style: italic;
+  color: var(--sage-dark);
+}
