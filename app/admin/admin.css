@@ -1447,3 +1447,14 @@ button.stat-card:hover:not(:disabled) {
 .invitee-name .edit-toggle {
   margin-top: 2px;
 }
+
+/* Match / manual-link info, tucked inside the expanded household editor. */
+.editor-match {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--admin-border, #e6e5e0);
+}

@@ -27,7 +27,7 @@ const FILTERS: { id: string; label: string }[] = [
   { id: "all", label: "Todos" },
 ];
 
-const COL_COUNT = 7;
+const COL_COUNT = 6;
 
 interface DraftMember {
   firstName: string;
@@ -441,7 +441,6 @@ export default function FollowUpView() {
             <tr>
               <th>Nombre</th>
               <th>Estado</th>
-              <th>Coincidencia</th>
               <th>Link personalizado</th>
               <th>Mensaje completo</th>
               <th>Contacto</th>
@@ -469,37 +468,6 @@ export default function FollowUpView() {
                     <span className={`badge ${STATUS_TONES[item.status]}`}>
                       {STATUS_LABELS[item.status]}
                     </span>
-                  </td>
-                  <td>
-                    {item.matchedGuest ? (
-                      <div className="match-cell">
-                        <span>{item.matchedGuest.name}</span>
-                        <span className={`match-badge conf-${item.confidence}`}>
-                          {CONFIDENCE_LABELS[item.confidence]}
-                        </span>
-                        {item.confidence === "manual" || item.confidence === "partial" ? (
-                          <button
-                            type="button"
-                            className="link-button"
-                            onClick={() => setManualMatch(item.id, null)}
-                          >
-                            quitar
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <select
-                        value=""
-                        onChange={(event) => setManualMatch(item.id, event.target.value)}
-                      >
-                        <option value="">Vincular…</option>
-                        {rowsWithTableNames.map((row) => (
-                          <option key={row.id} value={row.id}>
-                            {row.name} · {row.attending ? "Confirmó" : "No viene"}
-                          </option>
-                        ))}
-                      </select>
-                    )}
                   </td>
                   <td>
                     <div className="invite-link-cell">
@@ -544,7 +512,41 @@ export default function FollowUpView() {
                 </tr>
                 {editingId === item.id ? (
                   <tr className="editor-row">
-                    <td colSpan={COL_COUNT}>{renderEditor()}</td>
+                    <td colSpan={COL_COUNT}>
+                      {renderEditor()}
+                      <div className="editor-match">
+                        <span className="he-label">Coincidencia con la respuesta</span>
+                        {item.matchedGuest ? (
+                          <div className="match-cell">
+                            <span>{item.matchedGuest.name}</span>
+                            <span className={`match-badge conf-${item.confidence}`}>
+                              {CONFIDENCE_LABELS[item.confidence]}
+                            </span>
+                            {item.confidence === "manual" || item.confidence === "partial" ? (
+                              <button
+                                type="button"
+                                className="link-button"
+                                onClick={() => setManualMatch(item.id, null)}
+                              >
+                                quitar
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <select
+                            value=""
+                            onChange={(event) => setManualMatch(item.id, event.target.value)}
+                          >
+                            <option value="">Vincular a una respuesta…</option>
+                            {rowsWithTableNames.map((row) => (
+                              <option key={row.id} value={row.id}>
+                                {row.name} · {row.attending ? "Confirmó" : "No viene"}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ) : null}
               </Fragment>
