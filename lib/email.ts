@@ -3,14 +3,12 @@ import { Resend } from "resend";
 import type { Rsvp } from "@prisma/client";
 
 import { buildGoogleCalendarUrl, getEventDateShort, getEventWhen } from "@/lib/calendar";
-import { parseJson } from "@/lib/guests";
 import type { Locale } from "@/lib/types";
 
 interface EmailCopy {
   subject: string;
   greeting: (name: string) => string;
   confirmed: string;
-  partyIntro: string;
   detailsTitle: string;
   when: string;
   where: string;
@@ -35,7 +33,6 @@ const EVENT: Record<Locale, EmailCopy> = {
     subject: "¡Confirmamos tu lugar! · Juli & Tomi",
     greeting: (name) => `¡Hola ${name}!`,
     confirmed: "Recibimos tu confirmación. ¡Nos hace muy felices que vengas a celebrar con nosotros!",
-    partyIntro: "Te esperamos a:",
     detailsTitle: "Los detalles",
     when: "Cuándo",
     where: "Dónde",
@@ -57,7 +54,6 @@ const EVENT: Record<Locale, EmailCopy> = {
     subject: "Your spot is confirmed! · Juli & Tomi",
     greeting: (name) => `Hi ${name}!`,
     confirmed: "We got your RSVP. We're so happy you'll be celebrating with us!",
-    partyIntro: "We're expecting:",
     detailsTitle: "The details",
     when: "When",
     where: "Where",
@@ -102,8 +98,6 @@ function buildEmail(
   greetingName?: string,
 ): { subject: string; html: string; text: string } {
   const name = greetingName || rsvp.firstName;
-  const companions = parseJson<string[]>(rsvp.companions, []);
-  const partyNames = [`${rsvp.firstName} ${rsvp.lastName}`.trim(), ...companions].filter(Boolean);
   const mapUrl = (process.env.EVENT_MAP_URL || DEFAULT_MAP_URL).trim();
   const whereDetail = `<a href="${escapeHtml(mapUrl)}" style="color:#40513c;text-decoration:underline">${escapeHtml(t.whereValue)}</a>`;
   const whereText = `${t.whereValue} — ${mapUrl}`;
@@ -112,14 +106,6 @@ function buildEmail(
   const logoBlock = logoSrc
     ? `<img src="${logoSrc}" alt="Juli &amp; Tomi" width="158" style="display:block;margin:0 auto 16px;width:158px;max-width:58%;height:auto" />`
     : `<div style="font-family:${DISPLAY_FONT};font-size:30px;color:#40513c;margin-bottom:8px">Juli &amp; Tomi</div>`;
-
-  const partyBlock =
-    partyNames.length > 1
-      ? `<p style="font-family:${LABEL_FONT};margin:0 0 6px;color:#6f8062;font-size:12px;letter-spacing:.18em;text-transform:uppercase">${t.partyIntro}</p>
-         <p style="font-family:${BODY_FONT};margin:0 0 4px;font-size:16px;color:#26241f">${partyNames
-           .map((person) => escapeHtml(person))
-           .join(" · ")}</p>`
-      : "";
 
   const locale: Locale = t === EVENT.en ? "en" : "es";
   const whenValue = getEventWhen(locale);
@@ -167,7 +153,6 @@ function buildEmail(
                 <td bgcolor="#ffffff" style="background-color:#ffffff;padding:16px 32px 30px">
                   <h1 style="font-family:${DISPLAY_FONT};font-weight:600;margin:14px 0 14px;font-size:30px;color:#26241f">${escapeHtml(t.greeting(name))}</h1>
                   <p style="margin:0 0 20px;font-size:16px;line-height:1.7;color:#3a382f">${t.confirmed}</p>
-                  ${partyBlock}
                   <p style="font-family:${LABEL_FONT};margin:26px 0 10px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#6f8062">${t.detailsTitle}</p>
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">
                     ${row(t.when, whenValue)}
@@ -198,7 +183,6 @@ function buildEmail(
     t.greeting(name),
     "",
     t.confirmed,
-    partyNames.length > 1 ? `\n${t.partyIntro} ${partyNames.join(" · ")}` : "",
     "",
     `${t.detailsTitle}:`,
     `- ${t.when}: ${whenValue}`,
