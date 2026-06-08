@@ -105,12 +105,20 @@ export default function GuestDrawer() {
   }
 
   function handleDeleteGuest() {
+    if (!selectedRow) {
+      return;
+    }
+
     if (window.confirm(`¿Mover a "${selectedRow.name}" a la papelera?`)) {
       softDeleteGuest(selectedRow.id);
     }
   }
 
   function handleDeleteRsvp() {
+    if (!selectedSubmission) {
+      return;
+    }
+
     const count = selectedSubmissionPeople.length;
 
     if (
