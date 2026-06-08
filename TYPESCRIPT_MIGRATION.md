@@ -14,9 +14,9 @@ gratis.
 
 | Fase | Descripción | Estado |
 |------|-------------|--------|
-| 0 | Tooling (tsconfig, deps, scripts) | ✅ Hecho |
-| 1 | Capa de datos: `lib/*` + `lib/types.ts` | ✅ Hecho |
-| 2 | API routes (`app/api/**`) | ⏳ Pendiente |
+| 0 | Tooling (tsconfig, deps, scripts) | ✅ Hecho · verificado en Vercel |
+| 1 | Capa de datos: `lib/*` + `lib/types.ts` | ✅ Hecho · verificado en Vercel |
+| 2 | API routes (`app/api/**`) | ✅ Hecho |
 | 3 | Admin: `AdminContext` + componentes + `app/admin/lib/*` | ⏳ Pendiente |
 | 4 | Componentes de landing + páginas + `middleware` | ⏳ Pendiente |
 
@@ -80,21 +80,32 @@ fase — empiezan a aparecer cuando migremos las routes (Fase 2).
 
 ---
 
-## Fase 2 — API routes ⏳
+## Fase 2 — API routes ✅
 
 Tipar `request.json()` y las respuestas. 11 archivos.
 
-- [ ] `app/api/rsvp/route.js` → `.ts`
-- [ ] `app/api/calendar/route.js` → `.ts`
-- [ ] `app/api/admin/login/route.js` → `.ts`
-- [ ] `app/api/admin/logout/route.js` → `.ts`
-- [ ] `app/api/admin/guests/route.js` → `.ts`
-- [ ] `app/api/admin/guests/assign-table/route.js` → `.ts`
-- [ ] `app/api/admin/guests/tags/route.js` → `.ts`
-- [ ] `app/api/admin/rsvps/route.js` → `.ts`
-- [ ] `app/api/admin/tables/route.js` → `.ts`
-- [ ] `app/api/admin/invitees/route.js` → `.ts`
-- [ ] `app/api/admin/invitees/import/route.js` → `.ts`
+- [x] `app/api/rsvp/route.js` → `.ts`
+- [x] `app/api/calendar/route.js` → `.ts`
+- [x] `app/api/admin/login/route.js` → `.ts`
+- [x] `app/api/admin/logout/route.js` → `.ts`
+- [x] `app/api/admin/guests/route.js` → `.ts`
+- [x] `app/api/admin/guests/assign-table/route.js` → `.ts`
+- [x] `app/api/admin/guests/tags/route.js` → `.ts`
+- [x] `app/api/admin/rsvps/route.js` → `.ts`
+- [x] `app/api/admin/tables/route.js` → `.ts`
+- [x] `app/api/admin/invitees/route.js` → `.ts`
+- [x] `app/api/admin/invitees/import/route.js` → `.ts`
+
+**Notas / decisiones:**
+- `request.json()` queda como `any` (es JSON no confiable); el RSVP se castea a
+  `RsvpFormData`. Los accesos a propiedades siguen compilando sin fricción.
+- Bajo `strict`, `catch (error)` da `error: unknown`. Donde se lee
+  `error.code` (Prisma `P2025`/`P2002`) se usa `(error as { code?: string }).code`.
+- Handlers tipados como `(request: Request)`.
+- `import`: guard `typeof file === "string"` para estrechar `FormDataEntryValue`;
+  filas del Excel tipadas como `unknown[][]`; insert como `Prisma.InviteeCreateManyInput[]`.
+- `guests` PATCH: `guestData` tipado con campos opcionales (`food`/`needsBus`/
+  `tableId`) para poder construirlo incremental.
 
 ---
 

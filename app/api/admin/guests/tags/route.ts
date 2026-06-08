@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 import { parseJson } from "@/lib/guests";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
     const data = await request.json();
     const guestIds = Array.isArray(data.guestIds)
-      ? data.guestIds.map((id) => Number(id)).filter(Number.isInteger)
+      ? data.guestIds.map((id: unknown) => Number(id)).filter(Number.isInteger)
       : [];
     const tag = typeof data.tag === "string" ? data.tag.trim() : "";
 
@@ -33,7 +33,7 @@ export async function POST(request) {
 
     await prisma.$transaction(
       guests.map((guest) => {
-        const tags = parseJson(guest.tags, []);
+        const tags = parseJson<string[]>(guest.tags, []);
         const nextTags = Array.from(new Set([...tags, tag]));
 
         return prisma.guest.update({

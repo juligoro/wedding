@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // Soft-delete (or permanently delete) a whole RSVP and its guests.
-export async function DELETE(request) {
+export async function DELETE(request: Request) {
   try {
     const data = await request.json().catch(() => ({}));
     const id = Number(data.id);
@@ -27,7 +27,7 @@ export async function DELETE(request) {
 
     return NextResponse.json({ deleted: 1 });
   } catch (error) {
-    if (error.code === "P2025") {
+    if ((error as { code?: string }).code === "P2025") {
       return NextResponse.json({ error: "El envío no existe." }, { status: 404 });
     }
 
@@ -38,7 +38,7 @@ export async function DELETE(request) {
 }
 
 // Restore a soft-deleted RSVP and its guests.
-export async function PATCH(request) {
+export async function PATCH(request: Request) {
   try {
     const data = await request.json().catch(() => ({}));
     const id = Number(data.id);
@@ -58,7 +58,7 @@ export async function PATCH(request) {
 
     return NextResponse.json({ restored: 1 });
   } catch (error) {
-    if (error.code === "P2025") {
+    if ((error as { code?: string }).code === "P2025") {
       return NextResponse.json({ error: "El envío no existe." }, { status: 404 });
     }
 

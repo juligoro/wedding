@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 
-export async function PATCH(request) {
+export async function PATCH(request: Request) {
   try {
     const data = await request.json();
     const id = Number(data.id);
@@ -11,7 +11,7 @@ export async function PATCH(request) {
       return NextResponse.json({ error: "Invitado inválido." }, { status: 400 });
     }
 
-    const update = {};
+    const update: { contacted?: boolean; manualGuestId?: number | null } = {};
 
     if (typeof data.contacted === "boolean") {
       update.contacted = data.contacted;
@@ -37,7 +37,7 @@ export async function PATCH(request) {
 
     return NextResponse.json({ invitee });
   } catch (error) {
-    if (error.code === "P2025") {
+    if ((error as { code?: string }).code === "P2025") {
       return NextResponse.json({ error: "El invitado no existe." }, { status: 404 });
     }
 
@@ -47,7 +47,7 @@ export async function PATCH(request) {
   }
 }
 
-export async function DELETE(request) {
+export async function DELETE(request: Request) {
   try {
     const data = await request.json().catch(() => ({}));
 
@@ -67,7 +67,7 @@ export async function DELETE(request) {
 
     return NextResponse.json({ deleted: 1 });
   } catch (error) {
-    if (error.code === "P2025") {
+    if ((error as { code?: string }).code === "P2025") {
       return NextResponse.json({ error: "El invitado no existe." }, { status: 404 });
     }
 

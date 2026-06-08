@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
+import type { Prisma } from "@prisma/client";
+
 import { normalizeName } from "@/lib/guests";
 import { prisma } from "@/lib/prisma";
 
@@ -33,7 +35,19 @@ const HOUSEHOLD_HEADERS = ["familia", "grupo", "household", "group"];
 const PARTY_HEADERS = ["cantidad", "personas", "pax", "party", "cantidad de personas", "cupos"];
 const NOTES_HEADERS = ["notas", "nota", "observaciones", "comentarios", "comentario"];
 
-function findColumn(headers, candidates) {
+interface DetectedColumns {
+  headers: string[];
+  lastIdx: number;
+  firstIdx: number;
+  combinedIdx: number;
+  emailIdx: number;
+  phoneIdx: number;
+  householdIdx: number;
+  partyIdx: number;
+  notesIdx: number;
+}
+
+function findColumn(headers: string[], candidates: string[]): number {
   for (let index = 0; index < headers.length; index += 1) {
     if (candidates.includes(headers[index])) {
       return index;
@@ -43,7 +57,7 @@ function findColumn(headers, candidates) {
   return -1;
 }
 
-function cell(row, index) {
+function cell(row: unknown[], index: number): string {
   if (index < 0) {
     return "";
   }
@@ -51,7 +65,7 @@ function cell(row, index) {
   return String(row[index] ?? "").trim();
 }
 
-function detectColumns(rawHeaders) {
+function detectColumns(rawHeaders: string[]): DetectedColumns {
   const headers = rawHeaders.map((header) => normalizeName(header));
 
   const lastIdx = findColumn(headers, LAST_HEADERS);
@@ -71,7 +85,7 @@ function detectColumns(rawHeaders) {
   };
 }
 
-function buildName(row, columns) {
+function buildName(row: unknown[], columns: DetectedColumns): string {
   if (columns.firstIdx >= 0 && columns.lastIdx >= 0) {
     return `${cell(row, columns.firstIdx)} ${cell(row, columns.lastIdx)}`.trim();
   }
@@ -87,19 +101,19 @@ function buildName(row, columns) {
   return cell(row, 0);
 }
 
-function parseParty(value) {
+function parseParty(value: string): number {
   const number = Number.parseInt(value, 10);
 
   return Number.isInteger(number) && number > 0 ? number : 1;
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
     const mode = formData.get("mode") === "append" ? "append" : "replace";
 
-    if (!file || typeof file.arrayBuffer !== "function") {
+    if (!file || typeof file === "string" || typeof file.arrayBuffer !== "function") {
       return NextResponse.json({ error: "Subí un archivo .xlsx o .csv." }, { status: 400 });
     }
 
@@ -111,7 +125,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "El archivo no tiene hojas." }, { status: 400 });
     }
 
-    const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+    const matrix = XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[sheetName], {
       header: 1,
       blankrows: false,
       defval: "",
@@ -127,8 +141,8 @@ export async function POST(request) {
     const [headerRow, ...dataRows] = matrix;
     const columns = detectColumns(headerRow.map((value) => String(value ?? "")));
 
-    const seen = new Set();
-    const invitees = [];
+    const seen = new Set<string>();
+    const invitees: Prisma.InviteeCreateManyInput[] = [];
 
     dataRows.forEach((row) => {
       const fullName = buildName(row, columns);

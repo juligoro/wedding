@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
     const data = await request.json();
     const name = typeof data.name === "string" ? data.name.trim() : "";
@@ -20,7 +20,7 @@ export async function POST(request) {
 
     return NextResponse.json({ table }, { status: 201 });
   } catch (error) {
-    if (error.code === "P2002") {
+    if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Ya existe una mesa con ese nombre." }, { status: 409 });
     }
 
@@ -30,7 +30,7 @@ export async function POST(request) {
   }
 }
 
-export async function PATCH(request) {
+export async function PATCH(request: Request) {
   try {
     const data = await request.json();
     const id = Number(data.id);
@@ -55,7 +55,7 @@ export async function PATCH(request) {
 
     return NextResponse.json({ table });
   } catch (error) {
-    if (error.code === "P2002") {
+    if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Ya existe una mesa con ese nombre." }, { status: 409 });
     }
 

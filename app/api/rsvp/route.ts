@@ -3,29 +3,30 @@ import { NextResponse } from "next/server";
 import { sendRsvpConfirmation } from "@/lib/email";
 import { buildGuestsFromRsvp } from "@/lib/guests";
 import { prisma } from "@/lib/prisma";
+import type { CompanionFood, RsvpFormData } from "@/lib/types";
 
-function getText(data, key) {
+function getText(data: RsvpFormData, key: string): string {
   const value = data[key];
 
   return typeof value === "string" ? value.trim() : "";
 }
 
-function getCompanions(data, companionCount) {
+function getCompanions(data: RsvpFormData, companionCount: number): string[] {
   return Array.from({ length: companionCount }, (_, index) =>
     getText(data, `acompanante_${index + 1}`),
   ).filter(Boolean);
 }
 
-function getCompanionFood(data, companionCount) {
+function getCompanionFood(data: RsvpFormData, companionCount: number): CompanionFood[] {
   return Array.from({ length: companionCount }, (_, index) => ({
     name: getText(data, `acompanante_${index + 1}`),
     restriction: getText(data, `comida_acompanante_${index + 1}`) || "Ninguna",
   }));
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
-    const data = await request.json();
+    const data = (await request.json()) as RsvpFormData;
     const attending = data.asistencia === "si";
     const companionCount = attending ? Number(getText(data, "acompanantes") || 0) : 0;
 

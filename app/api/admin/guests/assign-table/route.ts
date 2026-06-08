@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
     const data = await request.json();
     const guestIds = Array.isArray(data.guestIds)
-      ? data.guestIds.map((id) => Number(id)).filter(Number.isInteger)
+      ? data.guestIds.map((id: unknown) => Number(id)).filter(Number.isInteger)
       : [];
     const tableId = data.tableId === null ? null : Number(data.tableId);
 
@@ -37,7 +37,7 @@ export async function POST(request) {
       }
 
       const currentGuestIds = new Set(table.guests.map((guest) => guest.id));
-      const incomingNewGuests = guestIds.filter((guestId) => !currentGuestIds.has(guestId));
+      const incomingNewGuests = guestIds.filter((guestId: number) => !currentGuestIds.has(guestId));
 
       if (table.guests.length + incomingNewGuests.length > table.capacity) {
         return NextResponse.json(

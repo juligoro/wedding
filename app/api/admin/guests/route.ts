@@ -2,7 +2,20 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 
-export async function PATCH(request) {
+interface GuestUpdateFields {
+  firstName: string;
+  lastName: string | null;
+  fullName: string;
+  email: string | null;
+  whatsapp: string | null;
+  attending: boolean;
+  food?: string | null;
+  allergies?: string | null;
+  needsBus?: boolean | null;
+  tableId?: number | null;
+}
+
+export async function PATCH(request: Request) {
   try {
     const data = await request.json();
     const id = Number(data.id);
@@ -45,7 +58,7 @@ export async function PATCH(request) {
         ? data.whatsapp.trim()
         : existing.whatsapp;
 
-    const guestData = {
+    const guestData: GuestUpdateFields = {
       firstName,
       lastName: lastName || null,
       fullName,
@@ -86,13 +99,13 @@ export async function PATCH(request) {
   }
 }
 
-export async function DELETE(request) {
+export async function DELETE(request: Request) {
   try {
     const data = await request.json().catch(() => ({}));
 
     // Bulk: { ids: [...] }
     if (Array.isArray(data.ids)) {
-      const ids = Array.from(new Set(data.ids.map(Number).filter(Number.isInteger)));
+      const ids = Array.from(new Set<number>(data.ids.map(Number).filter(Number.isInteger)));
 
       if (ids.length === 0) {
         return NextResponse.json({ error: "No hay invitados seleccionados." }, { status: 400 });
@@ -128,7 +141,7 @@ export async function DELETE(request) {
 
     return NextResponse.json({ deleted: 1 });
   } catch (error) {
-    if (error.code === "P2025") {
+    if ((error as { code?: string }).code === "P2025") {
       return NextResponse.json({ error: "El invitado no existe." }, { status: 404 });
     }
 

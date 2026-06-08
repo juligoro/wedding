@@ -3,7 +3,7 @@ import { buildIcs } from "@/lib/calendar";
 // Serves the wedding event as a downloadable .ics file (Apple Calendar, Outlook,
 // and any standards-compliant client). Public on purpose — linked from the
 // confirmation email and the RSVP success screen. ?locale=en for English copy.
-export function GET(request) {
+export function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const locale = searchParams.get("locale") === "en" ? "en" : "es";
   const ics = buildIcs(locale);
