@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
 
-const menuOptions = [
+const menuOptions: { value: string; labels: Record<string, string> }[] = [
   { value: "Ninguna", labels: { es: "Ninguna", en: "None" } },
   { value: "Sin gluten", labels: { es: "Sin gluten", en: "Gluten-free" } },
   { value: "Kosher", labels: { es: "Kosher", en: "Kosher" } },
@@ -13,7 +14,7 @@ const menuOptions = [
   { value: "Menu infantil", labels: { es: "Menu infantil", en: "Kids menu" } },
 ];
 
-const copy = {
+const copy: Record<string, Record<string, string>> = {
   es: {
     saveError: "No pudimos guardar la confirmación.",
     busYes: "Queda anotado que necesitan micro.",
@@ -96,14 +97,14 @@ const copy = {
   },
 };
 
-function format(template, replacements) {
+function format(template: string, replacements: Record<string, string | number>): string {
   return Object.entries(replacements).reduce(
-    (text, [key, value]) => text.replace(`{${key}}`, value),
+    (text, [key, value]) => text.replace(`{${key}}`, String(value)),
     template,
   );
 }
 
-function getCompanionOption(locale, count) {
+function getCompanionOption(locale: string, count: number): string {
   if (locale === "en") {
     return `+${count} ${count === 1 ? "guest" : "guests"}`;
   }
@@ -111,7 +112,7 @@ function getCompanionOption(locale, count) {
   return `+${count} ${count === 1 ? "acompañante" : "acompañantes"}`;
 }
 
-function SelectShell({ children }) {
+function SelectShell({ children }: { children: ReactNode }) {
   return (
     <span className="select-shell">
       {children}
@@ -122,7 +123,19 @@ function SelectShell({ children }) {
   );
 }
 
-function FoodSelect({ name, label, required, locale, full }) {
+function FoodSelect({
+  name,
+  label,
+  required,
+  locale,
+  full,
+}: {
+  name: string;
+  label: string;
+  required?: boolean;
+  locale: string;
+  full?: boolean;
+}) {
   return (
     <label className={full ? "full" : undefined}>
       <span className="field-label">{label}</span>
@@ -139,7 +152,7 @@ function FoodSelect({ name, label, required, locale, full }) {
   );
 }
 
-export default function RsvpForm({ locale = "es" }) {
+export default function RsvpForm({ locale = "es" }: { locale?: string }) {
   const text = copy[locale] || copy.es;
   const [attendance, setAttendance] = useState("");
   const [guestCount, setGuestCount] = useState(0);
@@ -163,7 +176,7 @@ export default function RsvpForm({ locale = "es" }) {
     }
   }, [isAttending]);
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const form = event.currentTarget;
@@ -202,7 +215,7 @@ export default function RsvpForm({ locale = "es" }) {
       setAttendance("");
       setGuestCount(0);
     } catch (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error instanceof Error ? error.message : text.saveError);
     } finally {
       setIsSubmitting(false);
     }

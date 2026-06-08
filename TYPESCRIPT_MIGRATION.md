@@ -10,15 +10,15 @@ gratis.
 > verificación la corre el usuario localmente** con `npm run typecheck` /
 > `npm run build`, reportando los errores que TS encuentre.
 
-**Estado general:** 🟡 En progreso
+**Estado general:** ✅ Completo — no queda ningún `.js`/`.jsx` en `app/`, `components/`, `lib/`
 
 | Fase | Descripción | Estado |
 |------|-------------|--------|
 | 0 | Tooling (tsconfig, deps, scripts) | ✅ Hecho · verificado en Vercel |
 | 1 | Capa de datos: `lib/*` + `lib/types.ts` | ✅ Hecho · verificado en Vercel |
-| 2 | API routes (`app/api/**`) | ✅ Hecho |
+| 2 | API routes (`app/api/**`) | ✅ Hecho · verificado en Vercel |
 | 3 | Admin: `AdminContext` + componentes + `app/admin/lib/*` | ✅ Hecho |
-| 4 | Componentes de landing + páginas + `middleware` | ⏳ Pendiente |
+| 4 | Componentes de landing + páginas + `middleware` | ✅ Hecho |
 
 Leyenda: ✅ hecho · 🟡 en progreso · ⏳ pendiente
 
@@ -139,10 +139,27 @@ y `.map` ya quedan tipados por el contexto.
 
 ---
 
-## Fase 4 — Landing + páginas + middleware ⏳
+## Fase 4 — Landing + páginas + middleware ✅
 
-- [ ] `components/*` (`WeddingLanding`, `RsvpForm`, `Countdown`, `PhotoGallery`,
+- [x] `components/*` (`WeddingLanding`, `RsvpForm`, `Countdown`, `PhotoGallery`,
       `Botanical`, `Reveal`) → `.tsx`
-- [ ] `app/page.js`, `app/en/page.js`, `app/layout.js` → `.tsx`
-- [ ] `middleware.js` → `.ts` (si existe en raíz)
-- [ ] Eliminar `allowJs` del `tsconfig` si ya no queda ningún `.js` (opcional)
+- [x] `app/page.js`, `app/en/page.js`, `app/layout.js` → `.tsx` (`metadata`/
+      `viewport` tipados con `Metadata`/`Viewport` de `next`)
+- [x] `middleware.js` → `middleware.ts` (`request: NextRequest`)
+- [ ] Eliminar `allowJs` del `tsconfig`: se deja en `true` a propósito —
+      `next.config.mjs` y `scripts/backfill-guests.mjs` siguen en JS (fuera del
+      `include` de tsc, pero sin costo dejarlo).
+
+Notas 4: `Reveal` (polimórfico con `as`) usa un bag de props permisivo para que
+el `ref` + passthrough compilen con cualquier tag; `Botanical` con
+`icons: Record<string, ReactNode>`; `Countdown`/`PhotoGallery` con `useRef`
+tipado y tuplas explícitas; `RsvpForm` con `copy: Record<string, Record<…>>`.
+
+---
+
+## ✅ Migración terminada
+
+Toda la base de la app es TypeScript. Quedan en JS sólo cosas fuera del alcance
+de `tsc`: `next.config.mjs` y el script one-off `scripts/backfill-guests.mjs`
+(ver caveat en Fase 1). Verificación continua: `npm run typecheck` en local y el
+type-check de `next build` en cada deploy de Vercel.

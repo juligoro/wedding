@@ -1,10 +1,41 @@
 import Countdown from "@/components/Countdown";
 import PhotoGallery from "@/components/PhotoGallery";
+import type { GalleryLabels, GalleryPhoto } from "@/components/PhotoGallery";
 import Reveal from "@/components/Reveal";
 import RsvpForm from "@/components/RsvpForm";
 import { Divider, Icon, Sprig } from "@/components/Botanical";
 
-const couplePhotos = [
+interface LandingCard {
+  icon: string;
+  title: string;
+  lines: string[];
+  note?: string;
+}
+
+interface LandingCopy {
+  brand: string;
+  homeAria: string;
+  langCode: string;
+  langHref: string;
+  langLabel: string;
+  heroLabel: string;
+  date: string;
+  location: string;
+  scrollCue: string;
+  introText: string;
+  signature: string;
+  galleryAria: string;
+  galleryLabels: GalleryLabels;
+  detailsAria: string;
+  cards: LandingCard[];
+  rsvpHeading: string;
+  rsvpText: string;
+  rsvpSubtext: string;
+  footerThanks: string;
+  footerBack: string;
+}
+
+const couplePhotos: GalleryPhoto[] = [
   { src: "/couple-photos/img-6634.jpg", alt: "Juli y Tomi abrazados frente al mar", position: "45% 72%" },
   { src: "/couple-photos/img-9679.jpg", alt: "Juli y Tomi con vista a la ciudad", position: "50% 72%" },
   { src: "/couple-photos/img-9509.jpg", alt: "Juli y Tomi de viaje", position: "50% 60%" },
@@ -20,7 +51,7 @@ const couplePhotos = [
   { src: "/couple-photos/img-9063.jpg", alt: "Juli y Tomi abrazados", position: "42% 60%" },
 ];
 
-const copy = {
+const copy: Record<string, LandingCopy> = {
   es: {
     brand: "Juli & Tomi",
     homeAria: "Inicio",
@@ -119,7 +150,7 @@ const copy = {
   },
 };
 
-export default function WeddingLanding({ locale = "es" }) {
+export default function WeddingLanding({ locale = "es" }: { locale?: string }) {
   const text = copy[locale] || copy.es;
 
   return (

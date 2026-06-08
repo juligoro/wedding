@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { ADMIN_COOKIE_NAME, ADMIN_LOGIN_PATH, verifyAdminSession } from "@/lib/adminAuth";
 
 const PUBLIC_ADMIN_PATHS = new Set([ADMIN_LOGIN_PATH, "/api/admin/login"]);
 
-export async function middleware(request) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (PUBLIC_ADMIN_PATHS.has(pathname)) {

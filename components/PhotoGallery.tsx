@@ -4,16 +4,32 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const AUTOPLAY_MS = 2600;
 
-export default function PhotoGallery({ photos, labels }) {
+export interface GalleryPhoto {
+  src: string;
+  alt: string;
+  position: string;
+}
+
+export interface GalleryLabels {
+  label: string;
+  prev: string;
+  next: string;
+  go: string;
+}
+
+export default function PhotoGallery({
+  photos,
+  labels,
+}: {
+  photos: GalleryPhoto[];
+  labels: GalleryLabels;
+}) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const count = photos.length;
-  const timer = useRef(null);
+  const timer = useRef<number | null>(null);
 
-  const go = useCallback(
-    (next) => setIndex((current) => (next + count) % count),
-    [count],
-  );
+  const go = useCallback((next: number) => setIndex((current) => (next + count) % count), [count]);
 
   useEffect(() => {
     if (paused || count <= 1) return undefined;
@@ -25,7 +41,9 @@ export default function PhotoGallery({ photos, labels }) {
     }
 
     timer.current = window.setTimeout(() => go(index + 1), AUTOPLAY_MS);
-    return () => window.clearTimeout(timer.current);
+    return () => {
+      if (timer.current) window.clearTimeout(timer.current);
+    };
   }, [index, paused, count, go]);
 
   return (

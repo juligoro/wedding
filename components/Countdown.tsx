@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const weddingTime = new Date("2026-12-06T17:00:00.000Z").getTime();
 
-const labels = {
+const labels: Record<string, Record<string, string>> = {
   es: {
     kicker: "Cuenta regresiva",
     countdown: "Cuenta regresiva para el casamiento",
@@ -25,7 +25,15 @@ const labels = {
   },
 };
 
-function getRemaining() {
+interface Remaining {
+  total: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+function getRemaining(): Remaining {
   const total = Math.max(0, weddingTime - Date.now());
 
   return {
@@ -37,10 +45,10 @@ function getRemaining() {
   };
 }
 
-export default function Countdown({ locale = "es" }) {
+export default function Countdown({ locale = "es" }: { locale?: string }) {
   const text = labels[locale] || labels.es;
-  const [remaining, setRemaining] = useState(null);
-  const units = useMemo(
+  const [remaining, setRemaining] = useState<Remaining | null>(null);
+  const units = useMemo<Array<[string, number | undefined]>>(
     () => [
       ["days", remaining?.days],
       ["hours", remaining?.hours],

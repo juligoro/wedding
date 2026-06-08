@@ -3,7 +3,9 @@
  * All strokes inherit `currentColor` so they can be tinted from CSS.
  */
 
-export function Sprig({ className = "", flip = false }) {
+import type { ReactNode } from "react";
+
+export function Sprig({ className = "", flip = false }: { className?: string; flip?: boolean }) {
   return (
     <svg
       className={className}
@@ -43,7 +45,7 @@ export function Sprig({ className = "", flip = false }) {
   );
 }
 
-export function Divider({ className = "" }) {
+export function Divider({ className = "" }: { className?: string }) {
   return (
     <div className={`divider ${className}`.trim()} role="presentation">
       <span className="divider-line" />
@@ -68,7 +70,7 @@ export function Divider({ className = "" }) {
   );
 }
 
-const icons = {
+const icons: Record<string, ReactNode> = {
   rings: (
     <>
       <circle cx="9" cy="14" r="6" />
@@ -108,7 +110,7 @@ const icons = {
   ),
 };
 
-export function Icon({ name, className = "" }) {
+export function Icon({ name, className = "" }: { name: string; className?: string }) {
   return (
     <svg
       className={`line-icon ${className}`.trim()}

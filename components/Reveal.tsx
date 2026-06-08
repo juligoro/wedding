@@ -1,6 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ElementType, ReactNode } from "react";
+
+interface RevealProps {
+  as?: ElementType;
+  className?: string;
+  variant?: string;
+  delay?: number;
+  once?: boolean;
+  children?: ReactNode;
+  [key: string]: unknown;
+}
 
 /**
  * Scroll-triggered entrance animation. Adds `is-visible` once the element
@@ -14,8 +25,8 @@ export default function Reveal({
   once = true,
   children,
   ...rest
-}) {
-  const ref = useRef(null);
+}: RevealProps) {
+  const ref = useRef<HTMLElement | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -48,14 +59,17 @@ export default function Reveal({
     return () => observer.disconnect();
   }, [once]);
 
-  return (
-    <Tag
-      ref={ref}
-      className={`reveal reveal-${variant} ${visible ? "is-visible" : ""} ${className}`.trim()}
-      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
-      {...rest}
-    >
-      {children}
-    </Tag>
-  );
+  // Polymorphic `as`: render through a permissive props bag so the ref and any
+  // passthrough props type-check regardless of which tag is used.
+  const Component = Tag as ElementType;
+  const style: CSSProperties | undefined = delay ? { transitionDelay: `${delay}ms` } : undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tagProps: any = {
+    ref,
+    className: `reveal reveal-${variant} ${visible ? "is-visible" : ""} ${className}`.trim(),
+    style,
+    ...rest,
+  };
+
+  return <Component {...tagProps}>{children}</Component>;
 }

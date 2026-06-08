@@ -1,6 +1,9 @@
 import "./globals.css";
 
-export const metadata = {
+import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
+
+export const metadata: Metadata = {
   metadataBase: new URL("https://juli-tomi.wedding"),
   title: "Juli & Tomi | Nos casamos",
   description:
@@ -15,11 +18,11 @@ export const metadata = {
   },
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   themeColor: "#f3ecd8",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es">
       <head>
