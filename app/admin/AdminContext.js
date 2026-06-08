@@ -566,6 +566,33 @@ export function AdminProvider({
     );
   }
 
+  async function softDeleteSelected() {
+    const ids = Array.from(new Set(selectedGuestIds.map(Number).filter(Number.isInteger)));
+
+    if (ids.length === 0) {
+      setTableMessage("Seleccioná al menos un invitado.");
+      return false;
+    }
+
+    const ok = await runCrud(
+      "/api/admin/guests",
+      { method: "DELETE", ...jsonBody({ ids }) },
+      `${ids.length} invitado(s) movidos a la papelera.`,
+    );
+
+    if (ok) {
+      setTableMessage(`${ids.length} invitado(s) movidos a la papelera.`);
+
+      if (ids.includes(selectedRowId)) {
+        setSelectedRowId(null);
+      }
+
+      setSelectedGuestIds([]);
+    }
+
+    return ok;
+  }
+
   async function importInvitees(file) {
     if (!file) {
       setInviteeMessage("Elegí un archivo .xlsx o .csv.");
@@ -733,6 +760,7 @@ export function AdminProvider({
     restoreRsvp,
     purgeGuest,
     purgeRsvp,
+    softDeleteSelected,
     // derived
     rowsWithTableNames,
     acceptedRows,

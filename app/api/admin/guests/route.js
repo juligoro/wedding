@@ -89,6 +89,29 @@ export async function PATCH(request) {
 export async function DELETE(request) {
   try {
     const data = await request.json().catch(() => ({}));
+
+    // Bulk: { ids: [...] }
+    if (Array.isArray(data.ids)) {
+      const ids = Array.from(new Set(data.ids.map(Number).filter(Number.isInteger)));
+
+      if (ids.length === 0) {
+        return NextResponse.json({ error: "No hay invitados seleccionados." }, { status: 400 });
+      }
+
+      if (data.permanent === true) {
+        const result = await prisma.guest.deleteMany({ where: { id: { in: ids } } });
+
+        return NextResponse.json({ deleted: result.count });
+      }
+
+      const result = await prisma.guest.updateMany({
+        where: { id: { in: ids } },
+        data: { deletedAt: new Date() },
+      });
+
+      return NextResponse.json({ deleted: result.count });
+    }
+
     const id = Number(data.id);
 
     if (!Number.isInteger(id)) {

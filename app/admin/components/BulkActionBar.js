@@ -21,7 +21,14 @@ export default function BulkActionBar() {
     copySelected,
     selectUnassignedGuests,
     unassignedRows,
+    softDeleteSelected,
   } = useAdmin();
+
+  function handleBulkDelete() {
+    if (window.confirm(`¿Mover ${selectedGuestIds.length} invitado(s) a la papelera?`)) {
+      softDeleteSelected();
+    }
+  }
 
   if (selectedGuestIds.length === 0) {
     return (
@@ -87,6 +94,17 @@ export default function BulkActionBar() {
         </button>
         <button type="button" onClick={() => copySelected("whatsapp")}>
           Copiar WhatsApps
+        </button>
+      </div>
+
+      <div className="bulk-group">
+        <button
+          type="button"
+          className="danger-button"
+          disabled={isSavingTables}
+          onClick={handleBulkDelete}
+        >
+          Eliminar
         </button>
       </div>
 
