@@ -38,7 +38,7 @@ export function splitName(name: string): { firstName: string; lastName: string }
 // guest rows directly from the members list instead of from the RSVP aggregate.
 export function buildGuestsFromMembers(
   members: InviteRsvpMember[],
-  contact: { email: string; whatsapp: string; allergies: string | null; needsBus: boolean | null },
+  options: { needsBus: boolean | null },
 ): GuestSeed[] {
   return members.map((member, index): GuestSeed => {
     const lastName = member.lastName.trim();
@@ -50,10 +50,10 @@ export function buildGuestsFromMembers(
       role: index === 0 ? "Titular" : "Acompañante",
       attending: member.attending,
       food: member.attending ? member.food || "Ninguna" : null,
-      allergies: member.attending ? contact.allergies : null,
-      needsBus: member.attending ? contact.needsBus : null,
-      email: contact.email,
-      whatsapp: contact.whatsapp,
+      allergies: member.attending ? member.allergies.trim() || null : null,
+      needsBus: member.attending ? options.needsBus : null,
+      email: member.email.trim(),
+      whatsapp: member.whatsapp.trim(),
     };
   });
 }

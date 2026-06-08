@@ -73,8 +73,10 @@ const copy: Record<string, Record<string, string>> = {
     contactHeading: "Tus datos de contacto",
     contactNote: "Para enviarte la confirmación y la dirección exacta.",
     extras: "Alergias y aclaraciones",
+    allergiesFor: "Alergias o comentarios de {name}",
     needName: "Completá el nombre de cada invitado.",
     needContact: "Completá tu email y WhatsApp.",
+    needEmail: "Completá el email de cada invitado que asiste (ahí le llega la confirmación).",
     needBus: "Indicá si necesitan micro.",
   },
   en: {
@@ -125,8 +127,10 @@ const copy: Record<string, Record<string, string>> = {
     contactHeading: "Your contact details",
     contactNote: "So we can email your confirmation and the exact address.",
     extras: "Allergies & notes",
+    allergiesFor: "Allergies or notes for {name}",
     needName: "Please enter each guest's name.",
     needContact: "Please enter your email and WhatsApp.",
+    needEmail: "Please enter an email for each attending guest (that's where their confirmation goes).",
     needBus: "Please tell us whether you need the shuttle.",
   },
 };
@@ -136,6 +140,9 @@ interface MemberState {
   lastName: string;
   attending: boolean;
   food: string;
+  email: string;
+  whatsapp: string;
+  allergies: string;
 }
 
 function format(template: string, replacements: Record<string, string | number>): string {
@@ -201,17 +208,18 @@ export default function RsvpForm({
 
   // --- personalized-link state ---
   const [members, setMembers] = useState<MemberState[]>(() =>
-    (invitee?.members ?? []).map((member) => ({
+    (invitee?.members ?? []).map((member, index) => ({
       firstName: member.firstName,
       lastName: member.lastName,
       attending: true,
       food: "Ninguna",
+      // Prefill the first person's contact from the household, if we have it.
+      email: index === 0 ? (invitee?.email ?? "") : "",
+      whatsapp: index === 0 ? (invitee?.whatsapp ?? "") : "",
+      allergies: "",
     })),
   );
-  const [contactEmail, setContactEmail] = useState(invitee?.email ?? "");
-  const [contactWhatsapp, setContactWhatsapp] = useState(invitee?.whatsapp ?? "");
   const [busChoice, setBusChoice] = useState("");
-  const [allergies, setAllergies] = useState("");
   const [message, setMessage] = useState("");
 
   const googleCalendarUrl = buildGoogleCalendarUrl(locale);
@@ -274,6 +282,9 @@ export default function RsvpForm({
       lastName: member.lastName.trim(),
       attending: member.attending,
       food: member.attending ? member.food : "Ninguna",
+      email: member.attending ? member.email.trim() : "",
+      whatsapp: member.attending ? member.whatsapp.trim() : "",
+      allergies: member.attending ? member.allergies.trim() : "",
     }));
 
     if (cleanMembers.some((member) => !member.firstName)) {
@@ -281,15 +292,12 @@ export default function RsvpForm({
       return;
     }
 
-    const email = contactEmail.trim();
-    const whatsapp = contactWhatsapp.trim();
+    const anyAttending = cleanMembers.some((member) => member.attending);
 
-    if (!email || !whatsapp) {
-      setErrorMessage(text.needContact);
+    if (anyAttending && cleanMembers.some((member) => member.attending && !member.email)) {
+      setErrorMessage(text.needEmail);
       return;
     }
-
-    const anyAttending = cleanMembers.some((member) => member.attending);
 
     if (anyAttending && busChoice !== "si" && busChoice !== "no") {
       setErrorMessage(text.needBus);
@@ -304,10 +312,7 @@ export default function RsvpForm({
       await postRsvp({
         token: invitee.token,
         locale,
-        email,
-        whatsapp,
         micro: anyAttending ? busChoice : "no",
-        alergias: anyAttending ? allergies.trim() : "",
         mensaje: message.trim(),
         members: cleanMembers,
       });
@@ -400,7 +405,7 @@ export default function RsvpForm({
 
   // ---- Personalized-link form (names pre-filled, per-person attendance) ----
   if (invitee) {
-    const messageNum = anyMemberAttending ? "05" : "03";
+    const messageNum = anyMemberAttending ? "03" : "02";
 
     return (
       <form id="rsvpForm" className="rsvp-form" onSubmit={handleSubmit}>
@@ -455,49 +460,52 @@ export default function RsvpForm({
                       </label>
                     </div>
                     {member.attending ? (
-                      <label className="full">
-                        <span className="field-label">
-                          {format(text.mealFor, { name: member.firstName || `#${index + 1}` })}
-                        </span>
-                        <Select
-                          options={foodOptionsFor(locale)}
-                          value={member.food}
-                          onValueChange={(value) => updateMember(index, { food: value })}
-                          ariaLabel={format(text.mealFor, { name: member.firstName || `#${index + 1}` })}
-                        />
-                      </label>
+                      <>
+                        <label className="full">
+                          <span className="field-label">
+                            {format(text.mealFor, { name: member.firstName || `#${index + 1}` })}
+                          </span>
+                          <Select
+                            options={foodOptionsFor(locale)}
+                            value={member.food}
+                            onValueChange={(value) => updateMember(index, { food: value })}
+                            ariaLabel={format(text.mealFor, { name: member.firstName || `#${index + 1}` })}
+                          />
+                        </label>
+                        <div className="grid">
+                          <label>
+                            <span className="field-label">Email</span>
+                            <input
+                              type="email"
+                              autoComplete="email"
+                              value={member.email}
+                              onChange={(event) => updateMember(index, { email: event.target.value })}
+                              required
+                            />
+                          </label>
+                          <label>
+                            <span className="field-label">WhatsApp</span>
+                            <input
+                              autoComplete="tel"
+                              value={member.whatsapp}
+                              onChange={(event) => updateMember(index, { whatsapp: event.target.value })}
+                            />
+                          </label>
+                        </div>
+                        <label className="full">
+                          <span className="field-label">
+                            {format(text.allergiesFor, { name: member.firstName || `#${index + 1}` })}
+                          </span>
+                          <textarea
+                            value={member.allergies}
+                            placeholder={text.allergiesPlaceholder}
+                            onChange={(event) => updateMember(index, { allergies: event.target.value })}
+                          />
+                        </label>
+                      </>
                     ) : null}
                   </div>
                 ))}
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>
-                <span className="legend-num">02</span>
-                {text.contactHeading}
-              </legend>
-              <p className="field-note">{text.contactNote}</p>
-              <div className="grid">
-                <label>
-                  <span className="field-label">Email</span>
-                  <input
-                    type="email"
-                    autoComplete="email"
-                    value={contactEmail}
-                    onChange={(event) => setContactEmail(event.target.value)}
-                    required
-                  />
-                </label>
-                <label>
-                  <span className="field-label">WhatsApp</span>
-                  <input
-                    autoComplete="tel"
-                    value={contactWhatsapp}
-                    onChange={(event) => setContactWhatsapp(event.target.value)}
-                    required
-                  />
-                </label>
               </div>
             </fieldset>
 
@@ -505,22 +513,7 @@ export default function RsvpForm({
               <>
                 <fieldset>
                   <legend>
-                    <span className="legend-num">03</span>
-                    {text.extras}
-                  </legend>
-                  <label className="full">
-                    <span className="field-label">{text.allergies}</span>
-                    <textarea
-                      value={allergies}
-                      placeholder={text.allergiesPlaceholder}
-                      onChange={(event) => setAllergies(event.target.value)}
-                    />
-                  </label>
-                </fieldset>
-
-                <fieldset>
-                  <legend>
-                    <span className="legend-num">04</span>
+                    <span className="legend-num">02</span>
                     {text.mobility}
                   </legend>
                   <p className="field-note">{text.mobilityNote}</p>

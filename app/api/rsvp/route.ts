@@ -60,6 +60,9 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
       lastName: String(member?.lastName ?? "").trim(),
       attending: Boolean(member?.attending),
       food: String(member?.food ?? "").trim() || "Ninguna",
+      email: String(member?.email ?? "").trim(),
+      whatsapp: String(member?.whatsapp ?? "").trim(),
+      allergies: String(member?.allergies ?? "").trim(),
     }))
     .filter((member) => member.firstName);
 
@@ -67,14 +70,16 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
     return NextResponse.json({ error: "Faltan los nombres de los invitados." }, { status: 400 });
   }
 
-  const email = String(payload.email ?? "").trim();
-  const whatsapp = String(payload.whatsapp ?? "").trim();
+  const anyAttending = members.some((member) => member.attending);
 
-  if (!email || !whatsapp) {
-    return NextResponse.json({ error: "Faltan datos de contacto." }, { status: 400 });
+  // Each attending guest needs an email so their own confirmation reaches them.
+  if (anyAttending && members.some((member) => member.attending && !member.email)) {
+    return NextResponse.json(
+      { error: "Falta el email de algún invitado que asiste." },
+      { status: 400 },
+    );
   }
 
-  const anyAttending = members.some((member) => member.attending);
   const needsBus = anyAttending ? payload.micro === "si" : null;
 
   // One confirmation per household. If they need changes, they contact the couple.
@@ -96,15 +101,14 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
   // (built below from every member, attending or not).
   const lead = (anyAttending ? members.find((member) => member.attending) : members[0]) ?? members[0];
   const attendingOthers = members.filter((member) => member !== lead && member.attending);
-  const allergies = anyAttending ? String(payload.alergias ?? "").trim() || null : null;
   const message = String(payload.mensaje ?? "").trim() || null;
 
   const rsvp = await prisma.rsvp.create({
     data: {
       firstName: lead.firstName,
       lastName: lead.lastName,
-      email,
-      whatsapp,
+      email: lead.email,
+      whatsapp: lead.whatsapp,
       attending: anyAttending,
       companionCount: attendingOthers.length,
       companions: JSON.stringify(attendingOthers.map(memberName)),
@@ -115,7 +119,8 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
           restriction: member.food || "Ninguna",
         })),
       ),
-      allergies,
+      // Allergies are per person now — stored on each Guest row, not the aggregate.
+      allergies: null,
       needsBus,
       message,
       inviteeId: invitee.id,
@@ -123,7 +128,7 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
   });
 
   await prisma.guest.createMany({
-    data: buildGuestsFromMembers(members, { email, whatsapp, allergies, needsBus }).map(
+    data: buildGuestsFromMembers(members, { needsBus }).map(
       (guest): Prisma.GuestCreateManyInput => ({
         ...guest,
         rsvpId: rsvp.id,
@@ -135,11 +140,28 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
     const locale = payload.locale === "en" ? "en" : "es";
     const baseUrl = resolveBaseUrl(request);
 
-    // Best-effort: a mail failure must not fail the RSVP.
-    try {
-      await sendRsvpConfirmation({ rsvp, locale, baseUrl });
-    } catch (emailError) {
-      console.error("RSVP confirmation email failed", emailError);
+    // One confirmation per unique attending email, greeting each by their name.
+    const recipients = new Map<string, string>();
+
+    members.forEach((member) => {
+      if (member.attending && member.email && !recipients.has(member.email)) {
+        recipients.set(member.email, member.firstName);
+      }
+    });
+
+    for (const [recipientEmail, recipientName] of recipients) {
+      // Best-effort: a mail failure must not fail the RSVP.
+      try {
+        await sendRsvpConfirmation({
+          rsvp,
+          locale,
+          baseUrl,
+          to: recipientEmail,
+          greetingName: recipientName,
+        });
+      } catch (emailError) {
+        console.error("RSVP confirmation email failed", emailError);
+      }
     }
   }
 

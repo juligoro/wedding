@@ -40,22 +40,24 @@ export interface GuestSeed {
   whatsapp: string; // Guest.whatsapp is non-nullable in the schema
 }
 
-// One member's reply within a personalized-link RSVP submission.
+// One member's reply within a personalized-link RSVP submission. Contact and
+// allergies are per person so each attending guest gets their own confirmation
+// email and can note their own dietary needs.
 export interface InviteRsvpMember {
   firstName: string;
   lastName: string;
   attending: boolean;
   food: string;
+  email: string;
+  whatsapp: string;
+  allergies: string;
 }
 
 // Payload posted by the personalized-link form (JSON, not FormData).
 export interface InviteRsvpPayload {
   token: string;
   locale?: string;
-  email: string;
-  whatsapp: string;
   micro: string;
-  alergias?: string;
   mensaje?: string;
   members: InviteRsvpMember[];
 }

@@ -99,8 +99,9 @@ function buildEmail(
   t: EmailCopy,
   rsvp: Rsvp,
   baseUrl = "",
+  greetingName?: string,
 ): { subject: string; html: string; text: string } {
-  const name = rsvp.firstName;
+  const name = greetingName || rsvp.firstName;
   const companions = parseJson<string[]>(rsvp.companions, []);
   const partyNames = [`${rsvp.firstName} ${rsvp.lastName}`.trim(), ...companions].filter(Boolean);
   const mapUrl = (process.env.EVENT_MAP_URL || DEFAULT_MAP_URL).trim();
@@ -223,10 +224,16 @@ export async function sendRsvpConfirmation({
   rsvp,
   locale = "es",
   baseUrl = "",
+  to,
+  greetingName,
 }: {
   rsvp: Rsvp;
   locale?: string;
   baseUrl?: string;
+  /** Override the recipient (per-person invite mode). Defaults to rsvp.email. */
+  to?: string;
+  /** Override the greeting name (per-person invite mode). Defaults to rsvp.firstName. */
+  greetingName?: string;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -236,20 +243,22 @@ export async function sendRsvpConfirmation({
     return;
   }
 
-  if (!rsvp.email) {
+  const recipient = (to || rsvp.email || "").trim();
+
+  if (!recipient) {
     return;
   }
 
   const key: Locale = locale === "en" ? "en" : "es";
   const t = EVENT[key];
   const assetBase = process.env.EMAIL_ASSET_BASE_URL || baseUrl;
-  const { subject, html, text } = buildEmail(t, rsvp, assetBase);
+  const { subject, html, text } = buildEmail(t, rsvp, assetBase, greetingName);
   const resend = new Resend(apiKey);
   const replyTo = (process.env.EMAIL_REPLY_TO || "").trim();
 
   await resend.emails.send({
     from,
-    to: rsvp.email,
+    to: recipient,
     subject,
     html,
     text,

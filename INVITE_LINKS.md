@@ -210,6 +210,25 @@ in situ + alta al final.
       (cubre altas manuales una vez que responden, y cualquier hogar que ya
       respondió aunque no esté en la planilla).
 
+## Extra — Contacto y alergias por persona ✅ (código)
+
+A pedido: el **email, WhatsApp y alergias** dejan de ser del hogar y pasan a
+**cada invitado** dentro de su tarjeta (solo si asiste). Así cada persona recibe
+**su propio mail de confirmación** y carga sus propias alergias/comentarios.
+
+- [x] `InviteRsvpMember` += `email`, `whatsapp`, `allergies`; `InviteRsvpPayload`
+      ya no lleva contacto/alergias a nivel hogar.
+- [x] `RsvpForm` (modo link): se quitó la sección "Tus datos de contacto" y la de
+      alergias del hogar; cada tarjeta de persona que asiste pide menú + email
+      (requerido) + WhatsApp + alergias. Micro sigue siendo grupal.
+- [x] `buildGuestsFromMembers(members, { needsBus })`: cada `Guest` guarda su
+      propio email/whatsapp/alergias.
+- [x] `handleInviteRsvp`: valida que cada asistente tenga email; el `Rsvp`
+      agregado usa el contacto del primer asistente; **manda un mail por cada
+      email único** de los que asisten (saludando por su nombre).
+- [x] `sendRsvpConfirmation` acepta `to` + `greetingName` para personalizar
+      destinatario y saludo.
+
 ## Fase 6 — Solo el link 🟡
 
 - [x] `WeddingLanding`: si **no** hay `invitee` (rutas públicas `/` y `/en`), el
