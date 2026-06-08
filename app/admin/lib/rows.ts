@@ -1,10 +1,16 @@
 import { parseJson } from "@/lib/guests";
 
-export function getRows(submissions, tableAssignments, guestEdits = {}) {
+import type { GuestEdit, Row, RowFilters, SerializedSubmission } from "../types";
+
+export function getRows(
+  submissions: SerializedSubmission[],
+  tableAssignments: Record<number, number | null>,
+  guestEdits: Record<number, GuestEdit> = {},
+): Row[] {
   return submissions.flatMap((submission) =>
     submission.guests.map((guest) => {
       const tableId = tableAssignments[guest.id] ?? guest.tableId;
-      const edit = guestEdits[guest.id] || {};
+      const edit: GuestEdit = guestEdits[guest.id] || {};
       const firstName = edit.firstName ?? guest.firstName;
       const lastName = edit.lastName ?? (guest.lastName || "");
       const fullName = edit.fullName ?? guest.fullName;
@@ -21,21 +27,21 @@ export function getRows(submissions, tableAssignments, guestEdits = {}) {
         allergies: edit.allergies ?? (guest.allergies || ""),
         email: edit.email ?? guest.email,
         whatsapp: edit.whatsapp ?? guest.whatsapp,
-        tags: parseJson(guest.tags, []),
+        tags: parseJson<string[]>(guest.tags, []),
         submittedBy: `${submission.firstName} ${submission.lastName}`,
         submittedAt: submission.createdAt,
         attending: edit.attending ?? guest.attending,
         tableId,
-        tableName: guest.table?.id === tableId ? guest.table.name : "",
+        tableName: guest.table && guest.table.id === tableId ? guest.table.name : "",
       };
     }),
   );
 }
 
-export function getMealGroups(rows) {
+export function getMealGroups(rows: Row[]): Record<string, Row[]> {
   return rows
     .filter((row) => row.attending)
-    .reduce((groups, person) => {
+    .reduce<Record<string, Row[]>>((groups, person) => {
       const key = person.food || "Ninguna";
 
       if (!groups[key]) {
@@ -48,7 +54,10 @@ export function getMealGroups(rows) {
     }, {});
 }
 
-export function filterAndSortRows(rows, { query, statusFilter, mealFilter, busFilter }) {
+export function filterAndSortRows(
+  rows: Row[],
+  { query, statusFilter, mealFilter, busFilter }: RowFilters,
+): Row[] {
   return rows
     .filter((row) => {
       const normalizedQuery = query.trim().toLowerCase();

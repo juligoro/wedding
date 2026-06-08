@@ -1,6 +1,8 @@
 import { formatDate } from "./format";
 
-export function escapeCsvValue(value) {
+import type { InviteeStatus, ReconcileItem, Row } from "../types";
+
+export function escapeCsvValue(value: unknown): string {
   const stringValue = String(value ?? "");
 
   if (/[",\n]/.test(stringValue)) {
@@ -10,7 +12,7 @@ export function escapeCsvValue(value) {
   return stringValue;
 }
 
-export function downloadCsv(rows) {
+export function downloadCsv(rows: Row[]): void {
   const headers = [
     "Fecha RSVP",
     "Nombres",
@@ -48,9 +50,12 @@ export function downloadCsv(rows) {
   URL.revokeObjectURL(url);
 }
 
-export function downloadInviteesCsv(items, filename = "invitados-sin-responder.csv") {
+export function downloadInviteesCsv(
+  items: ReconcileItem[],
+  filename = "invitados-sin-responder.csv",
+): void {
   const headers = ["Nombre", "Grupo", "Email", "WhatsApp", "Personas", "Estado", "Contactado"];
-  const statusLabels = {
+  const statusLabels: Record<InviteeStatus, string> = {
     accepted: "Confirmó",
     declined: "No viene",
     pending: "Sin responder",

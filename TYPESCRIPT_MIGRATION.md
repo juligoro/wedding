@@ -17,7 +17,7 @@ gratis.
 | 0 | Tooling (tsconfig, deps, scripts) | ✅ Hecho · verificado en Vercel |
 | 1 | Capa de datos: `lib/*` + `lib/types.ts` | ✅ Hecho · verificado en Vercel |
 | 2 | API routes (`app/api/**`) | ✅ Hecho |
-| 3 | Admin: `AdminContext` + componentes + `app/admin/lib/*` | ⏳ Pendiente |
+| 3 | Admin: `AdminContext` + componentes + `app/admin/lib/*` | 🟡 En progreso (3a hecho) |
 | 4 | Componentes de landing + páginas + `middleware` | ⏳ Pendiente |
 
 Leyenda: ✅ hecho · 🟡 en progreso · ⏳ pendiente
@@ -109,15 +109,25 @@ Tipar `request.json()` y las respuestas. 11 archivos.
 
 ---
 
-## Fase 3 — Admin (UI + estado) ⏳
+## Fase 3 — Admin (UI + estado) 🟡
 
-Lo más pesado. El context con sus mapas de edición optimista.
+Lo más pesado. Se hace en sub-pasos verificables.
 
-- [ ] `app/admin/lib/csv.js`, `format.js`, `rows.js`, `match.js` → `.ts`
-- [ ] `app/admin/AdminContext.js` → `.tsx`
+**3a — Tipos del dominio + helpers** ✅
+- [x] `app/admin/types.ts` (nuevo): `SerializedGuest/Submission/Table/Invitee`,
+      `Row`, `GuestEdit`, `ReconcileItem/Result`, `MatchConfidence`, etc.
+      (`Serialized<T>` mapea los `Date` de Prisma a `string`.)
+- [x] `app/admin/lib/csv.js`, `format.js`, `rows.js`, `match.js` → `.ts`
+      (en `match.ts` se reescribió el armado de índices con un helper `pushTo`
+      type-safe en vez del `map.get() || map.set()`).
+
+**3b — Estado + datos del server** ⏳
+- [ ] `app/admin/AdminContext.js` → `.tsx` (tipar el value del context)
+- [ ] `app/admin/page.js` → `.tsx` (helpers `serialize*`)
+
+**3c — Componentes** ⏳
 - [ ] `app/admin/AdminDashboard.js` → `.tsx`
 - [ ] `app/admin/components/*` (12 componentes) → `.tsx`
-- [ ] `app/admin/page.js` → `.tsx` (helpers `serialize*`)
 - [ ] `app/admin/login/page.js` → `.tsx`
 
 ---

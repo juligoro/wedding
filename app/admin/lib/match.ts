@@ -1,20 +1,46 @@
 import { normalizeName } from "@/lib/guests";
 
-function tokenKey(normalized) {
+import type {
+  InviteeStatus,
+  MatchConfidence,
+  ReconcileItem,
+  ReconcileResult,
+  Row,
+  SerializedInvitee,
+} from "../types";
+
+function tokenKey(normalized: string): string {
   return normalized.split(" ").filter(Boolean).sort().join(" ");
 }
 
-function normalizeEmail(value) {
+function normalizeEmail(value: unknown): string {
   return String(value ?? "")
     .trim()
     .toLowerCase();
 }
 
-function buildGuestIndexes(rows) {
-  const byId = new Map();
-  const byExact = new Map();
-  const byTokens = new Map();
-  const byEmail = new Map();
+interface GuestIndexes {
+  byId: Map<number, Row>;
+  byExact: Map<string, Row[]>;
+  byTokens: Map<string, Row[]>;
+  byEmail: Map<string, Row[]>;
+}
+
+function pushTo(map: Map<string, Row[]>, key: string, row: Row): void {
+  const list = map.get(key);
+
+  if (list) {
+    list.push(row);
+  } else {
+    map.set(key, [row]);
+  }
+}
+
+function buildGuestIndexes(rows: Row[]): GuestIndexes {
+  const byId = new Map<number, Row>();
+  const byExact = new Map<string, Row[]>();
+  const byTokens = new Map<string, Row[]>();
+  const byEmail = new Map<string, Row[]>();
 
   rows.forEach((row) => {
     byId.set(row.id, row);
@@ -24,22 +50,22 @@ function buildGuestIndexes(rows) {
     const email = normalizeEmail(row.email);
 
     if (normalized) {
-      (byExact.get(normalized) || byExact.set(normalized, []).get(normalized)).push(row);
+      pushTo(byExact, normalized, row);
     }
 
     if (tokens) {
-      (byTokens.get(tokens) || byTokens.set(tokens, []).get(tokens)).push(row);
+      pushTo(byTokens, tokens, row);
     }
 
     if (email) {
-      (byEmail.get(email) || byEmail.set(email, []).get(email)).push(row);
+      pushTo(byEmail, email, row);
     }
   });
 
   return { byId, byExact, byTokens, byEmail };
 }
 
-function statusFor(guest) {
+function statusFor(guest: Row | null): InviteeStatus {
   if (!guest) {
     return "pending";
   }
@@ -49,29 +75,33 @@ function statusFor(guest) {
 
 // Matches each invitee against the live RSVP rows (titulars + companions).
 // Priority: manual link > exact name > sorted-token name > email > partial token subset.
-export function reconcile(invitees, rows) {
+export function reconcile(invitees: SerializedInvitee[], rows: Row[]): ReconcileResult {
   const { byId, byExact, byTokens, byEmail } = buildGuestIndexes(rows);
-  const matchedGuestIds = new Set();
+  const matchedGuestIds = new Set<number>();
 
-  const items = invitees.map((invitee) => {
+  const items: ReconcileItem[] = invitees.map((invitee) => {
     const normalized = invitee.normalized || normalizeName(invitee.fullName);
     const tokens = tokenKey(normalized);
     const email = normalizeEmail(invitee.email);
 
-    let guest = null;
-    let confidence = "none";
+    let guest: Row | null = null;
+    let confidence: MatchConfidence = "none";
+
+    const exactMatches = normalized ? byExact.get(normalized) : undefined;
+    const tokenMatches = tokens ? byTokens.get(tokens) : undefined;
+    const emailMatches = email ? byEmail.get(email) : undefined;
 
     if (invitee.manualGuestId && byId.has(invitee.manualGuestId)) {
-      guest = byId.get(invitee.manualGuestId);
+      guest = byId.get(invitee.manualGuestId) ?? null;
       confidence = "manual";
-    } else if (normalized && byExact.get(normalized)?.length === 1) {
-      [guest] = byExact.get(normalized);
+    } else if (exactMatches && exactMatches.length === 1) {
+      guest = exactMatches[0];
       confidence = "exact";
-    } else if (tokens && byTokens.get(tokens)?.length === 1) {
-      [guest] = byTokens.get(tokens);
+    } else if (tokenMatches && tokenMatches.length === 1) {
+      guest = tokenMatches[0];
       confidence = "tokens";
-    } else if (email && byEmail.get(email)?.length === 1) {
-      [guest] = byEmail.get(email);
+    } else if (emailMatches && emailMatches.length === 1) {
+      guest = emailMatches[0];
       confidence = "email";
     } else if (tokens) {
       const inviteeTokens = tokens.split(" ");
@@ -119,7 +149,7 @@ export function reconcile(invitees, rows) {
   return { items, extras, stats };
 }
 
-export const CONFIDENCE_LABELS = {
+export const CONFIDENCE_LABELS: Record<MatchConfidence, string> = {
   manual: "Manual",
   exact: "Exacta",
   tokens: "Por nombre",
