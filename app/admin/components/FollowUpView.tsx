@@ -22,6 +22,7 @@ const STATUS_TONES: Record<InviteeStatus, string> = {
 };
 const FILTERS: { id: string; label: string }[] = [
   { id: "pending", label: "Sin responder" },
+  { id: "uncontacted", label: "Sin contactar" },
   { id: "responded", label: "Respondieron" },
   { id: "all", label: "Todos" },
 ];
@@ -168,8 +169,19 @@ export default function FollowUpView() {
       household: draft.household,
     };
 
-    const ok =
-      editingId === "new" ? await addInvitee(payload) : await saveInvitee(editingId as number, payload);
+    if (editingId === "new") {
+      const ok = await addInvitee(payload);
+
+      if (ok) {
+        // Keep the editor open and blank so several households can be added in a
+        // row without the list collapsing under you.
+        setDraft(emptyDraft());
+      }
+
+      return;
+    }
+
+    const ok = await saveInvitee(editingId as number, payload);
 
     if (ok) {
       cancelEdit();
@@ -428,11 +440,11 @@ export default function FollowUpView() {
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Contacto</th>
               <th>Estado</th>
               <th>Coincidencia</th>
               <th>Link personalizado</th>
               <th>Mensaje completo</th>
+              <th>Contacto</th>
               <th>Contactado</th>
             </tr>
           </thead>
@@ -441,19 +453,17 @@ export default function FollowUpView() {
               <Fragment key={item.id}>
                 <tr>
                   <td>
-                    <strong>{item.fullName}</strong>
-                    {item.household ? <span className="cell-sub">{item.household}</span> : null}
-                    <button
-                      type="button"
-                      className="link-button"
-                      onClick={() => (editingId === item.id ? cancelEdit() : startEdit(item))}
-                    >
-                      {editingId === item.id ? "cerrar" : "editar"}
-                    </button>
-                  </td>
-                  <td>
-                    <span className="cell-sub">{item.whatsapp || "—"}</span>
-                    <span className="cell-sub">{item.email || ""}</span>
+                    <div className="invitee-name">
+                      <strong>{item.fullName}</strong>
+                      {item.household ? <span className="cell-sub">{item.household}</span> : null}
+                      <button
+                        type="button"
+                        className="link-button edit-toggle"
+                        onClick={() => (editingId === item.id ? cancelEdit() : startEdit(item))}
+                      >
+                        {editingId === item.id ? "cerrar" : "editar"}
+                      </button>
+                    </div>
                   </td>
                   <td>
                     <span className={`badge ${STATUS_TONES[item.status]}`}>
@@ -519,6 +529,10 @@ export default function FollowUpView() {
                     >
                       Copiar mensaje
                     </button>
+                  </td>
+                  <td>
+                    <span className="cell-sub">{item.whatsapp || "—"}</span>
+                    <span className="cell-sub">{item.email || ""}</span>
                   </td>
                   <td>
                     <input

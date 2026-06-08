@@ -135,6 +135,10 @@ function useAdminValue({
         return item.status !== "pending";
       }
 
+      if (followFilter === "uncontacted") {
+        return !item.contacted;
+      }
+
       return item.status === followFilter;
     })
     .filter((item) => {
