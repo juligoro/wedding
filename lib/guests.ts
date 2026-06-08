@@ -1,16 +1,20 @@
-export function parseJson(value, fallback) {
+import type { Rsvp } from "@prisma/client";
+
+import type { CompanionFood, GuestSeed } from "@/lib/types";
+
+export function parseJson<T>(value: string | null | undefined, fallback: T): T {
   if (!value) {
     return fallback;
   }
 
   try {
-    return JSON.parse(value);
+    return JSON.parse(value) as T;
   } catch {
     return fallback;
   }
 }
 
-export function normalizeName(value) {
+export function normalizeName(value: unknown): string {
   return String(value ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -20,7 +24,7 @@ export function normalizeName(value) {
     .replace(/\s+/g, " ");
 }
 
-export function splitName(name) {
+export function splitName(name: string): { firstName: string; lastName: string } {
   const [firstName = name, ...lastNameParts] = name.trim().split(/\s+/);
 
   return {
@@ -29,7 +33,7 @@ export function splitName(name) {
   };
 }
 
-export function buildGuestsFromRsvp(rsvp) {
+export function buildGuestsFromRsvp(rsvp: Rsvp): GuestSeed[] {
   if (!rsvp.attending) {
     return [
       {
@@ -47,8 +51,8 @@ export function buildGuestsFromRsvp(rsvp) {
     ];
   }
 
-  const companions = parseJson(rsvp.companions, []);
-  const companionFood = parseJson(rsvp.companionFood, []);
+  const companions = parseJson<string[]>(rsvp.companions, []);
+  const companionFood = parseJson<CompanionFood[]>(rsvp.companionFood, []);
 
   return [
     {
@@ -70,7 +74,7 @@ export function buildGuestsFromRsvp(rsvp) {
         firstName: parsedName.firstName,
         lastName: parsedName.lastName || null,
         fullName: name,
-        role: "Acompañante",
+        role: "Acompañante" as const,
         attending: true,
         food: companionFood[index]?.restriction || "Ninguna",
         allergies: rsvp.allergies || null,

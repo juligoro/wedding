@@ -9,6 +9,7 @@
     "build:wasm": "NEXT_TEST_WASM=1 NEXT_TEST_WASM_DIR=node_modules/@next/swc-wasm-nodejs next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "db:backfill-guests": "node scripts/backfill-guests.mjs",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
@@ -26,6 +27,10 @@
   },
   "devDependencies": {
     "@next/swc-wasm-nodejs": "^15.5.18",
-    "prisma": "^6.19.3"
+    "@types/node": "^20.17.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "prisma": "^6.19.3",
+    "typescript": "^5.7.0"
   }
 }

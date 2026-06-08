@@ -1,0 +1,120 @@
+# Migración a TypeScript — progreso
+
+Migración incremental de la base JS/JSX a TypeScript. Next.js permite que `.ts`
+y `.js` convivan (`allowJs: true`), así que cada fase es **deployable por sí
+sola**. Prisma ya genera tipos (`@prisma/client`), lo que da tipado de la base
+gratis.
+
+> **Restricción del entorno:** este asistente no puede correr `tsc` / `next build`
+> en su sandbox (no hay Node). El tipado se escribe con cuidado y **la
+> verificación la corre el usuario localmente** con `npm run typecheck` /
+> `npm run build`, reportando los errores que TS encuentre.
+
+**Estado general:** 🟡 En progreso
+
+| Fase | Descripción | Estado |
+|------|-------------|--------|
+| 0 | Tooling (tsconfig, deps, scripts) | ✅ Hecho |
+| 1 | Capa de datos: `lib/*` + `lib/types.ts` | ✅ Hecho |
+| 2 | API routes (`app/api/**`) | ⏳ Pendiente |
+| 3 | Admin: `AdminContext` + componentes + `app/admin/lib/*` | ⏳ Pendiente |
+| 4 | Componentes de landing + páginas + `middleware` | ⏳ Pendiente |
+
+Leyenda: ✅ hecho · 🟡 en progreso · ⏳ pendiente
+
+---
+
+## Cómo verificar (correr localmente tras cada fase)
+
+```bash
+npm install          # instala typescript + @types (primera vez)
+npm run typecheck    # tsc --noEmit — debe pasar sin errores
+npm run build        # build completo de Next (incluye type-check)
+```
+
+Si `typecheck` tira errores, pegámelos y los resuelvo.
+
+---
+
+## Fase 0 — Tooling ✅
+
+Sin cambios de comportamiento. Habilita TypeScript en el proyecto.
+
+- [x] `package.json`: devDeps `typescript`, `@types/node`, `@types/react`, `@types/react-dom`
+- [x] `package.json`: script `"typecheck": "tsc --noEmit"`
+- [x] `tsconfig.json` (preset Next.js: `allowJs`, `strict`, paths `@/*`)
+- [x] `next-env.d.ts`
+- [x] Eliminar `jsconfig.json` (reemplazado por `tsconfig.json`)
+
+**Notas:** `allowJs: true` + `checkJs` apagado ⇒ los `.js` existentes **no** se
+type-checkean, así que nada se rompe. Solo los archivos que renombramos a `.ts`
+pasan por el checker. `strict: true` queda activo para el código nuevo tipado.
+
+---
+
+## Fase 1 — Capa de datos ✅
+
+El mayor retorno con el menor riesgo: lógica pura + contratos de dominio.
+
+- [x] `lib/types.ts` (nuevo) — tipos de dominio compartidos (`Locale`,
+      `RsvpFormData`, `CompanionFood`, `GuestSeed`)
+- [x] `lib/guests.js` → `lib/guests.ts` (`parseJson` genérico, `normalizeName`,
+      `splitName`, `buildGuestsFromRsvp`)
+- [x] `lib/prisma.js` → `lib/prisma.ts` (singleton tipado)
+- [x] `lib/adminAuth.js` → `lib/adminAuth.ts` (HMAC + cookies)
+- [x] `lib/calendar.js` → `lib/calendar.ts`
+- [x] `lib/email.js` → `lib/email.ts` (`EmailCopy`, `Record<Locale, EmailCopy>`)
+
+**Notas:** las API routes (todavía `.js`) importan estos módulos sin extensión
+(`@/lib/...`), así que la resolución sigue funcionando. Los `.js` no se
+type-checkean contra los `.ts`, por eso no aparecen errores cruzados en esta
+fase — empiezan a aparecer cuando migremos las routes (Fase 2).
+
+> ⚠️ **Caveat:** `scripts/backfill-guests.mjs` (script one-off, `npm run
+> db:backfill-guests`) importa `../lib/guests.js` y `../lib/prisma.js` con
+> extensión `.js` explícita y se corre con `node` directo. Como esos módulos
+> ahora son `.ts`, ese script quedó roto: Node no importa TypeScript sin loader.
+> Es un backfill que ya se usó una vez; si hiciera falta de nuevo, hay que
+> reescribirlo (p. ej. correrlo con `tsx`/`ts-node`) o restaurar shims `.js`.
+> No afecta al build ni a la app en producción.
+
+---
+
+## Fase 2 — API routes ⏳
+
+Tipar `request.json()` y las respuestas. 11 archivos.
+
+- [ ] `app/api/rsvp/route.js` → `.ts`
+- [ ] `app/api/calendar/route.js` → `.ts`
+- [ ] `app/api/admin/login/route.js` → `.ts`
+- [ ] `app/api/admin/logout/route.js` → `.ts`
+- [ ] `app/api/admin/guests/route.js` → `.ts`
+- [ ] `app/api/admin/guests/assign-table/route.js` → `.ts`
+- [ ] `app/api/admin/guests/tags/route.js` → `.ts`
+- [ ] `app/api/admin/rsvps/route.js` → `.ts`
+- [ ] `app/api/admin/tables/route.js` → `.ts`
+- [ ] `app/api/admin/invitees/route.js` → `.ts`
+- [ ] `app/api/admin/invitees/import/route.js` → `.ts`
+
+---
+
+## Fase 3 — Admin (UI + estado) ⏳
+
+Lo más pesado. El context con sus mapas de edición optimista.
+
+- [ ] `app/admin/lib/csv.js`, `format.js`, `rows.js`, `match.js` → `.ts`
+- [ ] `app/admin/AdminContext.js` → `.tsx`
+- [ ] `app/admin/AdminDashboard.js` → `.tsx`
+- [ ] `app/admin/components/*` (12 componentes) → `.tsx`
+- [ ] `app/admin/page.js` → `.tsx` (helpers `serialize*`)
+- [ ] `app/admin/login/page.js` → `.tsx`
+
+---
+
+## Fase 4 — Landing + páginas + middleware ⏳
+
+- [ ] `components/*` (`WeddingLanding`, `RsvpForm`, `Countdown`, `PhotoGallery`,
+      `Botanical`, `Reveal`) → `.tsx`
+- [ ] `app/page.js`, `app/en/page.js`, `app/layout.js` → `.tsx`
+- [ ] `middleware.js` → `.ts` (si existe en raíz)
+- [ ] Eliminar `allowJs` del `tsconfig` si ya no queda ningún `.js` (opcional)

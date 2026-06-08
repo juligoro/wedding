@@ -1,11 +1,36 @@
 import { Resend } from "resend";
 
+import type { Rsvp } from "@prisma/client";
+
 import { buildGoogleCalendarUrl, getEventDateShort, getEventWhen } from "@/lib/calendar";
 import { parseJson } from "@/lib/guests";
+import type { Locale } from "@/lib/types";
+
+interface EmailCopy {
+  subject: string;
+  greeting: (name: string) => string;
+  confirmed: string;
+  partyIntro: string;
+  detailsTitle: string;
+  when: string;
+  where: string;
+  whereValue: string;
+  addressSoon: string;
+  dress: string;
+  dressValue: string;
+  calendarTitle: string;
+  calendarIntro: string;
+  calGoogle: string;
+  calApple: string;
+  closing: string;
+  signature: string;
+  banner: string;
+  footer: string;
+}
 
 // Canonical event copy — mirrors the landing page (components/WeddingLanding.js).
 // Edit these (and EVENT_ADDRESS in your env) to update what guests receive.
-const EVENT = {
+const EVENT: Record<Locale, EmailCopy> = {
   es: {
     subject: "¡Confirmamos tu lugar! · Juli & Tomi",
     greeting: (name) => `¡Hola ${name}!`,
@@ -62,7 +87,7 @@ const LABEL_FONT = "'Jost', 'Helvetica Neue', Arial, sans-serif";
 const DEFAULT_MAP_URL =
   "https://www.google.com/maps?q=Janos+Quinta,+Av.+Pres.+Arturo+Umberto+Illia+12802-12900,+B1669+Del+Viso,+Provincia+de+Buenos+Aires&ftid=0x95bc993b005e22c9:0xb3cf995bc6679d2c&entry=gps&shh=CAE&lucs=,94297699,94231188,94280568,47071704,94218641,94282134,100813464,94286869&g_ep=CAISEjI2LjIyLjIuOTIxMTAxNzU3MBgAIIgnKkksOTQyOTc2OTksOTQyMzExODgsOTQyODA1NjgsNDcwNzE3MDQsOTQyMTg2NDEsOTQyODIxMzQsMTAwODEzNDY0LDk0Mjg2ODY5QgJBUg%3D%3D&skid=df8b08af-b870-4b0a-82ee-56f71f9299ee&g_st=ia";
 
-function escapeHtml(value) {
+function escapeHtml(value: unknown): string {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -70,9 +95,13 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
-function buildEmail(t, rsvp, baseUrl = "") {
+function buildEmail(
+  t: EmailCopy,
+  rsvp: Rsvp,
+  baseUrl = "",
+): { subject: string; html: string; text: string } {
   const name = rsvp.firstName;
-  const companions = parseJson(rsvp.companions, []);
+  const companions = parseJson<string[]>(rsvp.companions, []);
   const partyNames = [`${rsvp.firstName} ${rsvp.lastName}`.trim(), ...companions].filter(Boolean);
   const mapUrl = (process.env.EVENT_MAP_URL || DEFAULT_MAP_URL).trim();
   const whereDetail = `<a href="${escapeHtml(mapUrl)}" style="color:#40513c;text-decoration:underline">${escapeHtml(t.whereValue)}</a>`;
@@ -91,12 +120,12 @@ function buildEmail(t, rsvp, baseUrl = "") {
            .join(" · ")}</p>`
       : "";
 
-  const locale = t === EVENT.en ? "en" : "es";
+  const locale: Locale = t === EVENT.en ? "en" : "es";
   const whenValue = getEventWhen(locale);
   const googleUrl = buildGoogleCalendarUrl(locale);
   const icsUrl = baseUrl ? `${baseUrl.replace(/\/$/, "")}/api/calendar?locale=${locale}` : "";
 
-  const calButton = (href, label, filled) =>
+  const calButton = (href: string, label: string, filled: boolean) =>
     `<a href="${escapeHtml(href)}" style="display:inline-block;font-family:${LABEL_FONT};font-size:12px;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;padding:13px 22px;border-radius:999px;${
       filled
         ? "background-color:#40513c;color:#f3efe4;border:1px solid #40513c"
@@ -113,7 +142,7 @@ function buildEmail(t, rsvp, baseUrl = "") {
                     </tr>
                   </table>`;
 
-  const row = (label, value) =>
+  const row = (label: string, value: string) =>
     `<tr>
        <td style="font-family:${LABEL_FONT};padding:12px 0;border-bottom:1px solid #e6e4dd;vertical-align:top;width:118px;color:#6f8062;font-size:11px;letter-spacing:.16em;text-transform:uppercase">${label}</td>
        <td style="font-family:${BODY_FONT};padding:12px 0;border-bottom:1px solid #e6e4dd;color:#26241f;font-size:15px;line-height:1.6">${value}</td>
@@ -200,7 +229,15 @@ function buildEmail(t, rsvp, baseUrl = "") {
 
 // Best-effort: sends a confirmation email to the guest after a "sí" RSVP.
 // No-ops (with a warning) if the env isn't configured, so RSVPs never break.
-export async function sendRsvpConfirmation({ rsvp, locale = "es", baseUrl = "" }) {
+export async function sendRsvpConfirmation({
+  rsvp,
+  locale = "es",
+  baseUrl = "",
+}: {
+  rsvp: Rsvp;
+  locale?: string;
+  baseUrl?: string;
+}): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
 
@@ -213,7 +250,8 @@ export async function sendRsvpConfirmation({ rsvp, locale = "es", baseUrl = "" }
     return;
   }
 
-  const t = EVENT[locale] || EVENT.es;
+  const key: Locale = locale === "en" ? "en" : "es";
+  const t = EVENT[key];
   const assetBase = process.env.EMAIL_ASSET_BASE_URL || baseUrl;
   const { subject, html, text } = buildEmail(t, rsvp, assetBase);
   const resend = new Resend(apiKey);

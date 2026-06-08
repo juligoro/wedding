@@ -35,12 +35,22 @@ const LOCATION =
 // Reminders fired automatically by the guest's calendar (Apple/Outlook honor these).
 const ALARM_TRIGGERS = ["-P30D", "-P7D", "-PT24H"];
 
+type LocaleKey = "es" | "en";
+
+interface LocalDateTime {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+}
+
 // Converts a local Argentina date/time to an iCal UTC stamp (YYYYMMDDTHHMMSSZ).
 // UTC = local - utcOffset; Date.UTC handles any hour/day rollover.
-function toIcsUtc({ year, month, day, hour, minute }) {
+function toIcsUtc({ year, month, day, hour, minute }: LocalDateTime): string {
   const ms = Date.UTC(year, month - 1, day, hour - EVENT.utcOffset, minute, 0);
   const d = new Date(ms);
-  const p = (n) => String(n).padStart(2, "0");
+  const p = (n: number) => String(n).padStart(2, "0");
 
   return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}T${p(
     d.getUTCHours(),
@@ -63,11 +73,11 @@ const END_UTC = toIcsUtc({
   minute: EVENT.end.minute,
 });
 
-function pickLocale(locale) {
+function pickLocale(locale: string): LocaleKey {
   return locale === "en" ? "en" : "es";
 }
 
-function getCopy(locale) {
+function getCopy(locale: string): { title: string; description: string } {
   const l = pickLocale(locale);
   const title = l === "en" ? "Juli & Tomi's Wedding" : "Casamiento de Juli & Tomi";
   const description =
@@ -79,12 +89,12 @@ function getCopy(locale) {
 }
 
 // Human-readable "when" line, e.g. "Domingo 6 de diciembre de 2026 · desde las 14 hs."
-export function getEventWhen(locale = "es") {
+export function getEventWhen(locale: string = "es"): string {
   return EVENT.when[pickLocale(locale)];
 }
 
 // Short date for headers, e.g. "6 · 12 · 2026".
-export function getEventDateShort() {
+export function getEventDateShort(): string {
   const { year, month, day } = EVENT.date;
 
   return `${day} · ${month} · ${year}`;
@@ -92,7 +102,7 @@ export function getEventDateShort() {
 
 // Google Calendar "add event" template URL (Google ignores .ics alarms, so guests
 // add their own reminders — but the event lands fully pre-filled).
-export function buildGoogleCalendarUrl(locale = "es") {
+export function buildGoogleCalendarUrl(locale: string = "es"): string {
   const copy = getCopy(locale);
   const params = new URLSearchParams({
     action: "TEMPLATE",
@@ -106,7 +116,7 @@ export function buildGoogleCalendarUrl(locale = "es") {
 }
 
 // Escapes a TEXT value per RFC 5545 (backslash, comma, semicolon, newline).
-function escapeIcsText(value) {
+function escapeIcsText(value: unknown): string {
   return String(value ?? "")
     .replaceAll("\\", "\\\\")
     .replaceAll(";", "\\;")
@@ -115,12 +125,12 @@ function escapeIcsText(value) {
 }
 
 // Folds a content line to <=75 octets with CRLF + single space, per RFC 5545.
-function foldLine(line) {
+function foldLine(line: string): string {
   if (line.length <= 75) {
     return line;
   }
 
-  const chunks = [];
+  const chunks: string[] = [];
   let rest = line;
   chunks.push(rest.slice(0, 75));
   rest = rest.slice(75);
@@ -138,7 +148,7 @@ function foldLine(line) {
 }
 
 // Builds a complete VCALENDAR string with VALARM reminders.
-export function buildIcs(locale = "es") {
+export function buildIcs(locale: string = "es"): string {
   const copy = getCopy(locale);
 
   const lines = [

@@ -4,11 +4,11 @@ export const ADMIN_COOKIE_NAME = "wedding_admin_session";
 export const ADMIN_LOGIN_PATH = "/admin/login";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
-function getSessionSecret() {
+function getSessionSecret(): string {
   return process.env.ADMIN_SESSION_SECRET || "";
 }
 
-function base64UrlEncodeBytes(bytes) {
+function base64UrlEncodeBytes(bytes: Uint8Array): string {
   let binary = "";
 
   for (const byte of bytes) {
@@ -18,11 +18,11 @@ function base64UrlEncodeBytes(bytes) {
   return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
 
-function base64UrlEncodeText(value) {
+function base64UrlEncodeText(value: string): string {
   return base64UrlEncodeBytes(encoder.encode(value));
 }
 
-function base64UrlDecodeText(value) {
+function base64UrlDecodeText(value: string): string {
   const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
   const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
   const binary = atob(padded);
@@ -31,7 +31,7 @@ function base64UrlDecodeText(value) {
   return new TextDecoder().decode(bytes);
 }
 
-async function sign(value, secret) {
+async function sign(value: string, secret: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
     encoder.encode(secret),
@@ -44,7 +44,7 @@ async function sign(value, secret) {
   return base64UrlEncodeBytes(new Uint8Array(signature));
 }
 
-export async function createAdminSession() {
+export async function createAdminSession(): Promise<string> {
   const secret = getSessionSecret();
 
   if (!secret) {
@@ -61,7 +61,7 @@ export async function createAdminSession() {
   return `${payload}.${signature}`;
 }
 
-export async function verifyAdminSession(token) {
+export async function verifyAdminSession(token: string | null | undefined): Promise<boolean> {
   const secret = getSessionSecret();
 
   if (!secret || !token) {
@@ -94,7 +94,7 @@ export function getAdminCookieOptions() {
     httpOnly: true,
     maxAge: ADMIN_SESSION_MAX_AGE,
     path: "/",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
   };
 }
