@@ -125,22 +125,12 @@ function buildEmail(
   const googleUrl = buildGoogleCalendarUrl(locale);
   const icsUrl = baseUrl ? `${baseUrl.replace(/\/$/, "")}/api/calendar?locale=${locale}` : "";
 
-  const calButton = (href: string, label: string, filled: boolean) =>
-    `<a href="${escapeHtml(href)}" style="display:inline-block;font-family:${LABEL_FONT};font-size:12px;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;padding:13px 22px;border-radius:999px;${
-      filled
-        ? "background-color:#40513c;color:#f3efe4;border:1px solid #40513c"
-        : "background-color:#ffffff;color:#40513c;border:1px solid #cfd6c4"
-    }">${escapeHtml(label)}</a>`;
+  const calLink = (href: string, label: string) =>
+    `<a href="${escapeHtml(href)}" style="font-family:${LABEL_FONT};font-size:12px;text-decoration:underline;color:#40513c">${escapeHtml(label)}</a>`;
 
   const calendarBlock = `
-                  <p style="font-family:${LABEL_FONT};margin:30px 0 4px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#6f8062">${escapeHtml(t.calendarTitle)}</p>
-                  <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#3a382f">${escapeHtml(t.calendarIntro)}</p>
-                  <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
-                    <tr>
-                      <td style="padding:0 10px 10px 0">${calButton(googleUrl, t.calGoogle, true)}</td>
-                      ${icsUrl ? `<td style="padding:0 0 10px 0">${calButton(icsUrl, t.calApple, false)}</td>` : ""}
-                    </tr>
-                  </table>`;
+                  <p style="margin:20px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.calendarTitle)}:
+                    ${calLink(googleUrl, "Google Calendar")}${icsUrl ? ` · ${calLink(icsUrl, t.calApple)}` : ""}</p>`;
 
   const row = (label: string, value: string) =>
     `<tr>
@@ -164,7 +154,7 @@ function buildEmail(
     <center>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f5f4f0" style="background-color:#f5f4f0">
         <tr>
-          <td align="center" style="padding:32px 18px">
+          <td align="center" style="padding:32px 18px 56px">
             <table role="presentation" width="600" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:600px;max-width:100%;background-color:#ffffff;border:1px solid #e6e4dd;border-radius:18px">
               <tr>
                 <td align="center" bgcolor="#faf8f3" style="background-color:#faf8f3;padding:42px 24px 26px;border-bottom:1px solid #efece4;border-radius:18px 18px 0 0">
@@ -189,9 +179,9 @@ function buildEmail(
                 </td>
               </tr>
               <tr>
-                <td align="center" bgcolor="#40513c" style="background-color:#40513c;padding:30px 24px;border-radius:0 0 18px 18px">
-                  <div style="color:#9fb08f;font-size:18px;line-height:1;letter-spacing:.4em;margin:0 0 12px">&#10087;</div>
-                  <div style="font-family:${DISPLAY_FONT};font-size:21px;letter-spacing:.06em;color:#f3efe4">${t.banner}</div>
+                <td align="center" bgcolor="#40513c" style="background-color:#40513c;padding:24px 24px;border-radius:0 0 18px 18px">
+                  <div style="color:#9fb08f;font-size:16px;line-height:1;letter-spacing:.4em;margin:0 0 9px">&#10087;</div>
+                  <div style="font-family:${DISPLAY_FONT};font-size:19px;letter-spacing:.06em;color:#f3efe4">${t.banner}</div>
                 </td>
               </tr>
             </table>
