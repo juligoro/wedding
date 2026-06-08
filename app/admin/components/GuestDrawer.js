@@ -19,6 +19,8 @@ export default function GuestDrawer() {
     tableCounts,
     mealOptions,
     isSavingTables,
+    softDeleteGuest,
+    softDeleteRsvp,
   } = useAdmin();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -36,6 +38,9 @@ export default function GuestDrawer() {
     setForm({
       firstName: selectedRow.firstName || "",
       lastName: selectedRow.lastName || "",
+      attending: Boolean(selectedRow.attending),
+      email: selectedRow.email || "",
+      whatsapp: selectedRow.whatsapp || "",
       food: selectedRow.food || "",
       allergies: selectedRow.allergies || "",
       needsBus: Boolean(selectedRow.needsBus),
@@ -50,16 +55,19 @@ export default function GuestDrawer() {
     const ok = await saveGuest(selectedRow.id, {
       firstName: form.firstName,
       lastName: form.lastName,
+      attending: form.attending,
+      email: form.email,
+      whatsapp: form.whatsapp,
       food: form.food,
       allergies: form.allergies,
-      needsBus: selectedRow.attending ? form.needsBus : null,
+      needsBus: form.attending ? form.needsBus : null,
     });
 
     if (!ok) {
       return;
     }
 
-    if (selectedRow.attending) {
+    if (form.attending) {
       const nextTableId = form.tableId === "" ? null : Number(form.tableId);
       const currentTableId = selectedRow.tableId || null;
 
@@ -69,6 +77,24 @@ export default function GuestDrawer() {
     }
 
     setIsEditing(false);
+  }
+
+  function handleDeleteGuest() {
+    if (window.confirm(`¿Mover a "${selectedRow.name}" a la papelera?`)) {
+      softDeleteGuest(selectedRow.id);
+    }
+  }
+
+  function handleDeleteRsvp() {
+    const count = selectedSubmissionPeople.length;
+
+    if (
+      window.confirm(
+        `¿Mover a la papelera el envío de ${selectedSubmission.firstName} ${selectedSubmission.lastName} y sus ${count} invitado(s)?`,
+      )
+    ) {
+      softDeleteRsvp(selectedSubmission.id);
+    }
   }
 
   return (
@@ -165,8 +191,36 @@ export default function GuestDrawer() {
                 onChange={(event) => setForm((f) => ({ ...f, lastName: event.target.value }))}
               />
             </label>
+            <label>
+              Estado
+              <select
+                value={form.attending ? "si" : "no"}
+                onChange={(event) =>
+                  setForm((f) => ({ ...f, attending: event.target.value === "si" }))
+                }
+              >
+                <option value="si">Confirma asistencia</option>
+                <option value="no">No viene</option>
+              </select>
+            </label>
+            <label>
+              Email
+              <input
+                type="email"
+                value={form.email}
+                onChange={(event) => setForm((f) => ({ ...f, email: event.target.value }))}
+              />
+            </label>
+            <label>
+              WhatsApp
+              <input
+                value={form.whatsapp}
+                onChange={(event) => setForm((f) => ({ ...f, whatsapp: event.target.value }))}
+              />
+            </label>
+            <p className="drawer-hint">El email y el WhatsApp se actualizan para todo el envío.</p>
 
-            {selectedRow.attending ? (
+            {form.attending ? (
               <>
                 <label>
                   Comida
@@ -273,6 +327,23 @@ export default function GuestDrawer() {
           </>
         )}
       </section>
+
+      {!isEditing ? (
+        <section className="drawer-panel drawer-danger">
+          <h4>Eliminar</h4>
+          <p className="drawer-hint">Se mueve a la papelera. Podés restaurarlo después.</p>
+          <div className="drawer-danger-actions">
+            {selectedSubmissionPeople.length > 1 ? (
+              <button type="button" className="danger-button" onClick={handleDeleteGuest}>
+                Eliminar este invitado
+              </button>
+            ) : null}
+            <button type="button" className="danger-button" onClick={handleDeleteRsvp}>
+              Eliminar envío completo
+            </button>
+          </div>
+        </section>
+      ) : null}
     </aside>
   );
 }

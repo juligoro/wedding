@@ -1280,3 +1280,77 @@ button.stat-card:hover:not(:disabled) {
 .link-button.danger {
   color: var(--no);
 }
+
+/* ==========================================================================
+   CRUD — drawer edit hints, delete buttons, trash (papelera)
+   ========================================================================== */
+
+.drawer-hint {
+  margin: -4px 0 4px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.danger-button {
+  border-color: var(--no);
+  color: var(--no);
+  background: var(--no-soft);
+}
+
+.danger-button:hover:not(:disabled) {
+  background: var(--no);
+  border-color: var(--no);
+  color: #fff;
+}
+
+.drawer-danger {
+  border-top: 1px solid var(--border);
+}
+
+.drawer-danger h4 {
+  margin: 0 0 4px;
+}
+
+.drawer-danger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.trash-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trash-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.trash-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 200px;
+}
+
+.trash-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trash-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

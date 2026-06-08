@@ -8,6 +8,7 @@ const SECTIONS = [
   { id: "seating", label: "Mesas" },
   { id: "follow", label: "Seguimiento" },
   { id: "messages", label: "Mensajes" },
+  { id: "trash", label: "Papelera" },
 ];
 
 export default function Sidebar() {
@@ -20,6 +21,7 @@ export default function Sidebar() {
     messages,
     rowsWithTableNames,
     pendingInvitees,
+    trashCount,
   } = useAdmin();
 
   const counts = {
@@ -28,6 +30,7 @@ export default function Sidebar() {
     seating: unassignedRows.length,
     follow: pendingInvitees.length || null,
     messages: messages.length,
+    trash: trashCount || null,
   };
 
   function logout() {

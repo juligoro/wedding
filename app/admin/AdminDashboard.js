@@ -10,6 +10,7 @@ import MessagesView from "./components/MessagesView";
 import OverviewView from "./components/OverviewView";
 import Sidebar from "./components/Sidebar";
 import SeatingView from "./components/SeatingView";
+import TrashView from "./components/TrashView";
 
 function ActiveSection() {
   const { activeSection } = useAdmin();
@@ -23,6 +24,8 @@ function ActiveSection() {
       return <FollowUpView />;
     case "messages":
       return <MessagesView />;
+    case "trash":
+      return <TrashView />;
     default:
       return <OverviewView />;
   }
@@ -42,9 +45,9 @@ function Shell() {
   );
 }
 
-export default function AdminDashboard({ submissions, tables, invitees }) {
+export default function AdminDashboard({ submissions, tables, invitees, trash }) {
   return (
-    <AdminProvider submissions={submissions} tables={tables} invitees={invitees}>
+    <AdminProvider submissions={submissions} tables={tables} invitees={invitees} trash={trash}>
       <Shell />
     </AdminProvider>
   );

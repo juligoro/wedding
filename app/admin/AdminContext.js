@@ -18,7 +18,13 @@ export function useAdmin() {
   return value;
 }
 
-export function AdminProvider({ submissions, tables, invitees = [], children }) {
+export function AdminProvider({
+  submissions,
+  tables,
+  invitees = [],
+  trash = { rsvps: [], guests: [] },
+  children,
+}) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("overview");
   const [query, setQuery] = useState("");
@@ -48,6 +54,7 @@ export function AdminProvider({ submissions, tables, invitees = [], children }) 
   const [importMode, setImportMode] = useState("replace");
   const [followFilter, setFollowFilter] = useState("pending");
   const [followQuery, setFollowQuery] = useState("");
+  const [crudMessage, setCrudMessage] = useState("");
 
   const rows = useMemo(
     () => getRows(submissions, tableAssignments, guestEdits),
@@ -417,19 +424,35 @@ export function AdminProvider({ submissions, tables, invitees = [], children }) 
     }
 
     const lastName = (fields.lastName || "").trim();
-    const food = (fields.food || "").trim();
-    const allergies = (fields.allergies || "").trim();
-    const needsBus = typeof fields.needsBus === "boolean" ? fields.needsBus : null;
     const fullName = `${firstName} ${lastName}`.trim();
+    const attending = typeof fields.attending === "boolean" ? fields.attending : undefined;
+    const email = (fields.email || "").trim();
+    const whatsapp = (fields.whatsapp || "").trim();
+    const food = attending === false ? "" : (fields.food || "").trim();
+    const allergies = attending === false ? "" : (fields.allergies || "").trim();
+    const needsBus =
+      attending === false ? null : typeof fields.needsBus === "boolean" ? fields.needsBus : null;
 
     setIsSavingTables(true);
     setTableMessage("");
 
     try {
+      const payload = { id: guestId, firstName, lastName, food, allergies, needsBus };
+
+      if (attending !== undefined) {
+        payload.attending = attending;
+      }
+      if (email) {
+        payload.email = email;
+      }
+      if (whatsapp) {
+        payload.whatsapp = whatsapp;
+      }
+
       const response = await fetch("/api/admin/guests", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: guestId, firstName, lastName, food, allergies, needsBus }),
+        body: JSON.stringify(payload),
       });
       const body = await response.json();
 
@@ -439,9 +462,20 @@ export function AdminProvider({ submissions, tables, invitees = [], children }) 
 
       setGuestEdits((current) => ({
         ...current,
-        [guestId]: { firstName, lastName, fullName, food, allergies, needsBus },
+        [guestId]: {
+          firstName,
+          lastName,
+          fullName,
+          food,
+          allergies,
+          needsBus,
+          ...(attending !== undefined ? { attending } : {}),
+          ...(email ? { email } : {}),
+          ...(whatsapp ? { whatsapp } : {}),
+        },
       }));
       setTableMessage("Invitado actualizado.");
+      router.refresh();
       return true;
     } catch (error) {
       setTableMessage(error.message);
@@ -449,6 +483,87 @@ export function AdminProvider({ submissions, tables, invitees = [], children }) 
     } finally {
       setIsSavingTables(false);
     }
+  }
+
+  async function runCrud(url, options, successMessage) {
+    setCrudMessage("");
+
+    try {
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+
+        throw new Error(body.error || "No pudimos completar la acción.");
+      }
+
+      setCrudMessage(successMessage);
+      router.refresh();
+      return true;
+    } catch (error) {
+      setCrudMessage(error.message);
+      return false;
+    }
+  }
+
+  function jsonBody(payload) {
+    return { headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) };
+  }
+
+  async function softDeleteGuest(guestId) {
+    if (selectedRowId === guestId) {
+      setSelectedRowId(null);
+    }
+
+    return runCrud(
+      "/api/admin/guests",
+      { method: "DELETE", ...jsonBody({ id: guestId }) },
+      "Invitado movido a la papelera.",
+    );
+  }
+
+  async function softDeleteRsvp(rsvpId, { closeDrawer = true } = {}) {
+    if (closeDrawer) {
+      setSelectedRowId(null);
+    }
+
+    return runCrud(
+      "/api/admin/rsvps",
+      { method: "DELETE", ...jsonBody({ id: rsvpId }) },
+      "Envío movido a la papelera.",
+    );
+  }
+
+  async function restoreGuest(guestId) {
+    return runCrud(
+      "/api/admin/guests",
+      { method: "PATCH", ...jsonBody({ id: guestId, action: "restore" }) },
+      "Invitado restaurado.",
+    );
+  }
+
+  async function restoreRsvp(rsvpId) {
+    return runCrud(
+      "/api/admin/rsvps",
+      { method: "PATCH", ...jsonBody({ id: rsvpId, action: "restore" }) },
+      "Envío restaurado.",
+    );
+  }
+
+  async function purgeGuest(guestId) {
+    return runCrud(
+      "/api/admin/guests",
+      { method: "DELETE", ...jsonBody({ id: guestId, permanent: true }) },
+      "Invitado eliminado definitivamente.",
+    );
+  }
+
+  async function purgeRsvp(rsvpId) {
+    return runCrud(
+      "/api/admin/rsvps",
+      { method: "DELETE", ...jsonBody({ id: rsvpId, permanent: true }) },
+      "Envío eliminado definitivamente.",
+    );
   }
 
   async function importInvitees(file) {
@@ -607,6 +722,17 @@ export function AdminProvider({ submissions, tables, invitees = [], children }) 
     toggleContacted,
     setManualMatch,
     clearInvitees,
+    // trash / crud
+    trash,
+    trashCount: trash.rsvps.length + trash.guests.length,
+    crudMessage,
+    setCrudMessage,
+    softDeleteGuest,
+    softDeleteRsvp,
+    restoreGuest,
+    restoreRsvp,
+    purgeGuest,
+    purgeRsvp,
     // derived
     rowsWithTableNames,
     acceptedRows,

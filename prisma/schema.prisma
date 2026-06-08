@@ -22,9 +22,12 @@ model Rsvp {
   allergies          String?
   needsBus           Boolean?
   message            String?
+  deletedAt          DateTime?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   guests             Guest[]
+
+  @@index([deletedAt])
 }
 
 model SeatingTable {
@@ -68,6 +71,7 @@ model Guest {
   email       String
   whatsapp    String
   tags        String        @default("[]")
+  deletedAt   DateTime?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   rsvp        Rsvp          @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
@@ -75,4 +79,5 @@ model Guest {
 
   @@index([rsvpId])
   @@index([tableId])
+  @@index([deletedAt])
 }
