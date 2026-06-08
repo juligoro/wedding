@@ -1,22 +1,24 @@
 "use client";
 
 import { useRef } from "react";
+import type { FormEvent } from "react";
 
 import { useAdmin } from "../AdminContext";
 import { downloadInviteesCsv } from "../lib/csv";
 import { CONFIDENCE_LABELS } from "../lib/match";
+import type { InviteeStatus } from "../types";
 
-const STATUS_LABELS = {
+const STATUS_LABELS: Record<InviteeStatus, string> = {
   accepted: "Confirmó",
   declined: "No viene",
   pending: "Sin responder",
 };
-const STATUS_TONES = {
+const STATUS_TONES: Record<InviteeStatus, string> = {
   accepted: "ok",
   declined: "no",
   pending: "pending",
 };
-const FILTERS = [
+const FILTERS: { id: string; label: string }[] = [
   { id: "pending", label: "Sin responder" },
   { id: "responded", label: "Respondieron" },
   { id: "all", label: "Todos" },
@@ -43,11 +45,11 @@ export default function FollowUpView() {
     clearInvitees,
   } = useAdmin();
 
-  const fileRef = useRef(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const { stats } = reconciliation;
   const hasList = stats.total > 0;
 
-  function submitImport(event) {
+  function submitImport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const file = fileRef.current?.files?.[0];
 

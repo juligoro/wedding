@@ -1,5 +1,7 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
 import { useAdmin } from "../AdminContext";
 import { formatDate } from "../lib/format";
 import StatCard from "./StatCard";
@@ -22,7 +24,7 @@ export default function OverviewView() {
     setStatusFilter,
   } = useAdmin();
 
-  function openMeal(meal) {
+  function openMeal(meal: string) {
     setMealFilter(meal);
     setStatusFilter("accepted");
     setActiveSection("guests");
@@ -40,7 +42,7 @@ export default function OverviewView() {
           value={acceptedCount}
           hint={`${acceptedPercent}% de aceptación`}
           tone="ok"
-          visual={<div className="donut" style={{ "--value": `${acceptedPercent}%` }} />}
+          visual={<div className="donut" style={{ "--value": `${acceptedPercent}%` } as CSSProperties} />}
         />
         <StatCard label="No vienen" value={declinedCount} hint="Respondieron que no" tone="no" />
         <StatCard

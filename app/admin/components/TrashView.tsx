@@ -2,13 +2,14 @@
 
 import { useAdmin } from "../AdminContext";
 import { formatDateTime } from "../lib/format";
+import type { SerializedGuest, SerializedSubmission } from "../types";
 
 export default function TrashView() {
   const { trash, crudMessage, restoreRsvp, restoreGuest, purgeRsvp, purgeGuest } = useAdmin();
 
   const hasItems = trash.rsvps.length > 0 || trash.guests.length > 0;
 
-  function confirmPurgeRsvp(rsvp) {
+  function confirmPurgeRsvp(rsvp: SerializedSubmission) {
     if (
       window.confirm(
         `Eliminar para siempre el envío de ${rsvp.firstName} ${rsvp.lastName}. Esta acción no se puede deshacer. ¿Continuar?`,
@@ -18,7 +19,7 @@ export default function TrashView() {
     }
   }
 
-  function confirmPurgeGuest(guest) {
+  function confirmPurgeGuest(guest: SerializedGuest) {
     if (
       window.confirm(
         `Eliminar para siempre a ${guest.fullName}. Esta acción no se puede deshacer. ¿Continuar?`,

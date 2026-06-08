@@ -2,7 +2,7 @@
 
 import { useAdmin } from "../AdminContext";
 
-const SECTIONS = [
+const SECTIONS: { id: string; label: string }[] = [
   { id: "overview", label: "Resumen" },
   { id: "guests", label: "Invitados" },
   { id: "seating", label: "Mesas" },
@@ -24,7 +24,7 @@ export default function Sidebar() {
     trashCount,
   } = useAdmin();
 
-  const counts = {
+  const counts: Record<string, number | null> = {
     overview: null,
     guests: rowsWithTableNames.length,
     seating: unassignedRows.length,

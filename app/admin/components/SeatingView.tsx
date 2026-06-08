@@ -1,8 +1,9 @@
 "use client";
 
 import { useAdmin } from "../AdminContext";
+import type { Row } from "../types";
 
-function GuestChip({ row }) {
+function GuestChip({ row }: { row: Row }) {
   const { selectedGuestIds, toggleGuest, setDraggedGuestId } = useAdmin();
 
   return (

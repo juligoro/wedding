@@ -11,6 +11,12 @@ import OverviewView from "./components/OverviewView";
 import Sidebar from "./components/Sidebar";
 import SeatingView from "./components/SeatingView";
 import TrashView from "./components/TrashView";
+import type {
+  SerializedInvitee,
+  SerializedSeatingTable,
+  SerializedSubmission,
+  Trash,
+} from "./types";
 
 function ActiveSection() {
   const { activeSection } = useAdmin();
@@ -45,7 +51,19 @@ function Shell() {
   );
 }
 
-export default function AdminDashboard({ submissions, tables, invitees, trash }) {
+interface AdminDashboardProps {
+  submissions: SerializedSubmission[];
+  tables: SerializedSeatingTable[];
+  invitees: SerializedInvitee[];
+  trash: Trash;
+}
+
+export default function AdminDashboard({
+  submissions,
+  tables,
+  invitees,
+  trash,
+}: AdminDashboardProps) {
   return (
     <AdminProvider submissions={submissions} tables={tables} invitees={invitees} trash={trash}>
       <Shell />

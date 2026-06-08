@@ -1,9 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 
 import { useAdmin } from "../AdminContext";
 import { formatDateTime } from "../lib/format";
+
+interface DrawerForm {
+  firstName: string;
+  lastName: string;
+  attending: boolean;
+  email: string;
+  whatsapp: string;
+  food: string;
+  allergies: string;
+  needsBus: boolean;
+  tableId: string;
+}
 
 export default function GuestDrawer() {
   const {
@@ -24,7 +37,7 @@ export default function GuestDrawer() {
   } = useAdmin();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState(null);
+  const [form, setForm] = useState<DrawerForm | null>(null);
 
   useEffect(() => {
     setIsEditing(false);
@@ -34,7 +47,15 @@ export default function GuestDrawer() {
     return null;
   }
 
+  function updateForm(patch: Partial<DrawerForm>) {
+    setForm((current) => (current ? { ...current, ...patch } : current));
+  }
+
   function startEditing() {
+    if (!selectedRow) {
+      return;
+    }
+
     setForm({
       firstName: selectedRow.firstName || "",
       lastName: selectedRow.lastName || "",
@@ -49,8 +70,12 @@ export default function GuestDrawer() {
     setIsEditing(true);
   }
 
-  async function handleSave(event) {
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!form || !selectedRow) {
+      return;
+    }
 
     const ok = await saveGuest(selectedRow.id, {
       firstName: form.firstName,
@@ -60,7 +85,7 @@ export default function GuestDrawer() {
       whatsapp: form.whatsapp,
       food: form.food,
       allergies: form.allergies,
-      needsBus: form.attending ? form.needsBus : null,
+      needsBus: form.attending ? form.needsBus : undefined,
     });
 
     if (!ok) {
@@ -174,13 +199,13 @@ export default function GuestDrawer() {
           <span className="badge subtle">{selectedRow.role}</span>
         </div>
 
-        {isEditing ? (
+        {isEditing && form ? (
           <form className="drawer-edit-form" onSubmit={handleSave}>
             <label>
               Nombre
               <input
                 value={form.firstName}
-                onChange={(event) => setForm((f) => ({ ...f, firstName: event.target.value }))}
+                onChange={(event) => updateForm({ firstName: event.target.value })}
                 required
               />
             </label>
@@ -188,16 +213,14 @@ export default function GuestDrawer() {
               Apellido
               <input
                 value={form.lastName}
-                onChange={(event) => setForm((f) => ({ ...f, lastName: event.target.value }))}
+                onChange={(event) => updateForm({ lastName: event.target.value })}
               />
             </label>
             <label>
               Estado
               <select
                 value={form.attending ? "si" : "no"}
-                onChange={(event) =>
-                  setForm((f) => ({ ...f, attending: event.target.value === "si" }))
-                }
+                onChange={(event) => updateForm({ attending: event.target.value === "si" })}
               >
                 <option value="si">Confirma asistencia</option>
                 <option value="no">No viene</option>
@@ -208,14 +231,14 @@ export default function GuestDrawer() {
               <input
                 type="email"
                 value={form.email}
-                onChange={(event) => setForm((f) => ({ ...f, email: event.target.value }))}
+                onChange={(event) => updateForm({ email: event.target.value })}
               />
             </label>
             <label>
               WhatsApp
               <input
                 value={form.whatsapp}
-                onChange={(event) => setForm((f) => ({ ...f, whatsapp: event.target.value }))}
+                onChange={(event) => updateForm({ whatsapp: event.target.value })}
               />
             </label>
             <p className="drawer-hint">El email y el WhatsApp se actualizan para todo el envío.</p>
@@ -226,7 +249,7 @@ export default function GuestDrawer() {
                   Comida
                   <input
                     value={form.food}
-                    onChange={(event) => setForm((f) => ({ ...f, food: event.target.value }))}
+                    onChange={(event) => updateForm({ food: event.target.value })}
                     list="meal-options"
                     placeholder="Ej: Carne, Vegetariano…"
                   />
@@ -240,14 +263,14 @@ export default function GuestDrawer() {
                   Alergias
                   <input
                     value={form.allergies}
-                    onChange={(event) => setForm((f) => ({ ...f, allergies: event.target.value }))}
+                    onChange={(event) => updateForm({ allergies: event.target.value })}
                   />
                 </label>
                 <label className="checkbox-field">
                   <input
                     type="checkbox"
                     checked={form.needsBus}
-                    onChange={(event) => setForm((f) => ({ ...f, needsBus: event.target.checked }))}
+                    onChange={(event) => updateForm({ needsBus: event.target.checked })}
                   />
                   Necesita micro
                 </label>
@@ -255,7 +278,7 @@ export default function GuestDrawer() {
                   Mesa
                   <select
                     value={form.tableId}
-                    onChange={(event) => setForm((f) => ({ ...f, tableId: event.target.value }))}
+                    onChange={(event) => updateForm({ tableId: event.target.value })}
                   >
                     <option value="">Sin mesa</option>
                     {localTables.map((table) => (

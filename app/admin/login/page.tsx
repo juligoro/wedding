@@ -4,7 +4,11 @@ export const metadata = {
   title: "Admin | Login",
 };
 
-export default async function AdminLoginPage({ searchParams }) {
+export default async function AdminLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const params = await searchParams;
   const nextPath = typeof params?.next === "string" ? params.next : "/admin";
   const hasError = params?.error === "1";

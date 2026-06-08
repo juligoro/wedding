@@ -17,7 +17,7 @@ gratis.
 | 0 | Tooling (tsconfig, deps, scripts) | ✅ Hecho · verificado en Vercel |
 | 1 | Capa de datos: `lib/*` + `lib/types.ts` | ✅ Hecho · verificado en Vercel |
 | 2 | API routes (`app/api/**`) | ✅ Hecho |
-| 3 | Admin: `AdminContext` + componentes + `app/admin/lib/*` | 🟡 En progreso (3a hecho) |
+| 3 | Admin: `AdminContext` + componentes + `app/admin/lib/*` | ✅ Hecho |
 | 4 | Componentes de landing + páginas + `middleware` | ⏳ Pendiente |
 
 Leyenda: ✅ hecho · 🟡 en progreso · ⏳ pendiente
@@ -125,10 +125,17 @@ Lo más pesado. Se hace en sub-pasos verificables.
 - [ ] `app/admin/AdminContext.js` → `.tsx` (tipar el value del context)
 - [ ] `app/admin/page.js` → `.tsx` (helpers `serialize*`)
 
-**3c — Componentes** ⏳
-- [ ] `app/admin/AdminDashboard.js` → `.tsx`
-- [ ] `app/admin/components/*` (12 componentes) → `.tsx`
-- [ ] `app/admin/login/page.js` → `.tsx`
+**3c — Componentes** ✅
+- [x] `app/admin/AdminDashboard.js` → `.tsx` (props tipadas)
+- [x] `app/admin/components/*` (12 componentes) → `.tsx`
+- [x] `app/admin/login/page.js` → `.tsx` (`searchParams` como `Promise`)
+
+Notas 3c: `StatCard` con interfaz de props; `Sidebar` con `counts:
+Record<string, number|null>`; custom property CSS (`--value`) casteada a
+`CSSProperties`; `GuestDrawer` con estado `form: DrawerForm | null` + helper
+`updateForm` y guardas de no-null; `FollowUpView` con `useRef<HTMLInputElement>`.
+El resto (Guests/Table/Messages/BulkBar) son renombrados directos: los handlers
+y `.map` ya quedan tipados por el contexto.
 
 ---
 

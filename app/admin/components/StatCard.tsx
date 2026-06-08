@@ -1,6 +1,26 @@
 "use client";
 
-export default function StatCard({ label, value, hint, tone, visual, onClick, active }) {
+import type { ReactNode } from "react";
+
+interface StatCardProps {
+  label: ReactNode;
+  value: ReactNode;
+  hint?: ReactNode;
+  tone?: string;
+  visual?: ReactNode;
+  onClick?: () => void;
+  active?: boolean;
+}
+
+export default function StatCard({
+  label,
+  value,
+  hint,
+  tone,
+  visual,
+  onClick,
+  active,
+}: StatCardProps) {
   const className = ["stat-card", tone ? `tone-${tone}` : "", active ? "active" : ""]
     .filter(Boolean)
     .join(" ");

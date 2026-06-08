@@ -6,6 +6,7 @@ import AdminDashboard from "./AdminDashboard";
 import "./admin.css";
 import type {
   SerializedGuest,
+  SerializedInvitee,
   SerializedRsvpShallow,
   SerializedSeatingTable,
   SerializedSubmission,
@@ -95,7 +96,7 @@ export default async function AdminPage() {
     ...(serializeTable(table) as SerializedTable),
     guests: table.guests.map(serializeGuest),
   }));
-  const invitees = inviteeRecords.map((invitee) => ({
+  const invitees: SerializedInvitee[] = inviteeRecords.map((invitee) => ({
     ...invitee,
     createdAt: iso(invitee.createdAt),
     updatedAt: iso(invitee.updatedAt),
