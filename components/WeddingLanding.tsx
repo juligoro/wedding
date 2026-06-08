@@ -4,6 +4,7 @@ import type { GalleryLabels, GalleryPhoto } from "@/components/PhotoGallery";
 import Reveal from "@/components/Reveal";
 import RsvpForm from "@/components/RsvpForm";
 import { Divider, Icon, Sprig } from "@/components/Botanical";
+import type { InviteeContext } from "@/lib/types";
 
 interface LandingCard {
   icon: string;
@@ -150,8 +151,19 @@ const copy: Record<string, LandingCopy> = {
   },
 };
 
-export default function WeddingLanding({ locale = "es" }: { locale?: string }) {
+export default function WeddingLanding({
+  locale = "es",
+  invitee = null,
+}: {
+  locale?: string;
+  invitee?: InviteeContext | null;
+}) {
   const text = copy[locale] || copy.es;
+  const greeting = invitee
+    ? locale === "en"
+      ? `Hi ${invitee.greeting}!`
+      : `¡Hola ${invitee.greeting}!`
+    : null;
 
   return (
     <>
@@ -227,13 +239,14 @@ export default function WeddingLanding({ locale = "es" }: { locale?: string }) {
         <section className="section section-rsvp" id="rsvp" aria-label={text.rsvpHeading}>
           <div className="wrap rsvp-layout">
             <Reveal as="aside" className="rsvp-intro">
+              {greeting ? <p className="rsvp-greeting">{greeting}</p> : null}
               <h2 id="rsvp-title">{text.rsvpHeading}</h2>
               <p className="rsvp-lead">{text.rsvpText}</p>
               <p className="rsvp-sub">{text.rsvpSubtext}</p>
               <Sprig className="rsvp-sprig" />
             </Reveal>
             <Reveal delay={120}>
-              <RsvpForm locale={locale} />
+              <RsvpForm locale={locale} invitee={invitee} />
             </Reveal>
           </div>
         </section>

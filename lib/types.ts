@@ -8,6 +8,23 @@ export interface CompanionFood {
   restriction: string;
 }
 
+// One invited person within a household, as stored in Invitee.members (JSON).
+// These are the names the couple uploads; they pre-fill the RSVP form.
+export interface InviteeMember {
+  firstName: string;
+  lastName: string;
+}
+
+// The slice of an Invitee that the public invite page passes to the RSVP form.
+export interface InviteeContext {
+  token: string;
+  greeting: string;
+  locale: Locale;
+  members: InviteeMember[];
+  email: string;
+  whatsapp: string;
+}
+
 // A guest row as derived from an RSVP, before it gets an `id`/`rsvpId`.
 // Shape consumed by prisma.guest.createMany in the RSVP route.
 export interface GuestSeed {
@@ -21,6 +38,26 @@ export interface GuestSeed {
   needsBus: boolean | null;
   email: string; // Guest.email is non-nullable in the schema
   whatsapp: string; // Guest.whatsapp is non-nullable in the schema
+}
+
+// One member's reply within a personalized-link RSVP submission.
+export interface InviteRsvpMember {
+  firstName: string;
+  lastName: string;
+  attending: boolean;
+  food: string;
+}
+
+// Payload posted by the personalized-link form (JSON, not FormData).
+export interface InviteRsvpPayload {
+  token: string;
+  locale?: string;
+  email: string;
+  whatsapp: string;
+  micro: string;
+  alergias?: string;
+  mensaje?: string;
+  members: InviteRsvpMember[];
 }
 
 // Raw RSVP form payload (FormData entries + locale). All values are strings.

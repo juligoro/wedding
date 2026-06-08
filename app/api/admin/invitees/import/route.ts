@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
-import type { Prisma } from "@prisma/client";
-
-import { normalizeName } from "@/lib/guests";
+import { normalizeName, parseJson, splitName } from "@/lib/guests";
+import { generateUniqueToken, joinNames, memberFullName, parseLocale } from "@/lib/invite";
 import { prisma } from "@/lib/prisma";
+import type { InviteeMember, Locale } from "@/lib/types";
 
 const NAME_HEADERS = [
   "nombre completo",
@@ -31,8 +31,16 @@ const PHONE_HEADERS = [
   "numero",
   "numero de telefono",
 ];
-const HOUSEHOLD_HEADERS = ["familia", "grupo", "household", "group"];
-const PARTY_HEADERS = ["cantidad", "personas", "pax", "party", "cantidad de personas", "cupos"];
+const GROUP_HEADERS = ["grupo", "hogar", "familia", "group", "household"];
+const GREETING_HEADERS = [
+  "saludo",
+  "nombre a mostrar",
+  "como saludar",
+  "greeting",
+  "display",
+  "display name",
+];
+const LOCALE_HEADERS = ["idioma", "language", "lang", "lengua"];
 const NOTES_HEADERS = ["notas", "nota", "observaciones", "comentarios", "comentario"];
 
 interface DetectedColumns {
@@ -42,9 +50,21 @@ interface DetectedColumns {
   combinedIdx: number;
   emailIdx: number;
   phoneIdx: number;
-  householdIdx: number;
-  partyIdx: number;
+  groupIdx: number;
+  greetingIdx: number;
+  localeIdx: number;
   notesIdx: number;
+}
+
+interface Household {
+  groupLabel: string;
+  greeting: string;
+  locale: Locale | "";
+  email: string;
+  whatsapp: string;
+  notes: string;
+  members: InviteeMember[];
+  memberKeys: Set<string>;
 }
 
 function findColumn(headers: string[], candidates: string[]): number {
@@ -68,43 +88,48 @@ function cell(row: unknown[], index: number): string {
 function detectColumns(rawHeaders: string[]): DetectedColumns {
   const headers = rawHeaders.map((header) => normalizeName(header));
 
-  const lastIdx = findColumn(headers, LAST_HEADERS);
-  const firstIdx = findColumn(headers, FIRST_HEADERS);
-  const combinedIdx = findColumn(headers, NAME_HEADERS);
-
+  // "familia"/"grupo" overlap the group headers; only treat the name column as
+  // group if there's no dedicated name column conflict. Group detection runs
+  // against its own list, so a "Familia" header maps to the group key.
   return {
     headers: rawHeaders,
-    lastIdx,
-    firstIdx,
-    combinedIdx,
+    lastIdx: findColumn(headers, LAST_HEADERS),
+    firstIdx: findColumn(headers, FIRST_HEADERS),
+    combinedIdx: findColumn(headers, NAME_HEADERS),
     emailIdx: findColumn(headers, EMAIL_HEADERS),
     phoneIdx: findColumn(headers, PHONE_HEADERS),
-    householdIdx: findColumn(headers, HOUSEHOLD_HEADERS),
-    partyIdx: findColumn(headers, PARTY_HEADERS),
+    groupIdx: findColumn(headers, GROUP_HEADERS),
+    greetingIdx: findColumn(headers, GREETING_HEADERS),
+    localeIdx: findColumn(headers, LOCALE_HEADERS),
     notesIdx: findColumn(headers, NOTES_HEADERS),
   };
 }
 
-function buildName(row: unknown[], columns: DetectedColumns): string {
-  if (columns.firstIdx >= 0 && columns.lastIdx >= 0) {
-    return `${cell(row, columns.firstIdx)} ${cell(row, columns.lastIdx)}`.trim();
-  }
-
-  if (columns.combinedIdx >= 0) {
-    return cell(row, columns.combinedIdx);
-  }
-
+function memberFromRow(row: unknown[], columns: DetectedColumns): InviteeMember {
   if (columns.firstIdx >= 0) {
-    return cell(row, columns.firstIdx);
+    return {
+      firstName: cell(row, columns.firstIdx),
+      lastName: columns.lastIdx >= 0 ? cell(row, columns.lastIdx) : "",
+    };
   }
 
-  return cell(row, 0);
+  const full = columns.combinedIdx >= 0 ? cell(row, columns.combinedIdx) : cell(row, 0);
+  const { firstName, lastName } = splitName(full);
+
+  return { firstName, lastName };
 }
 
-function parseParty(value: string): number {
-  const number = Number.parseInt(value, 10);
+// Stable identity for a household across re-imports: the Grupo label if present,
+// otherwise the members' full names. Lets us update a household (keeping its
+// token/link) instead of recreating it.
+function householdMatchKey(groupLabel: string, members: InviteeMember[]): string {
+  const byGroup = normalizeName(groupLabel);
 
-  return Number.isInteger(number) && number > 0 ? number : 1;
+  if (byGroup) {
+    return `g:${byGroup}`;
+  }
+
+  return `m:${normalizeName(members.map(memberFullName).join(" "))}`;
 }
 
 export async function POST(request: Request) {
@@ -141,55 +166,178 @@ export async function POST(request: Request) {
     const [headerRow, ...dataRows] = matrix;
     const columns = detectColumns(headerRow.map((value) => String(value ?? "")));
 
-    const seen = new Set<string>();
-    const invitees: Prisma.InviteeCreateManyInput[] = [];
+    // Group rows into households. Rows sharing a "Grupo" value merge; a blank
+    // group makes that person their own one-person household.
+    const households = new Map<string, Household>();
 
-    dataRows.forEach((row) => {
-      const fullName = buildName(row, columns);
-      const normalized = normalizeName(fullName);
+    dataRows.forEach((row, index) => {
+      const member = memberFromRow(row, columns);
+      const memberName = memberFullName(member);
 
-      if (!normalized || seen.has(normalized)) {
+      if (!memberName) {
         return;
       }
 
-      seen.add(normalized);
-      invitees.push({
-        fullName,
-        normalized,
-        email: cell(row, columns.emailIdx) || null,
-        whatsapp: cell(row, columns.phoneIdx) || null,
-        household: cell(row, columns.householdIdx) || null,
-        party: parseParty(cell(row, columns.partyIdx)),
-        notes: cell(row, columns.notesIdx) || null,
-      });
+      const groupCell = cell(row, columns.groupIdx);
+      const groupKey = normalizeName(groupCell) || `__solo_${index}`;
+
+      let household = households.get(groupKey);
+
+      if (!household) {
+        household = {
+          groupLabel: groupCell,
+          greeting: "",
+          locale: "",
+          email: "",
+          whatsapp: "",
+          notes: "",
+          members: [],
+          memberKeys: new Set<string>(),
+        };
+        households.set(groupKey, household);
+      }
+
+      // Dedup the same person appearing twice within a household.
+      const memberKey = normalizeName(memberName);
+
+      if (!household.memberKeys.has(memberKey)) {
+        household.memberKeys.add(memberKey);
+        household.members.push(member);
+      }
+
+      // Household-level fields: first non-empty value wins.
+      if (!household.greeting) {
+        household.greeting = cell(row, columns.greetingIdx);
+      }
+
+      if (!household.locale) {
+        const localeCell = cell(row, columns.localeIdx);
+
+        if (localeCell) {
+          household.locale = parseLocale(localeCell);
+        }
+      }
+
+      if (!household.email) {
+        household.email = cell(row, columns.emailIdx);
+      }
+
+      if (!household.whatsapp) {
+        household.whatsapp = cell(row, columns.phoneIdx);
+      }
+
+      if (!household.notes) {
+        household.notes = cell(row, columns.notesIdx);
+      }
     });
 
-    if (invitees.length === 0) {
+    if (households.size === 0) {
       return NextResponse.json(
         { error: "No encontramos nombres válidos. Revisá que haya una columna de nombre." },
         { status: 400 },
       );
     }
 
-    let toInsert = invitees;
+    // Match incoming households against existing ones by Grupo (or member names
+    // when there's no group) so we can UPDATE in place and keep each token/link
+    // alive across re-imports, instead of recreating.
+    const existing = await prisma.invitee.findMany({
+      select: { id: true, token: true, household: true, members: true },
+    });
+
+    const takenTokens = new Set<string>();
+    const existingByKey = new Map<string, { id: number; key: string }>();
+
+    existing.forEach((item) => {
+      takenTokens.add(item.token);
+      const key = householdMatchKey(
+        item.household ?? "",
+        parseJson<InviteeMember[]>(item.members, []),
+      );
+
+      if (!existingByKey.has(key)) {
+        existingByKey.set(key, { id: item.id, key });
+      }
+    });
+
+    let created = 0;
+    let updated = 0;
     let skipped = 0;
+    const seenKeys = new Set<string>();
 
-    if (mode === "replace") {
-      await prisma.invitee.deleteMany({});
-    } else {
-      const existing = await prisma.invitee.findMany({ select: { normalized: true } });
-      const existingSet = new Set(existing.map((item) => item.normalized));
+    for (const household of households.values()) {
+      const locale: Locale = household.locale || "es";
+      const greeting =
+        household.greeting ||
+        joinNames(
+          household.members.map((member) => member.firstName),
+          locale,
+        );
+      const matchKey = householdMatchKey(household.groupLabel, household.members);
 
-      toInsert = invitees.filter((invitee) => !existingSet.has(invitee.normalized));
-      skipped = invitees.length - toInsert.length;
+      // Same household appearing twice in this sheet — keep the first.
+      if (seenKeys.has(matchKey)) {
+        skipped += 1;
+        continue;
+      }
+
+      seenKeys.add(matchKey);
+
+      const data = {
+        fullName: greeting,
+        normalized: normalizeName(greeting),
+        greeting,
+        locale,
+        members: JSON.stringify(household.members),
+        household: household.groupLabel || null,
+        email: household.email || null,
+        whatsapp: household.whatsapp || null,
+        party: household.members.length,
+        notes: household.notes || null,
+      };
+
+      const match = existingByKey.get(matchKey);
+
+      if (match) {
+        // Keep the existing token/link.
+        await prisma.invitee.update({ where: { id: match.id }, data });
+        updated += 1;
+      } else {
+        await prisma.invitee.create({
+          data: { ...data, token: generateUniqueToken(takenTokens) },
+        });
+        created += 1;
+      }
     }
 
-    if (toInsert.length > 0) {
-      await prisma.invitee.createMany({ data: toInsert });
+    // Replace mode = full sync: drop households that are no longer in the sheet.
+    // Append mode leaves untouched households in place.
+    let deleted = 0;
+
+    if (mode === "replace") {
+      const toDelete = existing
+        .filter((item) => {
+          const key = householdMatchKey(
+            item.household ?? "",
+            parseJson<InviteeMember[]>(item.members, []),
+          );
+
+          return !seenKeys.has(key);
+        })
+        .map((item) => item.id);
+
+      if (toDelete.length > 0) {
+        const result = await prisma.invitee.deleteMany({ where: { id: { in: toDelete } } });
+
+        deleted = result.count;
+      }
     }
 
     return NextResponse.json({
-      imported: toInsert.length,
+      imported: created + updated,
+      created,
+      updated,
+      deleted,
       skipped,
       mode,
       detected: {
@@ -197,10 +345,11 @@ export async function POST(request: Request) {
           columns.firstIdx >= 0 && columns.lastIdx >= 0
             ? `${columns.headers[columns.firstIdx]} + ${columns.headers[columns.lastIdx]}`
             : columns.headers[columns.combinedIdx >= 0 ? columns.combinedIdx : 0] || "Columna 1",
+        grupo: columns.groupIdx >= 0 ? columns.headers[columns.groupIdx] : null,
+        saludo: columns.greetingIdx >= 0 ? columns.headers[columns.greetingIdx] : null,
+        idioma: columns.localeIdx >= 0 ? columns.headers[columns.localeIdx] : null,
         email: columns.emailIdx >= 0 ? columns.headers[columns.emailIdx] : null,
         whatsapp: columns.phoneIdx >= 0 ? columns.headers[columns.phoneIdx] : null,
-        familia: columns.householdIdx >= 0 ? columns.headers[columns.householdIdx] : null,
-        cantidad: columns.partyIdx >= 0 ? columns.headers[columns.partyIdx] : null,
       },
     });
   } catch (error) {

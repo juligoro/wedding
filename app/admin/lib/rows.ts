@@ -18,6 +18,7 @@ export function getRows(
       return {
         id: guest.id,
         submissionId: submission.id,
+        inviteeId: submission.inviteeId ?? null,
         firstName,
         lastName,
         name: fullName,

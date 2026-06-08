@@ -663,9 +663,15 @@ function useAdminValue({
 
       setInviteeEdits({});
       const detected = body.detected?.nombre ? ` Columna de nombre: ${body.detected.nombre}.` : "";
-      const skipped = body.skipped ? ` ${body.skipped} ya estaban en la lista.` : "";
+      const parts = [
+        body.created ? `${body.created} hogares nuevos` : "",
+        body.updated ? `${body.updated} actualizados` : "",
+        body.deleted ? `${body.deleted} eliminados` : "",
+        body.skipped ? `${body.skipped} repetidos en la planilla` : "",
+      ].filter(Boolean);
+      const summary = parts.length > 0 ? parts.join(" · ") : "Sin cambios";
 
-      setInviteeMessage(`${body.imported} invitados importados.${skipped}${detected}`);
+      setInviteeMessage(`${summary}.${detected}`);
       router.refresh();
     } catch (error) {
       setInviteeMessage(error instanceof Error ? error.message : "No pudimos procesar el archivo.");

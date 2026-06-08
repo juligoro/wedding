@@ -49,6 +49,7 @@ export interface GuestEdit {
 export interface Row {
   id: number;
   submissionId: number;
+  inviteeId: number | null;
   firstName: string;
   lastName: string;
   name: string;
@@ -73,7 +74,7 @@ export interface RowFilters {
   busFilter: string;
 }
 
-export type MatchConfidence = "manual" | "exact" | "tokens" | "email" | "partial" | "none";
+export type MatchConfidence = "link" | "manual" | "exact" | "tokens" | "email" | "partial" | "none";
 export type InviteeStatus = "accepted" | "declined" | "pending";
 
 // An invitee from the uploaded list, reconciled against the live RSVP rows.

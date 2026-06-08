@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import { useAdmin } from "../AdminContext";
 import { downloadInviteesCsv } from "../lib/csv";
 import { CONFIDENCE_LABELS } from "../lib/match";
-import type { InviteeStatus } from "../types";
+import type { InviteeStatus, ReconcileItem } from "../types";
 
 const STATUS_LABELS: Record<InviteeStatus, string> = {
   accepted: "Confirmó",
@@ -46,8 +46,35 @@ export default function FollowUpView() {
   } = useAdmin();
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const [origin, setOrigin] = useState("");
   const { stats } = reconciliation;
   const hasList = stats.total > 0;
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  function linkFor(item: ReconcileItem): string {
+    return `${origin}/i/${item.token}`;
+  }
+
+  function messageFor(item: ReconcileItem): string {
+    const greeting = item.greeting || item.fullName;
+    const link = linkFor(item);
+
+    return item.locale === "en"
+      ? `Hi ${greeting}! We'd love for you to join us at our wedding. Please RSVP here: ${link}`
+      : `¡Hola ${greeting}! Nos encantaría que nos acompañen en nuestro casamiento. Confirmá tu asistencia acá: ${link}`;
+  }
+
+  async function copyText(text: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setInviteeMessage(`${label} copiado.`);
+    } catch {
+      setInviteeMessage("No pudimos copiar al portapapeles.");
+    }
+  }
 
   function submitImport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -116,7 +143,7 @@ export default function FollowUpView() {
               className={importMode === "append" ? "active" : ""}
               onClick={() => setImportMode("append")}
             >
-              Agregar
+              Agregar / actualizar
             </button>
           </div>
           <button type="submit" className="primary" disabled={isImporting}>
@@ -124,9 +151,14 @@ export default function FollowUpView() {
           </button>
         </form>
         <p className="import-hint">
-          Aceptamos <strong>.xlsx</strong> y <strong>.csv</strong>. Una persona por fila. Detectamos
-          columnas como <em>Nombre</em>, <em>Apellido</em>, <em>Email</em>, <em>WhatsApp</em>,{" "}
-          <em>Familia</em> y <em>Cantidad</em>.
+          Aceptamos <strong>.xlsx</strong> y <strong>.csv</strong>. <strong>Una fila por persona.</strong>{" "}
+          Las filas con el mismo <em>Grupo</em> (alias: Hogar / Familia) se juntan en un hogar con un
+          solo link. Detectamos <em>Nombre</em>, <em>Apellido</em>, <em>Grupo</em>, <em>Saludo</em>{" "}
+          (lo que ve el invitado), <em>Idioma</em> (ES/EN), <em>Email</em> y <em>WhatsApp</em>.{" "}
+          Podés editar la planilla y reimportar las veces que quieras: el match es por{" "}
+          <em>Grupo</em> y <strong>los links ya enviados se mantienen</strong>.{" "}
+          <em>Agregar / actualizar</em> actualiza y suma sin borrar; <em>Reemplazar lista</em>{" "}
+          además elimina los hogares que ya no estén en la planilla.
         </p>
         {inviteeMessage ? <p className="import-message">{inviteeMessage}</p> : null}
       </section>
@@ -200,6 +232,8 @@ export default function FollowUpView() {
                   <th>Contacto</th>
                   <th>Estado</th>
                   <th>Coincidencia</th>
+                  <th>Link personalizado</th>
+                  <th>Mensaje completo</th>
                   <th>Contactado</th>
                 </tr>
               </thead>
@@ -251,6 +285,35 @@ export default function FollowUpView() {
                       )}
                     </td>
                     <td>
+                      <div className="invite-link-cell">
+                        <a
+                          href={linkFor(item)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="invite-link"
+                          title={linkFor(item)}
+                        >
+                          /i/{item.token}
+                        </a>
+                        <button
+                          type="button"
+                          className="link-button"
+                          onClick={() => copyText(linkFor(item), "Link")}
+                        >
+                          copiar
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="link-button"
+                        onClick={() => copyText(messageFor(item), "Mensaje")}
+                      >
+                        Copiar mensaje
+                      </button>
+                    </td>
+                    <td>
                       <input
                         type="checkbox"
                         checked={Boolean(item.contacted)}
@@ -261,7 +324,7 @@ export default function FollowUpView() {
                 ))}
                 {filteredInvitees.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="empty">
+                    <td colSpan={7} className="empty">
                       No hay invitados para este filtro.
                     </td>
                   </tr>

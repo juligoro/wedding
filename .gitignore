@@ -10,3 +10,4 @@ prisma/dev.db-journal
 lib/generated/prisma/
 
 /app/generated/prisma
+test-invitados.csv

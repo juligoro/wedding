@@ -22,12 +22,15 @@ model Rsvp {
   allergies          String?
   needsBus           Boolean?
   message            String?
+  inviteeId          Int?
   deletedAt          DateTime?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   guests             Guest[]
+  invitee            Invitee? @relation(fields: [inviteeId], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
+  @@index([inviteeId])
 }
 
 model SeatingTable {
@@ -41,8 +44,12 @@ model SeatingTable {
 
 model Invitee {
   id            Int      @id @default(autoincrement())
+  token         String   @unique
   fullName      String
   normalized    String
+  greeting      String?
+  locale        String   @default("es")
+  members       String   @default("[]")
   household     String?
   email         String?
   whatsapp      String?
@@ -52,6 +59,7 @@ model Invitee {
   manualGuestId Int?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  rsvps         Rsvp[]
 
   @@index([normalized])
 }
