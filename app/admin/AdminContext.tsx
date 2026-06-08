@@ -2,29 +2,50 @@
 
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useMemo, useState } from "react";
+import type { DragEvent, FormEvent, ReactNode } from "react";
 
 import { filterAndSortRows, getMealGroups, getRows } from "./lib/rows";
 import { reconcile } from "./lib/match";
+import type {
+  GuestEdit,
+  SerializedInvitee,
+  SerializedSeatingTable,
+  SerializedSubmission,
+  Trash,
+} from "./types";
 
-const AdminContext = createContext(null);
-
-export function useAdmin() {
-  const value = useContext(AdminContext);
-
-  if (!value) {
-    throw new Error("useAdmin must be used inside <AdminProvider>");
-  }
-
-  return value;
+interface InviteeEdit {
+  contacted?: boolean;
+  manualGuestId?: number | null;
 }
 
-export function AdminProvider({
+interface SaveGuestFields {
+  firstName?: string;
+  lastName?: string;
+  attending?: boolean;
+  email?: string;
+  whatsapp?: string;
+  food?: string;
+  allergies?: string;
+  needsBus?: boolean;
+}
+
+interface AdminProviderProps {
+  submissions: SerializedSubmission[];
+  tables: SerializedSeatingTable[];
+  invitees?: SerializedInvitee[];
+  trash?: Trash;
+  children: ReactNode;
+}
+
+type AdminProviderData = Omit<AdminProviderProps, "children">;
+
+function useAdminValue({
   submissions,
   tables,
   invitees = [],
   trash = { rsvps: [], guests: [] },
-  children,
-}) {
+}: AdminProviderData) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("overview");
   const [query, setQuery] = useState("");
@@ -32,23 +53,23 @@ export function AdminProvider({
   const [mealFilter, setMealFilter] = useState("all");
   const [busFilter, setBusFilter] = useState("all");
   const [summaryView, setSummaryView] = useState("accepted");
-  const [selectedRowId, setSelectedRowId] = useState(null);
-  const [selectedGuestIds, setSelectedGuestIds] = useState([]);
-  const [localTables, setLocalTables] = useState(tables);
-  const [tableAssignments, setTableAssignments] = useState({});
-  const [guestEdits, setGuestEdits] = useState({});
+  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
+  const [selectedGuestIds, setSelectedGuestIds] = useState<number[]>([]);
+  const [localTables, setLocalTables] = useState<SerializedSeatingTable[]>(tables);
+  const [tableAssignments, setTableAssignments] = useState<Record<number, number | null>>({});
+  const [guestEdits, setGuestEdits] = useState<Record<number, GuestEdit>>({});
   const [newTableName, setNewTableName] = useState("");
   const [targetTableId, setTargetTableId] = useState("");
   const [quickAddTableId, setQuickAddTableId] = useState("");
   const [tableGuestQuery, setTableGuestQuery] = useState("");
-  const [editingTableId, setEditingTableId] = useState(null);
+  const [editingTableId, setEditingTableId] = useState<number | null>(null);
   const [editingTableName, setEditingTableName] = useState("");
-  const [draggedGuestId, setDraggedGuestId] = useState(null);
+  const [draggedGuestId, setDraggedGuestId] = useState<number | null>(null);
   const [bulkTag, setBulkTag] = useState("");
-  const [guestTags, setGuestTags] = useState({});
+  const [guestTags, setGuestTags] = useState<Record<number, string[]>>({});
   const [tableMessage, setTableMessage] = useState("");
   const [isSavingTables, setIsSavingTables] = useState(false);
-  const [inviteeEdits, setInviteeEdits] = useState({});
+  const [inviteeEdits, setInviteeEdits] = useState<Record<number, InviteeEdit>>({});
   const [inviteeMessage, setInviteeMessage] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [importMode, setImportMode] = useState("replace");
@@ -65,7 +86,9 @@ export function AdminProvider({
     [localTables],
   );
   const tableCounts = useMemo(() => {
-    const counts = Object.fromEntries(localTables.map((table) => [table.id, 0]));
+    const counts: Record<string, number> = Object.fromEntries(
+      localTables.map((table) => [table.id, 0]),
+    );
 
     rows.forEach((row) => {
       if (row.attending && row.tableId) {
@@ -155,11 +178,11 @@ export function AdminProvider({
     selectedVisibleGuestIds.length > 0 &&
     selectedVisibleGuestIds.every((guestId) => selectedGuestIds.includes(guestId));
 
-  function getTableById(tableId) {
+  function getTableById(tableId: number | string | null): SerializedSeatingTable | null {
     return localTables.find((table) => table.id === Number(tableId)) || null;
   }
 
-  function getSeatsNeeded(tableId, guestIds) {
+  function getSeatsNeeded(tableId: number | string | null, guestIds: number[]): number {
     return guestIds.filter((guestId) => {
       const row = rowsWithTableNames.find((person) => person.id === Number(guestId));
 
@@ -167,7 +190,10 @@ export function AdminProvider({
     }).length;
   }
 
-  function canAssignToTable(tableId, guestIds = selectedGuestIds) {
+  function canAssignToTable(
+    tableId: number | string | null,
+    guestIds: number[] = selectedGuestIds,
+  ): boolean {
     if (tableId === null || guestIds.length === 0) {
       return true;
     }
@@ -181,7 +207,7 @@ export function AdminProvider({
     return (tableCounts[table.id] || 0) + getSeatsNeeded(table.id, guestIds) <= table.capacity;
   }
 
-  function getCapacityMessage(tableId) {
+  function getCapacityMessage(tableId: number | string | null): string {
     const table = getTableById(tableId);
 
     if (!table) {
@@ -191,7 +217,7 @@ export function AdminProvider({
     return `La mesa ${table.name} admite hasta ${table.capacity} personas.`;
   }
 
-  function toggleGuest(guestId) {
+  function toggleGuest(guestId: number) {
     setSelectedGuestIds((current) =>
       current.includes(guestId) ? current.filter((id) => id !== guestId) : [...current, guestId],
     );
@@ -207,7 +233,7 @@ export function AdminProvider({
     });
   }
 
-  async function copySelected(field) {
+  async function copySelected(field: "email" | "whatsapp") {
     const values = Array.from(new Set(selectedRows.map((row) => row[field]).filter(Boolean)));
 
     if (values.length === 0) {
@@ -229,7 +255,7 @@ export function AdminProvider({
     setTableMessage(`${unassignedRows.length} invitados sin mesa seleccionados.`);
   }
 
-  async function createTable(event) {
+  async function createTable(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSavingTables(true);
     setTableMessage("");
@@ -252,13 +278,16 @@ export function AdminProvider({
       setNewTableName("");
       setTableMessage(`Mesa ${body.table.name} creada.`);
     } catch (error) {
-      setTableMessage(error.message);
+      setTableMessage(error instanceof Error ? error.message : "No pudimos crear la mesa.");
     } finally {
       setIsSavingTables(false);
     }
   }
 
-  async function assignGuests(tableId, guestIds = selectedGuestIds) {
+  async function assignGuests(
+    tableId: number | string | null,
+    guestIds: number[] = selectedGuestIds,
+  ) {
     const uniqueGuestIds = Array.from(new Set(guestIds.map(Number).filter(Number.isInteger)));
 
     if (uniqueGuestIds.length === 0) {
@@ -302,13 +331,13 @@ export function AdminProvider({
       setTableGuestQuery("");
       setTableMessage(numericTableId ? "Mesa asignada." : "Invitados desasignados.");
     } catch (error) {
-      setTableMessage(error.message);
+      setTableMessage(error instanceof Error ? error.message : "No pudimos asignar la mesa.");
     } finally {
       setIsSavingTables(false);
     }
   }
 
-  async function renameTable(event) {
+  async function renameTable(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!editingTableId) {
@@ -339,21 +368,21 @@ export function AdminProvider({
       setEditingTableName("");
       setTableMessage(`Mesa ${body.table.name} actualizada.`);
     } catch (error) {
-      setTableMessage(error.message);
+      setTableMessage(error instanceof Error ? error.message : "No pudimos actualizar la mesa.");
     } finally {
       setIsSavingTables(false);
     }
   }
 
-  function startEditingTable(table) {
+  function startEditingTable(table: SerializedSeatingTable) {
     setEditingTableId(table.id);
     setEditingTableName(table.name);
   }
 
-  function handleGuestDrop(event, tableId) {
+  function handleGuestDrop(event: DragEvent<HTMLElement>, tableId: number | string | null) {
     event.preventDefault();
     const rawGuestId = event.dataTransfer.getData("text/plain") || draggedGuestId;
-    const guestId = rawGuestId ? Number(rawGuestId) : null;
+    const guestId = rawGuestId ? Number(rawGuestId) : NaN;
 
     setDraggedGuestId(null);
 
@@ -409,13 +438,13 @@ export function AdminProvider({
       setBulkTag("");
       setTableMessage(`Tag "${tag}" agregado.`);
     } catch (error) {
-      setTableMessage(error.message);
+      setTableMessage(error instanceof Error ? error.message : "No pudimos agregar el tag.");
     } finally {
       setIsSavingTables(false);
     }
   }
 
-  async function saveGuest(guestId, fields) {
+  async function saveGuest(guestId: number, fields: SaveGuestFields): Promise<boolean> {
     const firstName = (fields.firstName || "").trim();
 
     if (!firstName) {
@@ -437,7 +466,17 @@ export function AdminProvider({
     setTableMessage("");
 
     try {
-      const payload = { id: guestId, firstName, lastName, food, allergies, needsBus };
+      const payload: {
+        id: number;
+        firstName: string;
+        lastName: string;
+        food: string;
+        allergies: string;
+        needsBus: boolean | null;
+        attending?: boolean;
+        email?: string;
+        whatsapp?: string;
+      } = { id: guestId, firstName, lastName, food, allergies, needsBus };
 
       if (attending !== undefined) {
         payload.attending = attending;
@@ -478,14 +517,18 @@ export function AdminProvider({
       router.refresh();
       return true;
     } catch (error) {
-      setTableMessage(error.message);
+      setTableMessage(error instanceof Error ? error.message : "No pudimos actualizar al invitado.");
       return false;
     } finally {
       setIsSavingTables(false);
     }
   }
 
-  async function runCrud(url, options, successMessage) {
+  async function runCrud(
+    url: string,
+    options: RequestInit,
+    successMessage: string,
+  ): Promise<boolean> {
     setCrudMessage("");
 
     try {
@@ -501,16 +544,16 @@ export function AdminProvider({
       router.refresh();
       return true;
     } catch (error) {
-      setCrudMessage(error.message);
+      setCrudMessage(error instanceof Error ? error.message : "No pudimos completar la acción.");
       return false;
     }
   }
 
-  function jsonBody(payload) {
+  function jsonBody(payload: unknown) {
     return { headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) };
   }
 
-  async function softDeleteGuest(guestId) {
+  async function softDeleteGuest(guestId: number) {
     if (selectedRowId === guestId) {
       setSelectedRowId(null);
     }
@@ -522,7 +565,7 @@ export function AdminProvider({
     );
   }
 
-  async function softDeleteRsvp(rsvpId, { closeDrawer = true } = {}) {
+  async function softDeleteRsvp(rsvpId: number, { closeDrawer = true }: { closeDrawer?: boolean } = {}) {
     if (closeDrawer) {
       setSelectedRowId(null);
     }
@@ -534,7 +577,7 @@ export function AdminProvider({
     );
   }
 
-  async function restoreGuest(guestId) {
+  async function restoreGuest(guestId: number) {
     return runCrud(
       "/api/admin/guests",
       { method: "PATCH", ...jsonBody({ id: guestId, action: "restore" }) },
@@ -542,7 +585,7 @@ export function AdminProvider({
     );
   }
 
-  async function restoreRsvp(rsvpId) {
+  async function restoreRsvp(rsvpId: number) {
     return runCrud(
       "/api/admin/rsvps",
       { method: "PATCH", ...jsonBody({ id: rsvpId, action: "restore" }) },
@@ -550,7 +593,7 @@ export function AdminProvider({
     );
   }
 
-  async function purgeGuest(guestId) {
+  async function purgeGuest(guestId: number) {
     return runCrud(
       "/api/admin/guests",
       { method: "DELETE", ...jsonBody({ id: guestId, permanent: true }) },
@@ -558,7 +601,7 @@ export function AdminProvider({
     );
   }
 
-  async function purgeRsvp(rsvpId) {
+  async function purgeRsvp(rsvpId: number) {
     return runCrud(
       "/api/admin/rsvps",
       { method: "DELETE", ...jsonBody({ id: rsvpId, permanent: true }) },
@@ -583,7 +626,7 @@ export function AdminProvider({
     if (ok) {
       setTableMessage(`${ids.length} invitado(s) movidos a la papelera.`);
 
-      if (ids.includes(selectedRowId)) {
+      if (selectedRowId !== null && ids.includes(selectedRowId)) {
         setSelectedRowId(null);
       }
 
@@ -593,7 +636,7 @@ export function AdminProvider({
     return ok;
   }
 
-  async function importInvitees(file) {
+  async function importInvitees(file: File | null | undefined) {
     if (!file) {
       setInviteeMessage("Elegí un archivo .xlsx o .csv.");
       return;
@@ -625,13 +668,13 @@ export function AdminProvider({
       setInviteeMessage(`${body.imported} invitados importados.${skipped}${detected}`);
       router.refresh();
     } catch (error) {
-      setInviteeMessage(error.message);
+      setInviteeMessage(error instanceof Error ? error.message : "No pudimos procesar el archivo.");
     } finally {
       setIsImporting(false);
     }
   }
 
-  async function patchInvitee(id, fields) {
+  async function patchInvitee(id: number, fields: InviteeEdit) {
     setInviteeEdits((current) => ({
       ...current,
       [id]: { ...(current[id] || {}), ...fields },
@@ -650,16 +693,16 @@ export function AdminProvider({
         throw new Error(body.error || "No pudimos actualizar al invitado.");
       }
     } catch (error) {
-      setInviteeMessage(error.message);
+      setInviteeMessage(error instanceof Error ? error.message : "No pudimos actualizar al invitado.");
       router.refresh();
     }
   }
 
-  function toggleContacted(id, contacted) {
+  function toggleContacted(id: number, contacted: boolean) {
     patchInvitee(id, { contacted });
   }
 
-  function setManualMatch(id, manualGuestId) {
+  function setManualMatch(id: number, manualGuestId: number | string | null) {
     patchInvitee(id, { manualGuestId: manualGuestId ? Number(manualGuestId) : null });
   }
 
@@ -684,7 +727,7 @@ export function AdminProvider({
       setInviteeMessage("Lista vaciada.");
       router.refresh();
     } catch (error) {
-      setInviteeMessage(error.message);
+      setInviteeMessage(error instanceof Error ? error.message : "No pudimos vaciar la lista.");
     } finally {
       setIsImporting(false);
     }
@@ -796,6 +839,26 @@ export function AdminProvider({
     addTagToSelected,
     saveGuest,
   };
+
+  return value;
+}
+
+export type AdminContextValue = ReturnType<typeof useAdminValue>;
+
+const AdminContext = createContext<AdminContextValue | null>(null);
+
+export function useAdmin(): AdminContextValue {
+  const value = useContext(AdminContext);
+
+  if (!value) {
+    throw new Error("useAdmin must be used inside <AdminProvider>");
+  }
+
+  return value;
+}
+
+export function AdminProvider({ children, ...props }: AdminProviderProps) {
+  const value = useAdminValue(props);
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
 }

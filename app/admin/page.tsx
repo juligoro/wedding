@@ -1,15 +1,29 @@
-import AdminDashboard from "./AdminDashboard";
-import "./admin.css";
+import type { Guest, Rsvp, SeatingTable } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
+import AdminDashboard from "./AdminDashboard";
+import "./admin.css";
+import type {
+  SerializedGuest,
+  SerializedRsvpShallow,
+  SerializedSeatingTable,
+  SerializedSubmission,
+  SerializedTable,
+} from "./types";
+
 export const dynamic = "force-dynamic";
 
-function iso(value) {
+type GuestWithRelations = Guest & { table?: SeatingTable | null; rsvp?: Rsvp };
+type RsvpWithGuests = Rsvp & { guests: GuestWithRelations[] };
+
+function iso(value: Date): string;
+function iso(value: Date | null | undefined): string | null;
+function iso(value: Date | null | undefined): string | null {
   return value ? value.toISOString() : null;
 }
 
-function serializeTable(table) {
+function serializeTable(table: SeatingTable | null): SerializedTable | null {
   if (!table) {
     return null;
   }
@@ -17,7 +31,7 @@ function serializeTable(table) {
   return { ...table, createdAt: iso(table.createdAt), updatedAt: iso(table.updatedAt) };
 }
 
-function serializeRsvpShallow(rsvp) {
+function serializeRsvpShallow(rsvp: Rsvp): SerializedRsvpShallow {
   return {
     ...rsvp,
     deletedAt: iso(rsvp.deletedAt),
@@ -26,7 +40,7 @@ function serializeRsvpShallow(rsvp) {
   };
 }
 
-function serializeGuest(guest) {
+function serializeGuest(guest: GuestWithRelations): SerializedGuest {
   return {
     ...guest,
     deletedAt: iso(guest.deletedAt),
@@ -34,10 +48,10 @@ function serializeGuest(guest) {
     updatedAt: iso(guest.updatedAt),
     ...(guest.table !== undefined ? { table: serializeTable(guest.table) } : {}),
     ...(guest.rsvp !== undefined ? { rsvp: serializeRsvpShallow(guest.rsvp) } : {}),
-  };
+  } as SerializedGuest;
 }
 
-function serializeRsvp(rsvp) {
+function serializeRsvp(rsvp: RsvpWithGuests): SerializedSubmission {
   return { ...serializeRsvpShallow(rsvp), guests: rsvp.guests.map(serializeGuest) };
 }
 
@@ -77,8 +91,8 @@ export default async function AdminPage() {
   });
 
   const submissions = rsvps.map(serializeRsvp);
-  const seatingTables = tables.map((table) => ({
-    ...serializeTable(table),
+  const seatingTables: SerializedSeatingTable[] = tables.map((table) => ({
+    ...(serializeTable(table) as SerializedTable),
     guests: table.guests.map(serializeGuest),
   }));
   const invitees = inviteeRecords.map((invitee) => ({
