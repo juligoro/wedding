@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { buildGoogleCalendarUrl } from "@/lib/calendar";
+
 const menuOptions = [
   { value: "Ninguna", labels: { es: "Ninguna", en: "None" } },
   { value: "Sin gluten", labels: { es: "Sin gluten", en: "Gluten-free" } },
@@ -19,6 +21,9 @@ const copy = {
     attendingSuccess:
       "¡Qué alegría que vengas!|Te enviamos un correo con la confirmación y la dirección completa.|Movilidad: {microText}",
     declinedSuccess: "Gracias por avisarnos.|Te vamos a extrañar muchísimo ese día.",
+    calTitle: "Agendá la fecha",
+    calGoogle: "Google Calendar",
+    calApple: "Apple · Outlook",
     personalData: "Datos personales",
     firstName: "Nombre",
     lastName: "Apellido",
@@ -56,6 +61,9 @@ const copy = {
     attendingSuccess:
       "Yay! We can't wait to see you.|We've just emailed you a confirmation with the full address.|Transportation: {microText}",
     declinedSuccess: "Thank you for letting us know.|We will miss you so much that day.",
+    calTitle: "Save the date",
+    calGoogle: "Google Calendar",
+    calApple: "Apple · Outlook",
     personalData: "Personal information",
     firstName: "First name",
     lastName: "Last name",
@@ -137,7 +145,11 @@ export default function RsvpForm({ locale = "es" }) {
   const [guestCount, setGuestCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showCalendar, setShowCalendar] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const googleCalendarUrl = buildGoogleCalendarUrl(locale);
+  const icsUrl = `/api/calendar?locale=${locale}`;
 
   const isAttending = attendance === "si";
   const companionIndexes = useMemo(
@@ -180,8 +192,10 @@ export default function RsvpForm({ locale = "es" }) {
         const microText = data.micro === "si" ? text.busYes : text.busNo;
 
         setSuccessMessage(format(text.attendingSuccess, { microText }));
+        setShowCalendar(true);
       } else {
         setSuccessMessage(text.declinedSuccess);
+        setShowCalendar(false);
       }
 
       form.reset();
@@ -386,6 +400,24 @@ export default function RsvpForm({ locale = "es" }) {
             {successMessage.split("|").map((line, index) =>
               index === 0 ? <strong key={line}>{line}</strong> : <p key={line}>{line}</p>,
             )}
+            {showCalendar ? (
+              <div className="success-calendar">
+                <span className="success-calendar-title">{text.calTitle}</span>
+                <div className="success-calendar-actions">
+                  <a
+                    className="button calendar"
+                    href={googleCalendarUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {text.calGoogle}
+                  </a>
+                  <a className="button calendar" href={icsUrl}>
+                    {text.calApple}
+                  </a>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

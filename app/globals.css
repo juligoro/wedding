@@ -1073,6 +1073,40 @@ img {
   line-height: 1.6;
   color: rgba(49, 63, 45, 0.82);
 }
+.success-calendar {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(111, 128, 98, 0.22);
+}
+.success-calendar-title {
+  display: block;
+  font-family: var(--label-font);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--sage);
+  margin-bottom: 10px;
+}
+.success-calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.button.calendar {
+  padding: 11px 20px;
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sage-deep);
+  background: var(--white);
+  border: 1px solid rgba(111, 128, 98, 0.4);
+  border-radius: 999px;
+}
+.button.calendar:hover {
+  background: var(--sage-deep);
+  color: #f3efe4;
+  border-color: var(--sage-deep);
+}
 
 .error {
   margin-top: 24px;
