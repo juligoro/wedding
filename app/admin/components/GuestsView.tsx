@@ -1,5 +1,7 @@
 "use client";
 
+import Select from "@/components/ui/Select";
+
 import { useAdmin } from "../AdminContext";
 import { downloadCsv } from "../lib/csv";
 import BulkActionBar from "./BulkActionBar";
@@ -46,30 +48,41 @@ export default function GuestsView() {
         </label>
         <label className="filter-field">
           Estado
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-            <option value="all">Todos</option>
-            <option value="accepted">Confirmados</option>
-            <option value="declined">No confirmados</option>
-          </select>
+          <Select
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+            ariaLabel="Filtrar por estado"
+            options={[
+              { value: "all", label: "Todos" },
+              { value: "accepted", label: "Confirmados" },
+              { value: "declined", label: "No confirmados" },
+            ]}
+          />
         </label>
         <label className="filter-field">
           Comida
-          <select value={mealFilter} onChange={(event) => setMealFilter(event.target.value)}>
-            <option value="all">Todas</option>
-            {mealOptions.map((meal) => (
-              <option key={meal} value={meal}>
-                {meal}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={mealFilter}
+            onValueChange={setMealFilter}
+            ariaLabel="Filtrar por comida"
+            options={[
+              { value: "all", label: "Todas" },
+              ...mealOptions.map((meal) => ({ value: meal, label: meal })),
+            ]}
+          />
         </label>
         <label className="filter-field">
           Micro
-          <select value={busFilter} onChange={(event) => setBusFilter(event.target.value)}>
-            <option value="all">Todos</option>
-            <option value="yes">Sí</option>
-            <option value="no">No</option>
-          </select>
+          <Select
+            value={busFilter}
+            onValueChange={setBusFilter}
+            ariaLabel="Filtrar por micro"
+            options={[
+              { value: "all", label: "Todos" },
+              { value: "yes", label: "Sí" },
+              { value: "no", label: "No" },
+            ]}
+          />
         </label>
       </div>
 

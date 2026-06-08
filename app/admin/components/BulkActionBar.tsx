@@ -1,5 +1,7 @@
 "use client";
 
+import Select from "@/components/ui/Select";
+
 import { useAdmin } from "../AdminContext";
 import { downloadCsv } from "../lib/csv";
 
@@ -46,18 +48,17 @@ export default function BulkActionBar() {
       <strong className="bulk-count">{selectedGuestIds.length} seleccionados</strong>
 
       <div className="bulk-group">
-        <select value={targetTableId} onChange={(event) => setTargetTableId(event.target.value)}>
-          <option value="">Elegir mesa</option>
-          {localTables.map((table) => (
-            <option
-              key={table.id}
-              value={table.id}
-              disabled={!canAssignToTable(table.id, selectedGuestIds)}
-            >
-              {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
-            </option>
-          ))}
-        </select>
+        <Select
+          value={targetTableId}
+          onValueChange={setTargetTableId}
+          placeholder="Elegir mesa"
+          ariaLabel="Elegir mesa"
+          options={localTables.map((table) => ({
+            value: String(table.id),
+            label: `${table.name} (${tableCounts[table.id] || 0}/${table.capacity})`,
+            disabled: !canAssignToTable(table.id, selectedGuestIds),
+          }))}
+        />
         <button
           type="button"
           className="primary"

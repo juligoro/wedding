@@ -1,5 +1,7 @@
 "use client";
 
+import Select from "@/components/ui/Select";
+
 import { useAdmin } from "../AdminContext";
 import type { Row } from "../types";
 
@@ -83,17 +85,16 @@ export default function SeatingView() {
           </label>
           <label className="filter-field">
             Agregar a mesa
-            <select
+            <Select
               value={quickAddTableId}
-              onChange={(event) => setQuickAddTableId(event.target.value)}
-            >
-              <option value="">Elegir mesa</option>
-              {localTables.map((table) => (
-                <option key={table.id} value={table.id}>
-                  {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
-                </option>
-              ))}
-            </select>
+              onValueChange={setQuickAddTableId}
+              placeholder="Elegir mesa"
+              ariaLabel="Agregar a mesa"
+              options={localTables.map((table) => ({
+                value: String(table.id),
+                label: `${table.name} (${tableCounts[table.id] || 0}/${table.capacity})`,
+              }))}
+            />
           </label>
         </div>
 

@@ -1,10 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent } from "react";
 
+import Select from "@/components/ui/Select";
+import type { SelectOption } from "@/components/ui/Select";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
 import type { InviteeContext } from "@/lib/types";
+
+function foodOptionsFor(locale: string): SelectOption[] {
+  return menuOptions.map((option) => ({
+    value: option.value,
+    label: option.labels[locale] ?? option.labels.es,
+  }));
+}
 
 const menuOptions: { value: string; labels: Record<string, string> }[] = [
   { value: "Ninguna", labels: { es: "Ninguna", en: "None" } },
@@ -60,7 +69,7 @@ const copy: Record<string, Record<string, string>> = {
     whoComingNote: "Marcá quién de tu grupo va a poder acompañarnos.",
     attends: "Viene",
     notAttends: "No viene",
-    mealFor: "Menú de {name}",
+    mealFor: "Restricción alimentaria de {name}",
     contactHeading: "Tus datos de contacto",
     contactNote: "Para enviarte la confirmación y la dirección exacta.",
     extras: "Alergias y aclaraciones",
@@ -112,7 +121,7 @@ const copy: Record<string, Record<string, string>> = {
     whoComingNote: "Let us know who from your group will be able to join us.",
     attends: "Attending",
     notAttends: "Not attending",
-    mealFor: "{name}'s meal",
+    mealFor: "{name}'s dietary restriction",
     contactHeading: "Your contact details",
     contactNote: "So we can email your confirmation and the exact address.",
     extras: "Allergies & notes",
@@ -144,17 +153,6 @@ function getCompanionOption(locale: string, count: number): string {
   return `+${count} ${count === 1 ? "acompañante" : "acompañantes"}`;
 }
 
-function SelectShell({ children }: { children: ReactNode }) {
-  return (
-    <span className="select-shell">
-      {children}
-      <svg className="select-caret" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M7 10 L12 15 L17 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  );
-}
-
 function FoodSelect({
   name,
   label,
@@ -171,15 +169,13 @@ function FoodSelect({
   return (
     <label className={full ? "full" : undefined}>
       <span className="field-label">{label}</span>
-      <SelectShell>
-        <select name={name} required={required}>
-          {menuOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.labels[locale]}
-            </option>
-          ))}
-        </select>
-      </SelectShell>
+      <Select
+        options={foodOptionsFor(locale)}
+        name={name}
+        defaultValue="Ninguna"
+        required={required}
+        ariaLabel={label}
+      />
     </label>
   );
 }
@@ -463,18 +459,12 @@ export default function RsvpForm({
                         <span className="field-label">
                           {format(text.mealFor, { name: member.firstName || `#${index + 1}` })}
                         </span>
-                        <SelectShell>
-                          <select
-                            value={member.food}
-                            onChange={(event) => updateMember(index, { food: event.target.value })}
-                          >
-                            {menuOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.labels[locale]}
-                              </option>
-                            ))}
-                          </select>
-                        </SelectShell>
+                        <Select
+                          options={foodOptionsFor(locale)}
+                          value={member.food}
+                          onValueChange={(value) => updateMember(index, { food: value })}
+                          ariaLabel={format(text.mealFor, { name: member.firstName || `#${index + 1}` })}
+                        />
                       </label>
                     ) : null}
                   </div>
@@ -665,21 +655,20 @@ export default function RsvpForm({
             <div className="grid">
               <label className="full">
                 <span className="field-label">{text.guestCount}</span>
-                <SelectShell>
-                  <select
-                    id="guestCount"
-                    name="acompanantes"
-                    value={guestCount}
-                    required
-                    onChange={(event) => setGuestCount(Number(event.target.value))}
-                  >
-                    <option value="0">{text.onlyMe}</option>
-                    <option value="1">{getCompanionOption(locale, 1)}</option>
-                    <option value="2">{getCompanionOption(locale, 2)}</option>
-                    <option value="3">{getCompanionOption(locale, 3)}</option>
-                    <option value="4">{getCompanionOption(locale, 4)}</option>
-                  </select>
-                </SelectShell>
+                <Select
+                  name="acompanantes"
+                  required
+                  value={String(guestCount)}
+                  onValueChange={(value) => setGuestCount(Number(value))}
+                  ariaLabel={text.guestCount}
+                  options={[
+                    { value: "0", label: text.onlyMe },
+                    { value: "1", label: getCompanionOption(locale, 1) },
+                    { value: "2", label: getCompanionOption(locale, 2) },
+                    { value: "3", label: getCompanionOption(locale, 3) },
+                    { value: "4", label: getCompanionOption(locale, 4) },
+                  ]}
+                />
               </label>
             </div>
 

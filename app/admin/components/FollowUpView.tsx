@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
+import Select from "@/components/ui/Select";
 import { parseJson } from "@/lib/guests";
 
 import { useAdmin } from "../AdminContext";
@@ -279,10 +280,15 @@ export default function FollowUpView() {
           </label>
           <label>
             <span>Idioma</span>
-            <select value={draft.locale} onChange={(event) => updateDraft({ locale: event.target.value })}>
-              <option value="es">Español</option>
-              <option value="en">Inglés</option>
-            </select>
+            <Select
+              value={draft.locale}
+              onValueChange={(value) => updateDraft({ locale: value })}
+              ariaLabel="Idioma"
+              options={[
+                { value: "es", label: "Español" },
+                { value: "en", label: "Inglés" },
+              ]}
+            />
           </label>
           <label>
             <span>Email (opcional)</span>
@@ -533,17 +539,16 @@ export default function FollowUpView() {
                             ) : null}
                           </div>
                         ) : (
-                          <select
+                          <Select
                             value=""
-                            onChange={(event) => setManualMatch(item.id, event.target.value)}
-                          >
-                            <option value="">Vincular a una respuesta…</option>
-                            {rowsWithTableNames.map((row) => (
-                              <option key={row.id} value={row.id}>
-                                {row.name} · {row.attending ? "Confirmó" : "No viene"}
-                              </option>
-                            ))}
-                          </select>
+                            onValueChange={(value) => setManualMatch(item.id, value)}
+                            placeholder="Vincular a una respuesta…"
+                            ariaLabel="Vincular a una respuesta"
+                            options={rowsWithTableNames.map((row) => ({
+                              value: String(row.id),
+                              label: `${row.name} · ${row.attending ? "Confirmó" : "No viene"}`,
+                            }))}
+                          />
                         )}
                       </div>
                     </td>

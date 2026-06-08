@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
+import Select from "@/components/ui/Select";
+
 import { useAdmin } from "../AdminContext";
 import { formatDateTime } from "../lib/format";
 
@@ -226,13 +228,15 @@ export default function GuestDrawer() {
             </label>
             <label>
               Estado
-              <select
+              <Select
                 value={form.attending ? "si" : "no"}
-                onChange={(event) => updateForm({ attending: event.target.value === "si" })}
-              >
-                <option value="si">Confirma asistencia</option>
-                <option value="no">No viene</option>
-              </select>
+                onValueChange={(value) => updateForm({ attending: value === "si" })}
+                ariaLabel="Estado de asistencia"
+                options={[
+                  { value: "si", label: "Confirma asistencia" },
+                  { value: "no", label: "No viene" },
+                ]}
+              />
             </label>
             <label>
               Email
@@ -284,21 +288,19 @@ export default function GuestDrawer() {
                 </label>
                 <label>
                   Mesa
-                  <select
-                    value={form.tableId}
-                    onChange={(event) => updateForm({ tableId: event.target.value })}
-                  >
-                    <option value="">Sin mesa</option>
-                    {localTables.map((table) => (
-                      <option
-                        key={table.id}
-                        value={table.id}
-                        disabled={!canAssignToTable(table.id, [selectedRow.id])}
-                      >
-                        {table.name} ({tableCounts[table.id] || 0}/{table.capacity})
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    value={form.tableId || "none"}
+                    onValueChange={(value) => updateForm({ tableId: value === "none" ? "" : value })}
+                    ariaLabel="Mesa"
+                    options={[
+                      { value: "none", label: "Sin mesa" },
+                      ...localTables.map((table) => ({
+                        value: String(table.id),
+                        label: `${table.name} (${tableCounts[table.id] || 0}/${table.capacity})`,
+                        disabled: !canAssignToTable(table.id, [selectedRow.id]),
+                      })),
+                    ]}
+                  />
                 </label>
               </>
             ) : null}

@@ -475,8 +475,14 @@ button.stat-card:hover:not(:disabled) {
 }
 
 .filter-field select,
-.filter-field input {
+.filter-field input,
+.filter-field .ui-select-trigger {
   min-width: 150px;
+}
+/* Keep the bulk-bar table select content-sized, not stretched. */
+.bulk-group .ui-select-trigger {
+  width: auto;
+  min-width: 180px;
 }
 
 /* Bulk bar */
