@@ -1409,3 +1409,30 @@ button.stat-card:hover:not(:disabled) {
     grid-template-columns: 1fr;
   }
 }
+
+/* Inline household editor inside the Seguimiento table. */
+.editor-row > td {
+  background: var(--admin-bg, #f6f6f4);
+  padding: 16px;
+}
+.household-editor {
+  display: grid;
+  gap: 16px;
+}
+.he-label {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--admin-muted, #6f6a60);
+}
+.household-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.add-row > td {
+  padding: 12px 16px;
+}
+.add-row .link-button {
+  font-weight: 600;
+}

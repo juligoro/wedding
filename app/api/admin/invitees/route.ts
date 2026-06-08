@@ -1,21 +1,28 @@
 import { NextResponse } from "next/server";
 
+import type { Prisma } from "@prisma/client";
+
 import { normalizeName } from "@/lib/guests";
 import { generateInviteToken, joinNames } from "@/lib/invite";
 import { prisma } from "@/lib/prisma";
-import type { Locale } from "@/lib/types";
+import type { InviteeMember, Locale } from "@/lib/types";
+
+// Normalizes a members payload into [{firstName,lastName}], dropping nameless rows.
+function cleanMembers(value: unknown): InviteeMember[] {
+  return (Array.isArray(value) ? value : [])
+    .map((member: { firstName?: unknown; lastName?: unknown }) => ({
+      firstName: String(member?.firstName ?? "").trim(),
+      lastName: String(member?.lastName ?? "").trim(),
+    }))
+    .filter((member) => member.firstName);
+}
 
 // Create a single household by hand (no spreadsheet).
 export async function POST(request: Request) {
   try {
     const data = await request.json();
 
-    const members = (Array.isArray(data.members) ? data.members : [])
-      .map((member: { firstName?: unknown; lastName?: unknown }) => ({
-        firstName: String(member?.firstName ?? "").trim(),
-        lastName: String(member?.lastName ?? "").trim(),
-      }))
-      .filter((member: { firstName: string }) => member.firstName);
+    const members = cleanMembers(data.members);
 
     if (members.length === 0) {
       return NextResponse.json(
@@ -28,7 +35,7 @@ export async function POST(request: Request) {
     const greeting =
       String(data.greeting ?? "").trim() ||
       joinNames(
-        members.map((member: { firstName: string }) => member.firstName),
+        members.map((member) => member.firstName),
         locale,
       );
 
@@ -79,7 +86,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Invitado inválido." }, { status: 400 });
     }
 
-    const update: { contacted?: boolean; manualGuestId?: number | null } = {};
+    const update: Prisma.InviteeUpdateInput = {};
 
     if (typeof data.contacted === "boolean") {
       update.contacted = data.contacted;
@@ -95,6 +102,36 @@ export async function PATCH(request: Request) {
       }
 
       update.manualGuestId = guestId;
+    }
+
+    // Full household edit (inline editor): members present → rebuild the household.
+    if (data.members !== undefined) {
+      const members = cleanMembers(data.members);
+
+      if (members.length === 0) {
+        return NextResponse.json(
+          { error: "Agregá al menos una persona con nombre." },
+          { status: 400 },
+        );
+      }
+
+      const locale: Locale = data.locale === "en" ? "en" : "es";
+      const greeting =
+        String(data.greeting ?? "").trim() ||
+        joinNames(
+          members.map((member) => member.firstName),
+          locale,
+        );
+
+      update.greeting = greeting;
+      update.fullName = greeting;
+      update.normalized = normalizeName(greeting);
+      update.locale = locale;
+      update.members = JSON.stringify(members);
+      update.party = members.length;
+      update.household = String(data.household ?? "").trim() || null;
+      update.email = String(data.email ?? "").trim() || null;
+      update.whatsapp = String(data.whatsapp ?? "").trim() || null;
     }
 
     if (Object.keys(update).length === 0) {

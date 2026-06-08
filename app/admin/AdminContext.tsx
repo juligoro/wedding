@@ -775,6 +775,45 @@ function useAdminValue({
     }
   }
 
+  async function saveInvitee(
+    id: number,
+    payload: {
+      members: { firstName: string; lastName: string }[];
+      greeting?: string;
+      locale?: string;
+      email?: string;
+      whatsapp?: string;
+      household?: string;
+    },
+  ): Promise<boolean> {
+    setIsImporting(true);
+    setInviteeMessage("");
+
+    try {
+      const response = await fetch("/api/admin/invitees", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...payload }),
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        throw new Error(body.error || "No pudimos guardar el hogar.");
+      }
+
+      setInviteeMessage("Hogar actualizado.");
+      router.refresh();
+
+      return true;
+    } catch (error) {
+      setInviteeMessage(error instanceof Error ? error.message : "No pudimos guardar el hogar.");
+
+      return false;
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
   const value = {
     submissions,
     // sections
@@ -832,6 +871,7 @@ function useAdminValue({
     setFollowQuery,
     importInvitees,
     addInvitee,
+    saveInvitee,
     toggleContacted,
     setManualMatch,
     clearInvitees,
