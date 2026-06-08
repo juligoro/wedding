@@ -37,6 +37,7 @@ export default function FollowUpView() {
     importMode,
     setImportMode,
     importInvitees,
+    addInvitee,
     isImporting,
     inviteeMessage,
     setInviteeMessage,
@@ -73,6 +74,45 @@ export default function FollowUpView() {
       setInviteeMessage(`${label} copiado.`);
     } catch {
       setInviteeMessage("No pudimos copiar al portapapeles.");
+    }
+  }
+
+  // --- Manual "add a household" form ---
+  const [showAdd, setShowAdd] = useState(false);
+  const [newMembers, setNewMembers] = useState<{ firstName: string; lastName: string }[]>([
+    { firstName: "", lastName: "" },
+  ]);
+  const [newGreeting, setNewGreeting] = useState("");
+  const [newLocale, setNewLocale] = useState("es");
+  const [newEmail, setNewEmail] = useState("");
+  const [newWhatsapp, setNewWhatsapp] = useState("");
+
+  function updateNewMember(index: number, patch: { firstName?: string; lastName?: string }) {
+    setNewMembers((prev) => prev.map((member, i) => (i === index ? { ...member, ...patch } : member)));
+  }
+
+  function resetAddForm() {
+    setNewMembers([{ firstName: "", lastName: "" }]);
+    setNewGreeting("");
+    setNewLocale("es");
+    setNewEmail("");
+    setNewWhatsapp("");
+  }
+
+  async function submitAdd(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const ok = await addInvitee({
+      members: newMembers,
+      greeting: newGreeting,
+      locale: newLocale,
+      email: newEmail,
+      whatsapp: newWhatsapp,
+    });
+
+    if (ok) {
+      resetAddForm();
+      setShowAdd(false);
     }
   }
 
@@ -161,6 +201,93 @@ export default function FollowUpView() {
           además elimina los hogares que ya no estén en la planilla.
         </p>
         {inviteeMessage ? <p className="import-message">{inviteeMessage}</p> : null}
+      </section>
+
+      <section className="panel add-card">
+        <div className="panel-head">
+          <h3>Agregar un hogar a mano</h3>
+          <button type="button" className="link-button" onClick={() => setShowAdd((value) => !value)}>
+            {showAdd ? "Cerrar" : "Agregar hogar"}
+          </button>
+        </div>
+
+        {showAdd ? (
+          <form className="add-form" onSubmit={submitAdd}>
+            <div className="add-members">
+              {newMembers.map((member, index) => (
+                <div className="add-member-row" key={index}>
+                  <input
+                    placeholder="Nombre"
+                    value={member.firstName}
+                    onChange={(event) => updateNewMember(index, { firstName: event.target.value })}
+                  />
+                  <input
+                    placeholder="Apellido"
+                    value={member.lastName}
+                    onChange={(event) => updateNewMember(index, { lastName: event.target.value })}
+                  />
+                  {newMembers.length > 1 ? (
+                    <button
+                      type="button"
+                      className="link-button danger"
+                      onClick={() => setNewMembers((prev) => prev.filter((_, i) => i !== index))}
+                    >
+                      quitar
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => setNewMembers((prev) => [...prev, { firstName: "", lastName: "" }])}
+              >
+                + Agregar persona
+              </button>
+            </div>
+
+            <div className="add-fields">
+              <label>
+                <span>Saludo (opcional)</span>
+                <input
+                  placeholder="Ej. Familia Goro o Lorena y Pablo"
+                  value={newGreeting}
+                  onChange={(event) => setNewGreeting(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>Idioma</span>
+                <select value={newLocale} onChange={(event) => setNewLocale(event.target.value)}>
+                  <option value="es">Español</option>
+                  <option value="en">Inglés</option>
+                </select>
+              </label>
+              <label>
+                <span>Email (opcional)</span>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(event) => setNewEmail(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>WhatsApp (opcional)</span>
+                <input value={newWhatsapp} onChange={(event) => setNewWhatsapp(event.target.value)} />
+              </label>
+            </div>
+
+            <button type="submit" className="primary" disabled={isImporting}>
+              {isImporting ? "Guardando…" : "Crear hogar y generar link"}
+            </button>
+          </form>
+        ) : (
+          <p className="import-hint">
+            Crea un hogar individual con su link, sin tocar la planilla. Si después reimportás en{" "}
+            <em>Reemplazar lista</em>, los hogares cargados a mano que no estén en la planilla se
+            eliminan — salvo que ya hayan confirmado. Para sumar a mano de forma permanente, reimportá
+            en <em>Agregar / actualizar</em>.
+          </p>
+        )}
       </section>
 
       {hasList ? (

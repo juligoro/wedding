@@ -315,8 +315,20 @@ export async function POST(request: Request) {
     let deleted = 0;
 
     if (mode === "replace") {
+      // Never delete a household that already confirmed (protects manual adds and
+      // responded guests from being wiped by a sheet that doesn't list them).
+      const responded = await prisma.rsvp.findMany({
+        where: { deletedAt: null, inviteeId: { not: null } },
+        select: { inviteeId: true },
+      });
+      const respondedIds = new Set(responded.map((rsvp) => rsvp.inviteeId));
+
       const toDelete = existing
         .filter((item) => {
+          if (respondedIds.has(item.id)) {
+            return false;
+          }
+
           const key = householdMatchKey(
             item.household ?? "",
             parseJson<InviteeMember[]>(item.members, []),

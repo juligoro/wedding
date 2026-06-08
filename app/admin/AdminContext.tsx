@@ -739,6 +739,42 @@ function useAdminValue({
     }
   }
 
+  async function addInvitee(payload: {
+    members: { firstName: string; lastName: string }[];
+    greeting?: string;
+    locale?: string;
+    email?: string;
+    whatsapp?: string;
+    household?: string;
+  }): Promise<boolean> {
+    setIsImporting(true);
+    setInviteeMessage("");
+
+    try {
+      const response = await fetch("/api/admin/invitees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        throw new Error(body.error || "No pudimos agregar el hogar.");
+      }
+
+      setInviteeMessage(`Hogar agregado: ${body.invitee?.greeting || "listo"}.`);
+      router.refresh();
+
+      return true;
+    } catch (error) {
+      setInviteeMessage(error instanceof Error ? error.message : "No pudimos agregar el hogar.");
+
+      return false;
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
   const value = {
     submissions,
     // sections
@@ -795,6 +831,7 @@ function useAdminValue({
     followQuery,
     setFollowQuery,
     importInvitees,
+    addInvitee,
     toggleContacted,
     setManualMatch,
     clearInvitees,

@@ -189,6 +189,19 @@ todos se oculten menú/micro.
    - al recargar `/i/<token>`, ver la pantalla **"ya confirmaste"**;
    - reintentar el POST → **409** "ya recibimos la confirmación".
 
+## Extra — Alta manual de hogares ✅ (código)
+
+- [x] `POST /api/admin/invitees`: crea **un hogar a mano** (members, saludo,
+      idioma, email, whatsapp) generando su token. `joinNames` arma el saludo si
+      no lo pasan.
+- [x] `AdminContext.addInvitee(payload)` + expuesto en el contexto.
+- [x] `FollowUpView`: panel **"Agregar un hogar a mano"** (filas de personas con
+      agregar/quitar, saludo, idioma, contacto) → crea el hogar y su link sin
+      planilla.
+- [x] Protección: `Reemplazar lista` ya **no borra hogares que confirmaron**
+      (cubre los altas manuales una vez que responden, y cualquier hogar que ya
+      respondió aunque no esté en la planilla).
+
 ## Fase 6 — Solo el link (pendiente)
 Reemplazar el formulario abierto en `/` y `/en` por una nota; reversible.
 

@@ -1371,3 +1371,41 @@ button.stat-card:hover:not(:disabled) {
 .invite-link:hover {
   text-decoration: underline;
 }
+
+/* Manual "add a household" form in Seguimiento. */
+.add-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+.add-members {
+  display: grid;
+  gap: 8px;
+}
+.add-member-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.add-member-row input {
+  flex: 1;
+  min-width: 0;
+}
+.add-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.add-fields label {
+  display: grid;
+  gap: 4px;
+}
+.add-fields label span {
+  font-size: 12px;
+  color: var(--admin-muted, #6f6a60);
+}
+@media (max-width: 640px) {
+  .add-fields {
+    grid-template-columns: 1fr;
+  }
+}
