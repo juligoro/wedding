@@ -19,8 +19,8 @@ export interface GuestSeed {
   food: string | null;
   allergies: string | null;
   needsBus: boolean | null;
-  email: string | null;
-  whatsapp: string | null;
+  email: string; // Guest.email is non-nullable in the schema
+  whatsapp: string; // Guest.whatsapp is non-nullable in the schema
 }
 
 // Raw RSVP form payload (FormData entries + locale). All values are strings.

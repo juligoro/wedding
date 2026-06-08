@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import type { Prisma } from "@prisma/client";
+
 import { sendRsvpConfirmation } from "@/lib/email";
 import { buildGuestsFromRsvp } from "@/lib/guests";
 import { prisma } from "@/lib/prisma";
@@ -71,10 +73,12 @@ export async function POST(request: Request) {
     });
 
     await prisma.guest.createMany({
-      data: buildGuestsFromRsvp(rsvp).map((guest) => ({
-        ...guest,
-        rsvpId: rsvp.id,
-      })),
+      data: buildGuestsFromRsvp(rsvp).map(
+        (guest): Prisma.GuestCreateManyInput => ({
+          ...guest,
+          rsvpId: rsvp.id,
+        }),
+      ),
     });
 
     if (attending) {

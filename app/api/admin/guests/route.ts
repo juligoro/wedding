@@ -1,19 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
-interface GuestUpdateFields {
-  firstName: string;
-  lastName: string | null;
-  fullName: string;
-  email: string | null;
-  whatsapp: string | null;
-  attending: boolean;
-  food?: string | null;
-  allergies?: string | null;
-  needsBus?: boolean | null;
-  tableId?: number | null;
-}
+import { prisma } from "@/lib/prisma";
 
 export async function PATCH(request: Request) {
   try {
@@ -58,7 +47,7 @@ export async function PATCH(request: Request) {
         ? data.whatsapp.trim()
         : existing.whatsapp;
 
-    const guestData: GuestUpdateFields = {
+    const guestData: Prisma.GuestUncheckedUpdateInput = {
       firstName,
       lastName: lastName || null,
       fullName,
