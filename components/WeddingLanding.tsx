@@ -94,7 +94,7 @@ const copy: Record<string, LandingCopy> = {
         icon: "dress",
         title: "Dresscode",
         lines: [
-          "Elegante. La ceremonia es afuera y la fiesta es adentro.",
+          "Vení con tu look más elegante: la ceremonia es al aire libre y la fiesta sigue adentro.",
         ],
         note: "Dejemos el blanco solo para la novia.",
       },
@@ -147,7 +147,7 @@ const copy: Record<string, LandingCopy> = {
         icon: "dress",
         title: "Dress code",
         lines: [
-          "Elegant. The ceremony is outdoors and the party is indoors.",
+          "Bring your most elegant look: the ceremony is outdoors and the party carries on indoors.",
         ],
         note: "White is reserved for the bride.",
       },
