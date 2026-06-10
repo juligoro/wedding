@@ -1,14 +1,17 @@
 import { Resend } from "resend";
 
-import type { Rsvp } from "@prisma/client";
+import type { Invitee, Rsvp } from "@prisma/client";
 
 import { buildGoogleCalendarUrl, getEventDateShort, getEventWhen } from "@/lib/calendar";
 import type { Locale } from "@/lib/types";
+import { getMapUrl } from "@/lib/venue";
 
 interface EmailCopy {
   subject: string;
+  subjectUpdated: string;
   greeting: (name: string) => string;
   confirmed: string;
+  confirmedUpdated: string;
   detailsTitle: string;
   when: string;
   where: string;
@@ -31,8 +34,11 @@ interface EmailCopy {
 const EVENT: Record<Locale, EmailCopy> = {
   es: {
     subject: "¡Confirmamos tu lugar! · Juli & Tomi",
+    subjectUpdated: "Actualizamos tu confirmación · Juli & Tomi",
     greeting: (name) => `¡Hola ${name}!`,
     confirmed: "Recibimos tu confirmación. ¡Nos hace muy felices que vengas a celebrar con nosotros!",
+    confirmedUpdated:
+      "Recibimos los cambios en tu confirmación. ¡Nos hace muy felices que vengas a celebrar con nosotros!",
     detailsTitle: "Los detalles",
     when: "Cuándo",
     where: "Dónde",
@@ -52,8 +58,11 @@ const EVENT: Record<Locale, EmailCopy> = {
   },
   en: {
     subject: "Your spot is confirmed! · Juli & Tomi",
+    subjectUpdated: "Your RSVP was updated · Juli & Tomi",
     greeting: (name) => `Hi ${name}!`,
     confirmed: "We got your RSVP. We're so happy you'll be celebrating with us!",
+    confirmedUpdated:
+      "We got the changes to your RSVP. We're so happy you'll be celebrating with us!",
     detailsTitle: "The details",
     when: "When",
     where: "Where",
@@ -73,15 +82,50 @@ const EVENT: Record<Locale, EmailCopy> = {
   },
 };
 
+interface ReminderCopy {
+  subject: string;
+  greeting: (name: string) => string;
+  intro: string;
+  deadline: string;
+  button: string;
+  closing: string;
+  signature: string;
+  banner: string;
+  footer: string;
+}
+
+const REMINDER: Record<Locale, ReminderCopy> = {
+  es: {
+    subject: "¿Nos acompañás? Confirmá tu asistencia · Juli & Tomi",
+    greeting: (name) => `¡Hola ${name}!`,
+    intro:
+      "Todavía no recibimos la confirmación de tu grupo y nos encantaría saber si nos acompañan en nuestro casamiento.",
+    deadline: "Podés confirmar hasta el 31 de octubre desde tu link personalizado:",
+    button: "Confirmar asistencia",
+    closing: "Cualquier duda, respondé este correo.",
+    signature: "Con cariño, Juli & Tomi",
+    banner: "¡Nos vemos para celebrar!",
+    footer: "Recibís este correo porque estás en la lista de invitados de juli-tomi.wedding",
+  },
+  en: {
+    subject: "Will you join us? Please RSVP · Juli & Tomi",
+    greeting: (name) => `Hi ${name}!`,
+    intro:
+      "We haven't received your group's RSVP yet and we'd love to know if you can join us at our wedding.",
+    deadline: "You can RSVP until October 31 using your personal link:",
+    button: "RSVP now",
+    closing: "Any questions, just reply to this email.",
+    signature: "With love, Juli & Tomi",
+    banner: "See you there to celebrate!",
+    footer: "You're receiving this because you're on the guest list at juli-tomi.wedding",
+  },
+};
+
 // Font stacks: the landing's web fonts first, with email-safe fallbacks for
 // clients that strip the @import (Gmail, Outlook) so it still looks intentional.
 const DISPLAY_FONT = "'Cormorant Garamond', Georgia, 'Times New Roman', serif";
 const BODY_FONT = "'Spectral', Georgia, 'Times New Roman', serif";
 const LABEL_FONT = "'Jost', 'Helvetica Neue', Arial, sans-serif";
-
-// Google Maps link for the venue (override with EVENT_MAP_URL in your env).
-const DEFAULT_MAP_URL =
-  "https://www.google.com/maps?q=Janos+Quinta,+Av.+Pres.+Arturo+Umberto+Illia+12802-12900,+B1669+Del+Viso,+Provincia+de+Buenos+Aires&ftid=0x95bc993b005e22c9:0xb3cf995bc6679d2c&entry=gps&shh=CAE&lucs=,94297699,94231188,94280568,47071704,94218641,94282134,100813464,94286869&g_ep=CAISEjI2LjIyLjIuOTIxMTAxNzU3MBgAIIgnKkksOTQyOTc2OTksOTQyMzExODgsOTQyODA1NjgsNDcwNzE3MDQsOTQyMTg2NDEsOTQyODIxMzQsMTAwODEzNDY0LDk0Mjg2ODY5QgJBUg%3D%3D&skid=df8b08af-b870-4b0a-82ee-56f71f9299ee&g_st=ia";
 
 function escapeHtml(value: unknown): string {
   return String(value ?? "")
@@ -91,42 +135,28 @@ function escapeHtml(value: unknown): string {
     .replaceAll('"', "&quot;");
 }
 
-function buildEmail(
-  t: EmailCopy,
-  rsvp: Rsvp,
-  baseUrl = "",
-  greetingName?: string,
-): { subject: string; html: string; text: string } {
-  const name = greetingName || rsvp.firstName;
-  const mapUrl = (process.env.EVENT_MAP_URL || DEFAULT_MAP_URL).trim();
-  const whereDetail = `<a href="${escapeHtml(mapUrl)}" style="color:#40513c;text-decoration:underline">${escapeHtml(t.whereValue)}</a>`;
-  const whereText = `${t.whereValue} — ${mapUrl}`;
-  const logoSrc = baseUrl ? `${baseUrl.replace(/\/$/, "")}/email-logo.png` : "";
-
+// Shared scaffold (header with logo + date, body card, banner, footer) so the
+// confirmation and reminder emails stay visually identical.
+function renderEmailShell({
+  lang,
+  assetBase,
+  bodyHtml,
+  banner,
+  footer,
+}: {
+  lang: Locale;
+  assetBase: string;
+  bodyHtml: string;
+  banner: string;
+  footer: string;
+}): string {
+  const logoSrc = assetBase ? `${assetBase.replace(/\/$/, "")}/email-logo.png` : "";
   const logoBlock = logoSrc
     ? `<img src="${logoSrc}" alt="Juli &amp; Tomi" width="158" style="display:block;margin:0 auto 16px;width:158px;max-width:58%;height:auto" />`
     : `<div style="font-family:${DISPLAY_FONT};font-size:30px;color:#40513c;margin-bottom:8px">Juli &amp; Tomi</div>`;
 
-  const locale: Locale = t === EVENT.en ? "en" : "es";
-  const whenValue = getEventWhen(locale);
-  const googleUrl = buildGoogleCalendarUrl(locale);
-  const icsUrl = baseUrl ? `${baseUrl.replace(/\/$/, "")}/api/calendar?locale=${locale}` : "";
-
-  const calLink = (href: string, label: string) =>
-    `<a href="${escapeHtml(href)}" style="font-family:${LABEL_FONT};font-size:12px;text-decoration:underline;color:#40513c">${escapeHtml(label)}</a>`;
-
-  const calendarBlock = `
-                  <p style="margin:20px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.calendarTitle)}:
-                    ${calLink(googleUrl, "Google Calendar")}${icsUrl ? ` · ${calLink(icsUrl, t.calApple)}` : ""}</p>`;
-
-  const row = (label: string, value: string) =>
-    `<tr>
-       <td style="font-family:${LABEL_FONT};padding:12px 0;border-bottom:1px solid #e6e4dd;vertical-align:top;width:118px;color:#6f8062;font-size:11px;letter-spacing:.16em;text-transform:uppercase">${label}</td>
-       <td style="font-family:${BODY_FONT};padding:12px 0;border-bottom:1px solid #e6e4dd;color:#26241f;font-size:15px;line-height:1.6">${value}</td>
-     </tr>`;
-
-  const html = `<!doctype html>
-<html lang="${t === EVENT.en ? "en" : "es"}">
+  return `<!doctype html>
+<html lang="${lang}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -151,8 +181,62 @@ function buildEmail(
               </tr>
               <tr>
                 <td bgcolor="#ffffff" style="background-color:#ffffff;padding:16px 32px 30px">
+                  ${bodyHtml}
+                </td>
+              </tr>
+              <tr>
+                <td align="center" bgcolor="#40513c" style="background-color:#40513c;padding:24px 24px;border-radius:0 0 18px 18px">
+                  <div style="color:#9fb08f;font-size:16px;line-height:1;letter-spacing:.4em;margin:0 0 9px">&#10087;</div>
+                  <div style="font-family:${DISPLAY_FONT};font-size:19px;letter-spacing:.06em;color:#f3efe4">${banner}</div>
+                </td>
+              </tr>
+            </table>
+            <p style="font-family:${LABEL_FONT};text-align:center;color:#9a958a;font-size:11px;letter-spacing:.04em;margin:18px 0 0">${footer}</p>
+          </td>
+        </tr>
+      </table>
+    </center>
+  </body>
+</html>`;
+}
+
+export type ConfirmationVariant = "created" | "updated";
+
+function buildEmail(
+  t: EmailCopy,
+  rsvp: Rsvp,
+  baseUrl = "",
+  greetingName?: string,
+  variant: ConfirmationVariant = "created",
+): { subject: string; html: string; text: string } {
+  const name = greetingName || rsvp.firstName;
+  const mapUrl = getMapUrl();
+  const whereDetail = `<a href="${escapeHtml(mapUrl)}" style="color:#40513c;text-decoration:underline">${escapeHtml(t.whereValue)}</a>`;
+  const whereText = `${t.whereValue} — ${mapUrl}`;
+
+  const locale: Locale = t === EVENT.en ? "en" : "es";
+  const whenValue = getEventWhen(locale);
+  const googleUrl = buildGoogleCalendarUrl(locale);
+  const icsUrl = baseUrl ? `${baseUrl.replace(/\/$/, "")}/api/calendar?locale=${locale}` : "";
+  const subject = variant === "updated" ? t.subjectUpdated : t.subject;
+  const confirmed = variant === "updated" ? t.confirmedUpdated : t.confirmed;
+
+  const calLink = (href: string, label: string) =>
+    `<a href="${escapeHtml(href)}" style="font-family:${LABEL_FONT};font-size:12px;text-decoration:underline;color:#40513c">${escapeHtml(label)}</a>`;
+
+  const calendarBlock = `
+                  <p style="margin:20px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.calendarTitle)}:
+                    ${calLink(googleUrl, "Google Calendar")}${icsUrl ? ` · ${calLink(icsUrl, t.calApple)}` : ""}</p>`;
+
+  const row = (label: string, value: string) =>
+    `<tr>
+       <td style="font-family:${LABEL_FONT};padding:12px 0;border-bottom:1px solid #e6e4dd;vertical-align:top;width:118px;color:#6f8062;font-size:11px;letter-spacing:.16em;text-transform:uppercase">${label}</td>
+       <td style="font-family:${BODY_FONT};padding:12px 0;border-bottom:1px solid #e6e4dd;color:#26241f;font-size:15px;line-height:1.6">${value}</td>
+     </tr>`;
+
+  const bodyHtml = `
                   <h1 style="font-family:${DISPLAY_FONT};font-weight:600;margin:14px 0 14px;font-size:30px;color:#26241f">${escapeHtml(t.greeting(name))}</h1>
-                  <p style="margin:0 0 20px;font-size:16px;line-height:1.7;color:#3a382f">${t.confirmed}</p>
+                  <p style="margin:0 0 20px;font-size:16px;line-height:1.7;color:#3a382f">${confirmed}</p>
                   <p style="font-family:${LABEL_FONT};margin:26px 0 10px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#6f8062">${t.detailsTitle}</p>
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">
                     ${row(t.when, whenValue)}
@@ -161,28 +245,20 @@ function buildEmail(
                   </table>
                   ${calendarBlock}
                   <p style="margin:28px 0 0;font-size:15px;line-height:1.7;color:#3a382f">${t.closing}</p>
-                  <p style="font-family:${DISPLAY_FONT};margin:14px 0 0;font-size:22px;color:#40513c">${t.signature}</p>
-                </td>
-              </tr>
-              <tr>
-                <td align="center" bgcolor="#40513c" style="background-color:#40513c;padding:24px 24px;border-radius:0 0 18px 18px">
-                  <div style="color:#9fb08f;font-size:16px;line-height:1;letter-spacing:.4em;margin:0 0 9px">&#10087;</div>
-                  <div style="font-family:${DISPLAY_FONT};font-size:19px;letter-spacing:.06em;color:#f3efe4">${t.banner}</div>
-                </td>
-              </tr>
-            </table>
-            <p style="font-family:${LABEL_FONT};text-align:center;color:#9a958a;font-size:11px;letter-spacing:.04em;margin:18px 0 0">${t.footer}</p>
-          </td>
-        </tr>
-      </table>
-    </center>
-  </body>
-</html>`;
+                  <p style="font-family:${DISPLAY_FONT};margin:14px 0 0;font-size:22px;color:#40513c">${t.signature}</p>`;
+
+  const html = renderEmailShell({
+    lang: locale,
+    assetBase: baseUrl,
+    bodyHtml,
+    banner: t.banner,
+    footer: t.footer,
+  });
 
   const textLines = [
     t.greeting(name),
     "",
-    t.confirmed,
+    confirmed,
     "",
     `${t.detailsTitle}:`,
     `- ${t.when}: ${whenValue}`,
@@ -199,7 +275,7 @@ function buildEmail(
     t.banner,
   ];
 
-  return { subject: t.subject, html, text: textLines.filter((line) => line !== undefined).join("\n") };
+  return { subject, html, text: textLines.filter((line) => line !== undefined).join("\n") };
 }
 
 // Best-effort: sends a confirmation email to the guest after a "sí" RSVP.
@@ -210,6 +286,7 @@ export async function sendRsvpConfirmation({
   baseUrl = "",
   to,
   greetingName,
+  variant = "created",
 }: {
   rsvp: Rsvp;
   locale?: string;
@@ -218,6 +295,8 @@ export async function sendRsvpConfirmation({
   to?: string;
   /** Override the greeting name (per-person invite mode). Defaults to rsvp.firstName. */
   greetingName?: string;
+  /** "updated" adjusts the subject and intro when a guest edits their RSVP. */
+  variant?: ConfirmationVariant;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -236,7 +315,7 @@ export async function sendRsvpConfirmation({
   const key: Locale = locale === "en" ? "en" : "es";
   const t = EVENT[key];
   const assetBase = process.env.EMAIL_ASSET_BASE_URL || baseUrl;
-  const { subject, html, text } = buildEmail(t, rsvp, assetBase, greetingName);
+  const { subject, html, text } = buildEmail(t, rsvp, assetBase, greetingName, variant);
   const resend = new Resend(apiKey);
   const replyTo = (process.env.EMAIL_REPLY_TO || "").trim();
 
@@ -248,4 +327,64 @@ export async function sendRsvpConfirmation({
     text,
     ...(replyTo ? { replyTo } : {}),
   });
+}
+
+export interface ReminderEmailPayload {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}
+
+// RSVP reminder for a pending household, sent manually from the admin.
+// Returns null when the invitee has no email.
+export function buildRsvpReminderEmail(invitee: Invitee, baseUrl = ""): ReminderEmailPayload | null {
+  const to = (invitee.email || "").trim();
+
+  if (!to) {
+    return null;
+  }
+
+  const locale: Locale = invitee.locale === "en" ? "en" : "es";
+  const t = REMINDER[locale];
+  const name = invitee.greeting || invitee.fullName;
+  const inviteUrl = `${(process.env.EMAIL_ASSET_BASE_URL || baseUrl).replace(/\/$/, "")}/i/${invitee.token}`;
+
+  const bodyHtml = `
+                  <h1 style="font-family:${DISPLAY_FONT};font-weight:600;margin:14px 0 14px;font-size:30px;color:#26241f">${escapeHtml(t.greeting(name))}</h1>
+                  <p style="margin:0 0 14px;font-size:16px;line-height:1.7;color:#3a382f">${escapeHtml(t.intro)}</p>
+                  <p style="margin:0 0 22px;font-size:16px;line-height:1.7;color:#3a382f">${escapeHtml(t.deadline)}</p>
+                  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 8px">
+                    <tr>
+                      <td align="center" bgcolor="#40513c" style="background-color:#40513c;border-radius:999px">
+                        <a href="${escapeHtml(inviteUrl)}" style="display:inline-block;padding:13px 30px;font-family:${LABEL_FONT};font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#f3efe4;text-decoration:none">${escapeHtml(t.button)}</a>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="text-align:center;margin:10px 0 0;font-size:12px;line-height:1.6;color:#9a958a"><a href="${escapeHtml(inviteUrl)}" style="color:#6f8062;text-decoration:underline">${escapeHtml(inviteUrl)}</a></p>
+                  <p style="margin:28px 0 0;font-size:15px;line-height:1.7;color:#3a382f">${escapeHtml(t.closing)}</p>
+                  <p style="font-family:${DISPLAY_FONT};margin:14px 0 0;font-size:22px;color:#40513c">${escapeHtml(t.signature)}</p>`;
+
+  const html = renderEmailShell({
+    lang: locale,
+    assetBase: process.env.EMAIL_ASSET_BASE_URL || baseUrl,
+    bodyHtml,
+    banner: t.banner,
+    footer: t.footer,
+  });
+
+  const text = [
+    t.greeting(name),
+    "",
+    t.intro,
+    t.deadline,
+    inviteUrl,
+    "",
+    t.closing,
+    t.signature,
+    "",
+    t.banner,
+  ].join("\n");
+
+  return { to, subject: t.subject, html, text };
 }

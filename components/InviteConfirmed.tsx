@@ -9,6 +9,8 @@ const copy: Record<Locale, {
   google: string;
   apple: string;
   edit: string;
+  editOpen: string;
+  editButton: string;
 }> = {
   es: {
     title: "¡Ya confirmaste!",
@@ -17,6 +19,8 @@ const copy: Record<Locale, {
     google: "Google Calendar",
     apple: "Apple · Outlook",
     edit: "Si necesitás editar algo de tu respuesta, escribinos y lo actualizamos.",
+    editOpen: "¿Cambió algo? Podés editar tu respuesta hasta el 31 de octubre.",
+    editButton: "Editar respuesta",
   },
   en: {
     title: "You're all set!",
@@ -25,15 +29,21 @@ const copy: Record<Locale, {
     google: "Google Calendar",
     apple: "Apple · Outlook",
     edit: "If you need to change anything in your reply, just message us and we'll update it.",
+    editOpen: "Need to change something? You can edit your reply until October 31.",
+    editButton: "Edit your reply",
   },
 };
 
 export default function InviteConfirmed({
   greeting,
   locale = "es",
+  token,
+  canEdit = false,
 }: {
   greeting: string;
   locale?: Locale;
+  token?: string;
+  canEdit?: boolean;
 }) {
   const text = copy[locale] || copy.es;
   const hello = locale === "en" ? `Hi ${greeting}` : `¡Hola ${greeting}!`;
@@ -72,7 +82,16 @@ export default function InviteConfirmed({
             </div>
           </div>
 
-          <p className="invite-edit">{text.edit}</p>
+          {canEdit && token ? (
+            <>
+              <p className="invite-edit">{text.editOpen}</p>
+              <a className="button secondary" href={`/i/${token}?edit=1`}>
+                {text.editButton}
+              </a>
+            </>
+          ) : (
+            <p className="invite-edit">{text.edit}</p>
+          )}
         </div>
       </section>
     </main>

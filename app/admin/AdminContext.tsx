@@ -76,6 +76,7 @@ function useAdminValue({
   const [followFilter, setFollowFilter] = useState("pending");
   const [followQuery, setFollowQuery] = useState("");
   const [crudMessage, setCrudMessage] = useState("");
+  const [isReminding, setIsReminding] = useState(false);
 
   const rows = useMemo(
     () => getRows(submissions, tableAssignments, guestEdits),
@@ -137,6 +138,10 @@ function useAdminValue({
 
       if (followFilter === "uncontacted") {
         return !item.contacted;
+      }
+
+      if (followFilter === "unopened") {
+        return item.status === "pending" && !item.firstOpenedAt;
       }
 
       return item.status === followFilter;
@@ -712,6 +717,45 @@ function useAdminValue({
     patchInvitee(id, { contacted });
   }
 
+  async function sendReminders(ids: number[]): Promise<void> {
+    if (ids.length === 0) {
+      setInviteeMessage("No hay hogares pendientes con email.");
+      return;
+    }
+
+    setIsReminding(true);
+    setInviteeMessage("");
+
+    try {
+      const response = await fetch("/api/admin/invitees/remind", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        throw new Error(body.error || "No pudimos enviar los recordatorios.");
+      }
+
+      const parts = [
+        `Recordatorios enviados: ${body.sent ?? 0}`,
+        body.failed ? `fallaron: ${body.failed}` : "",
+        body.skippedNoEmail ? `sin email: ${body.skippedNoEmail}` : "",
+        body.skippedResponded ? `ya respondieron: ${body.skippedResponded}` : "",
+      ].filter(Boolean);
+
+      setInviteeMessage(`${parts.join(" · ")}.`);
+      router.refresh();
+    } catch (error) {
+      setInviteeMessage(
+        error instanceof Error ? error.message : "No pudimos enviar los recordatorios.",
+      );
+    } finally {
+      setIsReminding(false);
+    }
+  }
+
   function setManualMatch(id: number, manualGuestId: number | string | null) {
     patchInvitee(id, { manualGuestId: manualGuestId ? Number(manualGuestId) : null });
   }
@@ -879,6 +923,8 @@ function useAdminValue({
     toggleContacted,
     setManualMatch,
     clearInvitees,
+    sendReminders,
+    isReminding,
     // trash / crud
     trash,
     trashCount: trash.rsvps.length + trash.guests.length,

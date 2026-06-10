@@ -54,7 +54,17 @@ export function downloadInviteesCsv(
   items: ReconcileItem[],
   filename = "invitados-sin-responder.csv",
 ): void {
-  const headers = ["Nombre", "Grupo", "Email", "WhatsApp", "Personas", "Estado", "Contactado"];
+  const headers = [
+    "Nombre",
+    "Grupo",
+    "Email",
+    "WhatsApp",
+    "Personas",
+    "Estado",
+    "Contactado",
+    "Abrió el link",
+    "Último recordatorio",
+  ];
   const statusLabels: Record<InviteeStatus, string> = {
     accepted: "Confirmó",
     declined: "No viene",
@@ -68,6 +78,8 @@ export function downloadInviteesCsv(
     item.party || 1,
     statusLabels[item.status] || "Sin responder",
     item.contacted ? "Sí" : "No",
+    item.firstOpenedAt ? formatDate(item.firstOpenedAt) : "No",
+    item.lastRemindedAt ? formatDate(item.lastRemindedAt) : "",
   ]);
   const csv = [headers, ...csvRows]
     .map((row) => row.map(escapeCsvValue).join(","))

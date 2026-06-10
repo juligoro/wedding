@@ -8,6 +8,7 @@ import { parseJson } from "@/lib/guests";
 
 import { useAdmin } from "../AdminContext";
 import { downloadInviteesCsv } from "../lib/csv";
+import { formatDate } from "../lib/format";
 import { CONFIDENCE_LABELS } from "../lib/match";
 import type { InviteeStatus, ReconcileItem } from "../types";
 
@@ -23,6 +24,7 @@ const STATUS_TONES: Record<InviteeStatus, string> = {
 };
 const FILTERS: { id: string; label: string }[] = [
   { id: "pending", label: "Sin responder" },
+  { id: "unopened", label: "Sin abrir" },
   { id: "uncontacted", label: "Sin contactar" },
   { id: "responded", label: "Respondieron" },
   { id: "all", label: "Todos" },
@@ -89,6 +91,8 @@ export default function FollowUpView() {
     toggleContacted,
     setManualMatch,
     clearInvitees,
+    sendReminders,
+    isReminding,
   } = useAdmin();
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -197,6 +201,23 @@ export default function FollowUpView() {
 
     if (fileRef.current) {
       fileRef.current.value = "";
+    }
+  }
+
+  const remindableInvitees = pendingInvitees.filter((item) => (item.email || "").trim());
+
+  function remindAllPending() {
+    if (remindableInvitees.length === 0) {
+      setInviteeMessage("No hay hogares pendientes con email.");
+      return;
+    }
+
+    const ok = window.confirm(
+      `¿Enviar recordatorio por email a ${remindableInvitees.length} hogar(es) sin responder?`,
+    );
+
+    if (ok) {
+      sendReminders(remindableInvitees.map((item) => item.id));
     }
   }
 
@@ -324,6 +345,15 @@ export default function FollowUpView() {
       <header className="view-header">
         <h2>Seguimiento</h2>
         <div className="view-actions">
+          <button
+            type="button"
+            onClick={remindAllPending}
+            disabled={isReminding || remindableInvitees.length === 0}
+          >
+            {isReminding
+              ? "Enviando recordatorios…"
+              : `Enviar recordatorio por email (${remindableInvitees.length})`}
+          </button>
           <button type="button" onClick={() => downloadInviteesCsv(pendingInvitees)}>
             Descargar sin responder
           </button>
@@ -396,7 +426,9 @@ export default function FollowUpView() {
             <div className="stat-body">
               <span className="stat-label">Sin responder</span>
               <strong className="stat-value">{stats.pending}</strong>
-              <span className="stat-hint">{stats.contacted} ya contactados</span>
+              <span className="stat-hint">
+                {stats.contacted} ya contactados · {stats.openedPending} abrieron el link
+              </span>
             </div>
           </div>
           {stats.extras > 0 ? (
@@ -474,6 +506,13 @@ export default function FollowUpView() {
                     <span className={`badge ${STATUS_TONES[item.status]}`}>
                       {STATUS_LABELS[item.status]}
                     </span>
+                    {item.status === "pending" ? (
+                      <span className="cell-sub">
+                        {item.firstOpenedAt
+                          ? `Abrió el link · ${formatDate(item.firstOpenedAt)}`
+                          : "No abrió el link"}
+                      </span>
+                    ) : null}
                   </td>
                   <td>
                     <div className="invite-link-cell">
@@ -503,6 +542,22 @@ export default function FollowUpView() {
                     >
                       Copiar mensaje
                     </button>
+                    {item.status === "pending" && (item.email || "").trim() ? (
+                      <button
+                        type="button"
+                        className="link-button"
+                        disabled={isReminding}
+                        onClick={() => sendReminders([item.id])}
+                      >
+                        Recordar por email
+                      </button>
+                    ) : null}
+                    {item.lastRemindedAt ? (
+                      <span className="cell-sub">
+                        Recordado · {formatDate(item.lastRemindedAt)}
+                        {item.remindCount > 1 ? ` ×${item.remindCount}` : ""}
+                      </span>
+                    ) : null}
                   </td>
                   <td>
                     <span className="cell-sub">{item.whatsapp || "—"}</span>

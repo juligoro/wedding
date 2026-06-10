@@ -6,7 +6,7 @@ import type { FormEvent } from "react";
 import Select from "@/components/ui/Select";
 import type { SelectOption } from "@/components/ui/Select";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
-import type { InviteeContext } from "@/lib/types";
+import type { InvitePreviousResponse, InviteeContext } from "@/lib/types";
 
 function foodOptionsFor(locale: string): SelectOption[] {
   return menuOptions.map((option) => ({
@@ -32,6 +32,10 @@ const copy: Record<string, Record<string, string>> = {
     attendingSuccess:
       "¡Qué alegría que vengas!|Te enviamos un correo con la confirmación y la dirección completa.|Movilidad: {microText}",
     declinedSuccess: "Gracias por avisarnos.|Te vamos a extrañar muchísimo ese día.",
+    updatedAttendingSuccess:
+      "¡Listo! Actualizamos tu respuesta.|Te reenviamos el correo con la confirmación.|Movilidad: {microText}",
+    updatedDeclinedSuccess:
+      "Listo, actualizamos tu respuesta.|Te vamos a extrañar muchísimo ese día.",
     calTitle: "Agendá la fecha",
     calGoogle: "Google Calendar",
     calApple: "Apple · Outlook",
@@ -63,6 +67,7 @@ const copy: Record<string, Record<string, string>> = {
     optional: "Opcional",
     sending: "Enviando...",
     submit: "Enviar RSVP",
+    updateSubmit: "Guardar cambios",
     details: "Ver detalles",
     // Personalized-link mode
     whoComing: "¿Quiénes vienen?",
@@ -86,6 +91,10 @@ const copy: Record<string, Record<string, string>> = {
     attendingSuccess:
       "Yay! We can't wait to see you.|We've just emailed you a confirmation with the full address.|Transportation: {microText}",
     declinedSuccess: "Thank you for letting us know.|We will miss you so much that day.",
+    updatedAttendingSuccess:
+      "Done! Your reply was updated.|We've re-sent your confirmation email.|Transportation: {microText}",
+    updatedDeclinedSuccess:
+      "Done, your reply was updated.|We will miss you so much that day.",
     calTitle: "Save the date",
     calGoogle: "Google Calendar",
     calApple: "Apple · Outlook",
@@ -117,6 +126,7 @@ const copy: Record<string, Record<string, string>> = {
     optional: "Optional",
     sending: "Sending...",
     submit: "Send RSVP",
+    updateSubmit: "Save changes",
     details: "See details",
     // Personalized-link mode
     whoComing: "Who's coming?",
@@ -190,11 +200,14 @@ function FoodSelect({
 export default function RsvpForm({
   locale = "es",
   invitee = null,
+  previous = null,
 }: {
   locale?: string;
   invitee?: InviteeContext | null;
+  previous?: InvitePreviousResponse | null;
 }) {
   const text = copy[locale] || copy.es;
+  const isEditing = Boolean(previous);
 
   // --- shared state ---
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -207,20 +220,25 @@ export default function RsvpForm({
   const [guestCount, setGuestCount] = useState(0);
 
   // --- personalized-link state ---
+  // When editing, prefill from the previous response instead of the household defaults.
   const [members, setMembers] = useState<MemberState[]>(() =>
-    (invitee?.members ?? []).map((member, index) => ({
-      firstName: member.firstName,
-      lastName: member.lastName,
-      attending: true,
-      food: "Ninguna",
-      // Prefill the first person's contact from the household, if we have it.
-      email: index === 0 ? (invitee?.email ?? "") : "",
-      whatsapp: index === 0 ? (invitee?.whatsapp ?? "") : "",
-      allergies: "",
-    })),
+    previous
+      ? previous.members.map((member) => ({ ...member }))
+      : (invitee?.members ?? []).map((member, index) => ({
+          firstName: member.firstName,
+          lastName: member.lastName,
+          attending: true,
+          food: "Ninguna",
+          // Prefill the first person's contact from the household, if we have it.
+          email: index === 0 ? (invitee?.email ?? "") : "",
+          whatsapp: index === 0 ? (invitee?.whatsapp ?? "") : "",
+          allergies: "",
+        })),
   );
-  const [busChoice, setBusChoice] = useState("");
-  const [message, setMessage] = useState("");
+  const [busChoice, setBusChoice] = useState(
+    previous ? (previous.needsBus === true ? "si" : previous.needsBus === false ? "no" : "") : "",
+  );
+  const [message, setMessage] = useState(previous?.message ?? "");
 
   const googleCalendarUrl = buildGoogleCalendarUrl(locale);
   const icsUrl = `/api/calendar?locale=${locale}`;
@@ -247,11 +265,12 @@ export default function RsvpForm({
   function showSuccess(attending: boolean, needsBus: boolean) {
     if (attending) {
       const microText = needsBus ? text.busYes : text.busNo;
+      const template = isEditing ? text.updatedAttendingSuccess : text.attendingSuccess;
 
-      setSuccessMessage(format(text.attendingSuccess, { microText }));
+      setSuccessMessage(format(template, { microText }));
       setShowCalendar(true);
     } else {
-      setSuccessMessage(text.declinedSuccess);
+      setSuccessMessage(isEditing ? text.updatedDeclinedSuccess : text.declinedSuccess);
       setShowCalendar(false);
     }
   }
@@ -563,7 +582,7 @@ export default function RsvpForm({
 
             <div className="form-actions">
               <button className="button submit" type="submit" disabled={isSubmitting}>
-                <span>{isSubmitting ? text.sending : text.submit}</span>
+                <span>{isSubmitting ? text.sending : isEditing ? text.updateSubmit : text.submit}</span>
               </button>
               <a className="button secondary" href="#detalles">
                 {text.details}

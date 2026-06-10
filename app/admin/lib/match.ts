@@ -162,6 +162,7 @@ export function reconcile(invitees: SerializedInvitee[], rows: Row[]): Reconcile
     declined: items.filter((item) => item.status === "declined").length,
     pending: items.filter((item) => item.status === "pending").length,
     contacted: items.filter((item) => item.status === "pending" && item.contacted).length,
+    openedPending: items.filter((item) => item.status === "pending" && item.firstOpenedAt).length,
     extras: extras.length,
   };
 

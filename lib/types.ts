@@ -40,6 +40,22 @@ export interface GuestSeed {
   whatsapp: string; // Guest.whatsapp is non-nullable in the schema
 }
 
+// A household's prior answers, rebuilt from its live Guest rows so the RSVP
+// form can be prefilled when a guest edits their response.
+export interface InvitePreviousResponse {
+  members: {
+    firstName: string;
+    lastName: string;
+    attending: boolean;
+    food: string;
+    email: string;
+    whatsapp: string;
+    allergies: string;
+  }[];
+  needsBus: boolean | null;
+  message: string;
+}
+
 // One member's reply within a personalized-link RSVP submission. Contact and
 // allergies are per person so each attending guest gets their own confirmation
 // email and can note their own dietary needs.

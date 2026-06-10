@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma, Rsvp } from "@prisma/client";
 
 import { sendRsvpConfirmation } from "@/lib/email";
-import { buildGuestsFromMembers, buildGuestsFromRsvp } from "@/lib/guests";
+import { buildGuestsFromMembers, buildGuestsFromRsvp, normalizeName } from "@/lib/guests";
 import { prisma } from "@/lib/prisma";
+import { isEditOpen } from "@/lib/rsvpEdit";
 import type { CompanionFood, InviteRsvpMember, InviteRsvpPayload, RsvpFormData } from "@/lib/types";
 
 function getText(data: RsvpFormData, key: string): string {
@@ -82,15 +83,16 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
 
   const needsBus = anyAttending ? payload.micro === "si" : null;
 
-  // One confirmation per household. If they need changes, they contact the couple.
+  // A second submission for the household becomes an edit-in-place, allowed
+  // until the RSVP_EDIT_DEADLINE. After that, they contact the couple.
   const existing = await prisma.rsvp.findFirst({
     where: { inviteeId: invitee.id, deletedAt: null },
-    select: { id: true },
+    include: { guests: { where: { deletedAt: null }, orderBy: { id: "asc" } } },
   });
 
-  if (existing) {
+  if (existing && !isEditOpen()) {
     return NextResponse.json(
-      { error: "Ya recibimos la confirmación de este grupo. Si necesitás cambiar algo, escribinos." },
+      { error: "El plazo para editar la respuesta ya cerró. Si necesitás cambiar algo, escribinos." },
       { status: 409 },
     );
   }
@@ -103,38 +105,87 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
   const attendingOthers = members.filter((member) => member !== lead && member.attending);
   const message = String(payload.mensaje ?? "").trim() || null;
 
-  const rsvp = await prisma.rsvp.create({
-    data: {
-      firstName: lead.firstName,
-      lastName: lead.lastName,
-      email: lead.email,
-      whatsapp: lead.whatsapp,
-      attending: anyAttending,
-      companionCount: attendingOthers.length,
-      companions: JSON.stringify(attendingOthers.map(memberName)),
-      primaryFood: lead.attending ? lead.food || "Ninguna" : null,
-      companionFood: JSON.stringify(
-        attendingOthers.map((member) => ({
-          name: memberName(member),
-          restriction: member.food || "Ninguna",
-        })),
-      ),
-      // Allergies are per person now — stored on each Guest row, not the aggregate.
-      allergies: null,
-      needsBus,
-      message,
-      inviteeId: invitee.id,
-    },
-  });
-
-  await prisma.guest.createMany({
-    data: buildGuestsFromMembers(members, { needsBus }).map(
-      (guest): Prisma.GuestCreateManyInput => ({
-        ...guest,
-        rsvpId: rsvp.id,
-      }),
+  const rsvpData = {
+    firstName: lead.firstName,
+    lastName: lead.lastName,
+    email: lead.email,
+    whatsapp: lead.whatsapp,
+    attending: anyAttending,
+    companionCount: attendingOthers.length,
+    companions: JSON.stringify(attendingOthers.map(memberName)),
+    primaryFood: lead.attending ? lead.food || "Ninguna" : null,
+    companionFood: JSON.stringify(
+      attendingOthers.map((member) => ({
+        name: memberName(member),
+        restriction: member.food || "Ninguna",
+      })),
     ),
-  });
+    // Allergies are per person now — stored on each Guest row, not the aggregate.
+    allergies: null,
+    needsBus,
+    message,
+    inviteeId: invitee.id,
+  };
+
+  const seeds = buildGuestsFromMembers(members, { needsBus });
+  let rsvp: Rsvp;
+
+  if (existing) {
+    rsvp = await prisma.$transaction(async (tx) => {
+      const updated = await tx.rsvp.update({ where: { id: existing.id }, data: rsvpData });
+
+      // Reconcile the new member list against the live Guest rows so each
+      // guest keeps its id (and with it, table assignment and tags). Match by
+      // normalized name first; pair leftovers by position so a typo fix
+      // doesn't orphan a guest's seat.
+      const remaining = [...existing.guests];
+      const matched = new Map<number, (typeof remaining)[number]>();
+
+      seeds.forEach((seed, index) => {
+        const key = normalizeName(seed.fullName);
+        const at = remaining.findIndex((guest) => normalizeName(guest.fullName) === key);
+
+        if (at !== -1) {
+          matched.set(index, remaining[at]);
+          remaining.splice(at, 1);
+        }
+      });
+      seeds.forEach((_, index) => {
+        if (!matched.has(index) && remaining.length > 0) {
+          matched.set(index, remaining.shift() as (typeof remaining)[number]);
+        }
+      });
+
+      for (const [index, seed] of seeds.entries()) {
+        const guest = matched.get(index);
+
+        if (guest) {
+          // Seed fields only — never touch tableId or tags.
+          await tx.guest.update({ where: { id: guest.id }, data: { ...seed } });
+        } else {
+          await tx.guest.create({ data: { ...seed, rsvpId: existing.id } });
+        }
+      }
+
+      // Members removed from the response go to the trash (restorable in admin).
+      for (const guest of remaining) {
+        await tx.guest.update({ where: { id: guest.id }, data: { deletedAt: new Date() } });
+      }
+
+      return updated;
+    });
+  } else {
+    rsvp = await prisma.rsvp.create({ data: rsvpData });
+
+    await prisma.guest.createMany({
+      data: seeds.map(
+        (guest): Prisma.GuestCreateManyInput => ({
+          ...guest,
+          rsvpId: rsvp.id,
+        }),
+      ),
+    });
+  }
 
   if (anyAttending) {
     const locale = payload.locale === "en" ? "en" : "es";
@@ -158,6 +209,7 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
           baseUrl,
           to: recipientEmail,
           greetingName: recipientName,
+          variant: existing ? "updated" : "created",
         });
       } catch (emailError) {
         console.error("RSVP confirmation email failed", emailError);
@@ -165,7 +217,9 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
     }
   }
 
-  return NextResponse.json({ id: rsvp.id }, { status: 201 });
+  return existing
+    ? NextResponse.json({ id: rsvp.id, updated: true }, { status: 200 })
+    : NextResponse.json({ id: rsvp.id }, { status: 201 });
 }
 
 // --- Open form RSVP: single attendance toggle + companions list. ---

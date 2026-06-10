@@ -4,13 +4,22 @@ import type { GalleryLabels, GalleryPhoto } from "@/components/PhotoGallery";
 import Reveal from "@/components/Reveal";
 import RsvpForm from "@/components/RsvpForm";
 import { Divider, Icon, Sprig } from "@/components/Botanical";
-import type { InviteeContext } from "@/lib/types";
+import type { InvitePreviousResponse, InviteeContext } from "@/lib/types";
+import { getMapUrl, getWazeUrl } from "@/lib/venue";
 
 interface LandingCard {
   icon: string;
   title: string;
   lines: string[];
   note?: string;
+}
+
+interface LandingFaqItem {
+  q: string;
+  a: string[];
+  links?: { label: string; href: string }[];
+  // The exact venue location stays gated behind the invite link.
+  personalizedOnly?: boolean;
 }
 
 interface LandingCopy {
@@ -29,6 +38,9 @@ interface LandingCopy {
   galleryLabels: GalleryLabels;
   detailsAria: string;
   cards: LandingCard[];
+  faqAria: string;
+  faqKicker: string;
+  faqItems: LandingFaqItem[];
   rsvpHeading: string;
   rsvpText: string;
   rsvpSubtext: string;
@@ -98,6 +110,55 @@ const copy: Record<string, LandingCopy> = {
         note: "Dejemos el blanco solo para la novia.",
       },
     ],
+    faqAria: "Preguntas frecuentes",
+    faqKicker: "Preguntas frecuentes",
+    faqItems: [
+      {
+        q: "¿Cómo llego a la quinta?",
+        a: [
+          "La celebración es en Janos Quinta, Del Viso (Buenos Aires).",
+          "Si vas en auto, podés navegar directo con estos links:",
+        ],
+        links: [
+          { label: "Google Maps", href: getMapUrl() },
+          { label: "Waze", href: getWazeUrl() },
+        ],
+        personalizedOnly: true,
+      },
+      {
+        q: "¿Hay micro?",
+        a: [
+          "Sí. Hay barra libre y no queremos que nadie maneje si tomó, así que va a haber un micro desde y hacia CABA.",
+          "Vamos a compartir las paradas y los horarios más cerca de la fecha. Indicá si lo necesitan cuando confirmes asistencia.",
+        ],
+      },
+      {
+        q: "¿Hay estacionamiento?",
+        a: ["Sí, la quinta tiene estacionamiento para quienes vayan en auto."],
+      },
+      {
+        q: "¿Qué me pongo?",
+        a: [
+          "Elegante pero fresco: la ceremonia es al aire libre y en diciembre va a hacer calor.",
+          "Gran parte de la fiesta es sobre césped, así que mejor evitar el taco fino.",
+          "El blanco queda reservado para la novia.",
+        ],
+      },
+      {
+        q: "¿Puedo sumar a alguien más?",
+        a: [
+          "La invitación es para las personas que figuran en tu link personalizado.",
+          "Si tenés alguna duda con tu grupo, escribinos y lo vemos juntos.",
+        ],
+      },
+      {
+        q: "¿Hasta cuándo puedo confirmar?",
+        a: [
+          "Hasta el 31 de octubre.",
+          "Hasta esa fecha también podés editar tu respuesta desde tu link personalizado si algo cambia.",
+        ],
+      },
+    ],
     rsvpHeading: "Confirmá tu asistencia",
     rsvpText: "Confirmá tu asistencia y la de tu grupo familiar hasta el 31 de octubre.",
     rsvpSubtext: "Vas a recibir los detalles por correo.",
@@ -150,6 +211,55 @@ const copy: Record<string, LandingCopy> = {
         note: "White is reserved for the bride.",
       },
     ],
+    faqAria: "Frequently asked questions",
+    faqKicker: "FAQ",
+    faqItems: [
+      {
+        q: "How do I get to the venue?",
+        a: [
+          "The celebration is at Janos Quinta, Del Viso (Buenos Aires).",
+          "If you're driving, you can navigate straight there with these links:",
+        ],
+        links: [
+          { label: "Google Maps", href: getMapUrl() },
+          { label: "Waze", href: getWazeUrl() },
+        ],
+        personalizedOnly: true,
+      },
+      {
+        q: "Is there a shuttle?",
+        a: [
+          "Yes. There will be an open bar and we don't want anyone driving after drinking, so there will be a shuttle from and to Buenos Aires City.",
+          "We'll share the stops and times closer to the date. Let us know if you need it when you RSVP.",
+        ],
+      },
+      {
+        q: "Is there parking?",
+        a: ["Yes, the venue has parking if you're coming by car."],
+      },
+      {
+        q: "What should I wear?",
+        a: [
+          "Elegant but fresh: the ceremony is outdoors and December in Buenos Aires is warm.",
+          "Much of the party is on grass, so thin heels are best avoided.",
+          "White is reserved for the bride.",
+        ],
+      },
+      {
+        q: "Can I bring someone else?",
+        a: [
+          "The invitation is for the people listed on your personal link.",
+          "If you have any questions about your group, message us and we'll sort it out together.",
+        ],
+      },
+      {
+        q: "When is the RSVP deadline?",
+        a: [
+          "October 31.",
+          "Until then you can also edit your reply from your personal link if anything changes.",
+        ],
+      },
+    ],
     rsvpHeading: "Confirm your attendance",
     rsvpText: "Please confirm your attendance and your family group's attendance by October 31.",
     rsvpSubtext: "You will receive the details by email.",
@@ -165,9 +275,11 @@ const copy: Record<string, LandingCopy> = {
 export default function WeddingLanding({
   locale = "es",
   invitee = null,
+  previous = null,
 }: {
   locale?: string;
   invitee?: InviteeContext | null;
+  previous?: InvitePreviousResponse | null;
 }) {
   const text = copy[locale] || copy.es;
   const greeting = invitee
@@ -247,6 +359,49 @@ export default function WeddingLanding({
           </div>
         </section>
 
+        <section className="section section-faq" id="faq" aria-label={text.faqAria}>
+          <div className="wrap">
+            <Reveal className="faq-head">
+              <p className="kicker">{text.faqKicker}</p>
+            </Reveal>
+            <div className="faq-list">
+              {text.faqItems
+                .filter((item) => !item.personalizedOnly || invitee)
+                .map((item, i) => (
+                  <Reveal key={item.q} delay={i * 90}>
+                    <details className="faq-item">
+                      <summary>
+                        <span className="faq-question">{item.q}</span>
+                        <span className="faq-chevron" aria-hidden="true">
+                          +
+                        </span>
+                      </summary>
+                      <div className="faq-body">
+                        {item.a.map((line) => (
+                          <p key={line}>{line}</p>
+                        ))}
+                        {item.links ? (
+                          <div className="faq-links">
+                            {item.links.map((link) => (
+                              <a
+                                key={link.label}
+                                href={link.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {link.label}
+                              </a>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </details>
+                  </Reveal>
+                ))}
+            </div>
+          </div>
+        </section>
+
         <section className="section section-rsvp" id="rsvp" aria-label={text.rsvpHeading}>
           <div className="wrap rsvp-layout">
             <Reveal as="aside" className="rsvp-intro">
@@ -258,7 +413,7 @@ export default function WeddingLanding({
             </Reveal>
             <Reveal delay={120}>
               {invitee ? (
-                <RsvpForm locale={locale} invitee={invitee} />
+                <RsvpForm locale={locale} invitee={invitee} previous={previous} />
               ) : (
                 <div className="rsvp-notice">
                   <h3>{text.rsvpNoticeTitle}</h3>

@@ -91,6 +91,7 @@ export interface ReconcileStats {
   declined: number;
   pending: number;
   contacted: number;
+  openedPending: number;
   extras: number;
 }
 

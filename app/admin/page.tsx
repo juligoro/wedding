@@ -98,6 +98,9 @@ export default async function AdminPage() {
   }));
   const invitees: SerializedInvitee[] = inviteeRecords.map((invitee) => ({
     ...invitee,
+    firstOpenedAt: iso(invitee.firstOpenedAt),
+    lastOpenedAt: iso(invitee.lastOpenedAt),
+    lastRemindedAt: iso(invitee.lastRemindedAt),
     createdAt: iso(invitee.createdAt),
     updatedAt: iso(invitee.updatedAt),
   }));
