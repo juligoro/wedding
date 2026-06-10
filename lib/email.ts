@@ -23,6 +23,8 @@ interface EmailCopy {
   calendarIntro: string;
   calGoogle: string;
   calApple: string;
+  faqLead: string;
+  faqLinkLabel: string;
   closing: string;
   signature: string;
   banner: string;
@@ -51,6 +53,8 @@ const EVENT: Record<Locale, EmailCopy> = {
     calendarIntro: "Sumá el evento a tu calendario y recibí los recordatorios automáticamente.",
     calGoogle: "Agregar a Google Calendar",
     calApple: "Apple · Outlook (.ics)",
+    faqLead: "¿Dudas sobre el micro, el estacionamiento o el dresscode?",
+    faqLinkLabel: "Mirá las preguntas frecuentes",
     closing: "Cualquier duda, respondé este correo.",
     signature: "Con cariño, Juli & Tomi",
     banner: "¡Nos vemos para celebrar!",
@@ -75,6 +79,8 @@ const EVENT: Record<Locale, EmailCopy> = {
     calendarIntro: "Add the event to your calendar and get reminders automatically.",
     calGoogle: "Add to Google Calendar",
     calApple: "Apple · Outlook (.ics)",
+    faqLead: "Questions about the shuttle, parking or dress code?",
+    faqLinkLabel: "Read the FAQ",
     closing: "Any questions, just reply to this email.",
     signature: "With love, Juli & Tomi",
     banner: "See you there to celebrate!",
@@ -208,6 +214,7 @@ function buildEmail(
   baseUrl = "",
   greetingName?: string,
   variant: ConfirmationVariant = "created",
+  faqUrl = "",
 ): { subject: string; html: string; text: string } {
   const name = greetingName || rsvp.firstName;
   const mapUrl = getMapUrl();
@@ -228,6 +235,12 @@ function buildEmail(
                   <p style="margin:20px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.calendarTitle)}:
                     ${calLink(googleUrl, "Google Calendar")}${icsUrl ? ` · ${calLink(icsUrl, t.calApple)}` : ""}</p>`;
 
+  const faqBlock = faqUrl
+    ? `
+                  <p style="margin:10px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.faqLead)}
+                    ${calLink(faqUrl, t.faqLinkLabel)}</p>`
+    : "";
+
   const row = (label: string, value: string) =>
     `<tr>
        <td style="font-family:${LABEL_FONT};padding:12px 0;border-bottom:1px solid #e6e4dd;vertical-align:top;width:118px;color:#6f8062;font-size:11px;letter-spacing:.16em;text-transform:uppercase">${label}</td>
@@ -243,7 +256,7 @@ function buildEmail(
                     ${row(t.where, whereDetail)}
                     ${row(t.dress, t.dressValue)}
                   </table>
-                  ${calendarBlock}
+                  ${calendarBlock}${faqBlock}
                   <p style="margin:28px 0 0;font-size:15px;line-height:1.7;color:#3a382f">${t.closing}</p>
                   <p style="font-family:${DISPLAY_FONT};margin:14px 0 0;font-size:22px;color:#40513c">${t.signature}</p>`;
 
@@ -268,6 +281,7 @@ function buildEmail(
     `${t.calendarTitle}: ${t.calendarIntro}`,
     `- Google Calendar: ${googleUrl}`,
     icsUrl ? `- Apple / Outlook (.ics): ${icsUrl}` : "",
+    faqUrl ? `\n${t.faqLead} ${t.faqLinkLabel}: ${faqUrl}` : "",
     "",
     t.closing,
     t.signature,
@@ -287,6 +301,7 @@ export async function sendRsvpConfirmation({
   to,
   greetingName,
   variant = "created",
+  faqUrl = "",
 }: {
   rsvp: Rsvp;
   locale?: string;
@@ -297,6 +312,8 @@ export async function sendRsvpConfirmation({
   greetingName?: string;
   /** "updated" adjusts the subject and intro when a guest edits their RSVP. */
   variant?: ConfirmationVariant;
+  /** Absolute URL to the FAQ page; included as a small link when set. */
+  faqUrl?: string;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -315,7 +332,7 @@ export async function sendRsvpConfirmation({
   const key: Locale = locale === "en" ? "en" : "es";
   const t = EVENT[key];
   const assetBase = process.env.EMAIL_ASSET_BASE_URL || baseUrl;
-  const { subject, html, text } = buildEmail(t, rsvp, assetBase, greetingName, variant);
+  const { subject, html, text } = buildEmail(t, rsvp, assetBase, greetingName, variant, faqUrl);
   const resend = new Resend(apiKey);
   const replyTo = (process.env.EMAIL_REPLY_TO || "").trim();
 

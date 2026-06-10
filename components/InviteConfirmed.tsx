@@ -11,6 +11,7 @@ const copy: Record<Locale, {
   edit: string;
   editOpen: string;
   editButton: string;
+  faq: string;
 }> = {
   es: {
     title: "¡Ya confirmaste!",
@@ -21,6 +22,7 @@ const copy: Record<Locale, {
     edit: "Si necesitás editar algo de tu respuesta, escribinos y lo actualizamos.",
     editOpen: "¿Cambió algo? Podés editar tu respuesta hasta el 31 de octubre.",
     editButton: "Editar respuesta",
+    faq: "Preguntas frecuentes",
   },
   en: {
     title: "You're all set!",
@@ -31,6 +33,7 @@ const copy: Record<Locale, {
     edit: "If you need to change anything in your reply, just message us and we'll update it.",
     editOpen: "Need to change something? You can edit your reply until October 31.",
     editButton: "Edit your reply",
+    faq: "FAQ",
   },
 };
 
@@ -92,6 +95,12 @@ export default function InviteConfirmed({
           ) : (
             <p className="invite-edit">{text.edit}</p>
           )}
+
+          {token ? (
+            <p className="invite-faq">
+              <a href={`/i/${token}/faq`}>{text.faq}</a>
+            </p>
+          ) : null}
         </div>
       </section>
     </main>

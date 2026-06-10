@@ -190,6 +190,7 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
   if (anyAttending) {
     const locale = payload.locale === "en" ? "en" : "es";
     const baseUrl = resolveBaseUrl(request);
+    const faqUrl = baseUrl ? `${baseUrl}/i/${invitee.token}/faq` : "";
 
     // One confirmation per unique attending email, greeting each by their name.
     const recipients = new Map<string, string>();
@@ -210,6 +211,7 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
           to: recipientEmail,
           greetingName: recipientName,
           variant: existing ? "updated" : "created",
+          faqUrl,
         });
       } catch (emailError) {
         console.error("RSVP confirmation email failed", emailError);
@@ -279,10 +281,11 @@ async function handleOpenRsvp(data: RsvpFormData, request: Request): Promise<Nex
   if (attending) {
     const locale = data.locale === "en" ? "en" : "es";
     const baseUrl = resolveBaseUrl(request);
+    const faqUrl = baseUrl ? `${baseUrl}${locale === "en" ? "/en" : ""}/faq` : "";
 
     // Best-effort: a mail failure must not fail the RSVP.
     try {
-      await sendRsvpConfirmation({ rsvp, locale, baseUrl });
+      await sendRsvpConfirmation({ rsvp, locale, baseUrl, faqUrl });
     } catch (emailError) {
       console.error("RSVP confirmation email failed", emailError);
     }
