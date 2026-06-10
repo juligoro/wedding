@@ -191,6 +191,7 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
     const locale = payload.locale === "en" ? "en" : "es";
     const baseUrl = resolveBaseUrl(request);
     const faqUrl = baseUrl ? `${baseUrl}/i/${invitee.token}/faq` : "";
+    const editUrl = baseUrl && isEditOpen() ? `${baseUrl}/i/${invitee.token}?edit=1` : "";
 
     // One confirmation per unique attending email, greeting each by their name.
     const recipients = new Map<string, string>();
@@ -212,6 +213,7 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
           greetingName: recipientName,
           variant: existing ? "updated" : "created",
           faqUrl,
+          editUrl,
         });
       } catch (emailError) {
         console.error("RSVP confirmation email failed", emailError);

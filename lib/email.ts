@@ -17,12 +17,12 @@ interface EmailCopy {
   where: string;
   whereValue: string;
   addressSoon: string;
-  dress: string;
-  dressValue: string;
   calendarTitle: string;
   calendarIntro: string;
   calGoogle: string;
   calApple: string;
+  editLead: string;
+  editLinkLabel: string;
   faqLead: string;
   faqLinkLabel: string;
   closing: string;
@@ -46,13 +46,12 @@ const EVENT: Record<Locale, EmailCopy> = {
     where: "Dónde",
     whereValue: "Janos Quinta",
     addressSoon: "Te enviaremos la dirección exacta y cómo llegar muy pronto.",
-    dress: "Dresscode",
-    dressValue:
-      "La ceremonia es al aire libre y va a hacer calor: elegante pero fresco. Dejemos el blanco para la novia.",
     calendarTitle: "Agendá la fecha",
     calendarIntro: "Sumá el evento a tu calendario y recibí los recordatorios automáticamente.",
     calGoogle: "Agregar a Google Calendar",
     calApple: "Apple · Outlook (.ics)",
+    editLead: "¿Necesitás editar tu respuesta?",
+    editLinkLabel: "Hacelo desde tu link hasta el 31 de octubre",
     faqLead: "¿Dudas sobre el micro, el estacionamiento o el dresscode?",
     faqLinkLabel: "Mirá las preguntas frecuentes",
     closing: "Cualquier duda, respondé este correo.",
@@ -72,13 +71,12 @@ const EVENT: Record<Locale, EmailCopy> = {
     where: "Where",
     whereValue: "Janos Quinta",
     addressSoon: "We'll send the exact address and directions very soon.",
-    dress: "Dress code",
-    dressValue:
-      "The ceremony is outdoors and the weather will be warm: elegant but fresh. White is reserved for the bride.",
     calendarTitle: "Save the date",
     calendarIntro: "Add the event to your calendar and get reminders automatically.",
     calGoogle: "Add to Google Calendar",
     calApple: "Apple · Outlook (.ics)",
+    editLead: "Need to edit your reply?",
+    editLinkLabel: "You can do it from your link until October 31",
     faqLead: "Questions about the shuttle, parking or dress code?",
     faqLinkLabel: "Read the FAQ",
     closing: "Any questions, just reply to this email.",
@@ -215,6 +213,7 @@ function buildEmail(
   greetingName?: string,
   variant: ConfirmationVariant = "created",
   faqUrl = "",
+  editUrl = "",
 ): { subject: string; html: string; text: string } {
   const name = greetingName || rsvp.firstName;
   const mapUrl = getMapUrl();
@@ -235,6 +234,12 @@ function buildEmail(
                   <p style="margin:20px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.calendarTitle)}:
                     ${calLink(googleUrl, "Google Calendar")}${icsUrl ? ` · ${calLink(icsUrl, t.calApple)}` : ""}</p>`;
 
+  const editBlock = editUrl
+    ? `
+                  <p style="margin:10px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.editLead)}
+                    ${calLink(editUrl, t.editLinkLabel)}</p>`
+    : "";
+
   const faqBlock = faqUrl
     ? `
                   <p style="margin:10px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.faqLead)}
@@ -254,9 +259,8 @@ function buildEmail(
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">
                     ${row(t.when, whenValue)}
                     ${row(t.where, whereDetail)}
-                    ${row(t.dress, t.dressValue)}
                   </table>
-                  ${calendarBlock}${faqBlock}
+                  ${calendarBlock}${editBlock}${faqBlock}
                   <p style="margin:28px 0 0;font-size:15px;line-height:1.7;color:#3a382f">${t.closing}</p>
                   <p style="font-family:${DISPLAY_FONT};margin:14px 0 0;font-size:22px;color:#40513c">${t.signature}</p>`;
 
@@ -276,11 +280,11 @@ function buildEmail(
     `${t.detailsTitle}:`,
     `- ${t.when}: ${whenValue}`,
     `- ${t.where}: ${whereText}`,
-    `- ${t.dress}: ${t.dressValue}`,
     "",
     `${t.calendarTitle}: ${t.calendarIntro}`,
     `- Google Calendar: ${googleUrl}`,
     icsUrl ? `- Apple / Outlook (.ics): ${icsUrl}` : "",
+    editUrl ? `\n${t.editLead} ${t.editLinkLabel}: ${editUrl}` : "",
     faqUrl ? `\n${t.faqLead} ${t.faqLinkLabel}: ${faqUrl}` : "",
     "",
     t.closing,
@@ -302,6 +306,7 @@ export async function sendRsvpConfirmation({
   greetingName,
   variant = "created",
   faqUrl = "",
+  editUrl = "",
 }: {
   rsvp: Rsvp;
   locale?: string;
@@ -314,6 +319,8 @@ export async function sendRsvpConfirmation({
   variant?: ConfirmationVariant;
   /** Absolute URL to the FAQ page; included as a small link when set. */
   faqUrl?: string;
+  /** Absolute URL to edit the RSVP (personal invite link); included when set. */
+  editUrl?: string;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -332,7 +339,15 @@ export async function sendRsvpConfirmation({
   const key: Locale = locale === "en" ? "en" : "es";
   const t = EVENT[key];
   const assetBase = process.env.EMAIL_ASSET_BASE_URL || baseUrl;
-  const { subject, html, text } = buildEmail(t, rsvp, assetBase, greetingName, variant, faqUrl);
+  const { subject, html, text } = buildEmail(
+    t,
+    rsvp,
+    assetBase,
+    greetingName,
+    variant,
+    faqUrl,
+    editUrl,
+  );
   const resend = new Resend(apiKey);
   const replyTo = (process.env.EMAIL_REPLY_TO || "").trim();
 
