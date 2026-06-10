@@ -38,8 +38,8 @@ const copy: Record<string, { items: FaqItem[] }> = {
       {
         q: "¿Qué me pongo?",
         a: [
-          "Elegante pero fresco: la ceremonia es al aire libre y en diciembre va a hacer calor.",
-          "Gran parte de la fiesta es sobre césped, así que mejor evitar el taco fino.",
+          "El dresscode es elegante.",
+          "La ceremonia es al aire libre, pero toda la fiesta es adentro.",
           "El blanco queda reservado para la novia.",
         ],
       },
@@ -87,8 +87,8 @@ const copy: Record<string, { items: FaqItem[] }> = {
       {
         q: "What should I wear?",
         a: [
-          "Elegant but fresh: the ceremony is outdoors and December in Buenos Aires is warm.",
-          "Much of the party is on grass, so thin heels are best avoided.",
+          "The dress code is elegant.",
+          "The ceremony is outdoors, but the whole party is indoors.",
           "White is reserved for the bride.",
         ],
       },
