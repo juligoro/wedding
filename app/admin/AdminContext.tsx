@@ -1,8 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { DragEvent, FormEvent, ReactNode } from "react";
+
+// Sobrevive a recargas y remounts (p. ej. tras router.refresh() al guardar):
+// sin esto, el dashboard vuelve al Resumen después de cada acción que refresca.
+const SECTION_STORAGE_KEY = "admin-active-section";
 
 import { filterAndSortRows, getMealGroups, getRows } from "./lib/rows";
 import { reconcile } from "./lib/match";
@@ -47,7 +51,27 @@ function useAdminValue({
   trash = { rsvps: [], guests: [] },
 }: AdminProviderData) {
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSectionState] = useState("overview");
+
+  // Restore the last visited section after a reload/remount. Runs after
+  // hydration so the server-rendered HTML (Resumen) always matches.
+  useEffect(() => {
+    const saved = window.sessionStorage.getItem(SECTION_STORAGE_KEY);
+
+    if (saved) {
+      setActiveSectionState(saved);
+    }
+  }, []);
+
+  function setActiveSection(section: string) {
+    setActiveSectionState(section);
+
+    try {
+      window.sessionStorage.setItem(SECTION_STORAGE_KEY, section);
+    } catch {
+      // Storage unavailable (private mode, etc.) — navigation still works.
+    }
+  }
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [mealFilter, setMealFilter] = useState("all");
