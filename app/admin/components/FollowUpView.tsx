@@ -80,6 +80,8 @@ export default function FollowUpView() {
     setFollowFilter,
     followQuery,
     setFollowQuery,
+    followSort,
+    setFollowSort,
     importMode,
     setImportMode,
     importInvitees,
@@ -466,6 +468,18 @@ export default function FollowUpView() {
               </button>
             ))}
           </div>
+          <label className="filter-field">
+            Orden
+            <Select
+              value={followSort}
+              onValueChange={setFollowSort}
+              ariaLabel="Ordenar hogares"
+              options={[
+                { value: "alpha", label: "Alfabético" },
+                { value: "recent", label: "Últimos cambios abajo" },
+              ]}
+            />
+          </label>
         </div>
       ) : (
         <p className="empty">

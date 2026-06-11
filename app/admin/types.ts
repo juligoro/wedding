@@ -62,6 +62,7 @@ export interface Row {
   tags: string[];
   submittedBy: string;
   submittedAt: string | null;
+  updatedAt: string;
   attending: boolean;
   tableId: number | null;
   tableName: string;
@@ -72,6 +73,7 @@ export interface RowFilters {
   statusFilter: string;
   mealFilter: string;
   busFilter: string;
+  sort: string;
 }
 
 export type MatchConfidence = "link" | "manual" | "exact" | "tokens" | "email" | "partial" | "none";

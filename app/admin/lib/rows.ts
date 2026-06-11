@@ -31,6 +31,7 @@ export function getRows(
         tags: parseJson<string[]>(guest.tags, []),
         submittedBy: `${submission.firstName} ${submission.lastName}`,
         submittedAt: submission.createdAt,
+        updatedAt: guest.updatedAt,
         attending: edit.attending ?? guest.attending,
         tableId,
         tableName: guest.table && guest.table.id === tableId ? guest.table.name : "",
@@ -57,7 +58,7 @@ export function getMealGroups(rows: Row[]): Record<string, Row[]> {
 
 export function filterAndSortRows(
   rows: Row[],
-  { query, statusFilter, mealFilter, busFilter }: RowFilters,
+  { query, statusFilter, mealFilter, busFilter, sort }: RowFilters,
 ): Row[] {
   return rows
     .filter((row) => {
@@ -80,6 +81,15 @@ export function filterAndSortRows(
       return matchesQuery && matchesStatus && matchesMeal && matchesBus;
     })
     .sort((a, b) => {
+      // "recent": oldest changes first, the rows just edited land at the bottom.
+      if (sort === "recent") {
+        return a.updatedAt === b.updatedAt
+          ? a.name.localeCompare(b.name)
+          : a.updatedAt < b.updatedAt
+            ? -1
+            : 1;
+      }
+
       if (a.attending !== b.attending) {
         return a.attending ? -1 : 1;
       }

@@ -76,6 +76,8 @@ function useAdminValue({
   const [statusFilter, setStatusFilter] = useState("all");
   const [mealFilter, setMealFilter] = useState("all");
   const [busFilter, setBusFilter] = useState("all");
+  const [guestSort, setGuestSort] = useState("alpha");
+  const [followSort, setFollowSort] = useState("alpha");
   const [summaryView, setSummaryView] = useState("accepted");
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   const [selectedGuestIds, setSelectedGuestIds] = useState<number[]>([]);
@@ -181,7 +183,19 @@ function useAdminValue({
         .toLowerCase()
         .includes(normalizedQuery);
     })
-    .sort((a, b) => a.fullName.localeCompare(b.fullName));
+    .sort((a, b) => {
+      // "recent": oldest activity first, the households just edited or
+      // reminded land at the bottom.
+      if (followSort === "recent") {
+        return a.updatedAt === b.updatedAt
+          ? a.fullName.localeCompare(b.fullName)
+          : a.updatedAt < b.updatedAt
+            ? -1
+            : 1;
+      }
+
+      return a.fullName.localeCompare(b.fullName);
+    });
   const pendingInvitees = reconciliation.items.filter((item) => item.status === "pending");
   const acceptedPercent =
     acceptedCount + declinedCount > 0
@@ -202,6 +216,7 @@ function useAdminValue({
     statusFilter,
     mealFilter,
     busFilter,
+    sort: guestSort,
   });
   const summaryNames = summaryView === "accepted" ? acceptedRows : declinedRows;
   const selectedVisibleGuestIds = filteredRows
@@ -900,6 +915,8 @@ function useAdminValue({
     setMealFilter,
     busFilter,
     setBusFilter,
+    guestSort,
+    setGuestSort,
     summaryView,
     setSummaryView,
     // selection + drawer
@@ -941,6 +958,8 @@ function useAdminValue({
     setFollowFilter,
     followQuery,
     setFollowQuery,
+    followSort,
+    setFollowSort,
     importInvitees,
     addInvitee,
     saveInvitee,

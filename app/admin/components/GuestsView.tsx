@@ -17,6 +17,8 @@ export default function GuestsView() {
     setMealFilter,
     busFilter,
     setBusFilter,
+    guestSort,
+    setGuestSort,
     mealOptions,
     filteredRows,
     rowsWithTableNames,
@@ -81,6 +83,18 @@ export default function GuestsView() {
               { value: "all", label: "Todos" },
               { value: "yes", label: "Sí" },
               { value: "no", label: "No" },
+            ]}
+          />
+        </label>
+        <label className="filter-field">
+          Orden
+          <Select
+            value={guestSort}
+            onValueChange={setGuestSort}
+            ariaLabel="Ordenar invitados"
+            options={[
+              { value: "alpha", label: "Alfabético" },
+              { value: "recent", label: "Últimos cambios abajo" },
             ]}
           />
         </label>
