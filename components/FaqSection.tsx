@@ -25,6 +25,14 @@ const copy: Record<string, { items: FaqItem[] }> = {
         venueOnly: true,
       },
       {
+        q: "¿A qué hora empieza y termina?",
+        a: [
+          "Empieza a las 14 hs en punto: la ceremonia comienza 14:20 puntual y, una vez comenzada, no se puede ingresar al establecimiento hasta que termine.",
+          "¡Te pedimos puntualidad!",
+          "La fiesta termina aproximadamente a las 23 hs.",
+        ],
+      },
+      {
         q: "¿Hay micro?",
         a: [
           "Sí. Hay barra libre y no queremos que nadie maneje si tomó, así que va a haber un micro desde y hacia CABA.",
@@ -72,6 +80,14 @@ const copy: Record<string, { items: FaqItem[] }> = {
           { label: "Waze", href: getWazeUrl() },
         ],
         venueOnly: true,
+      },
+      {
+        q: "What time does it start and end?",
+        a: [
+          "It starts at 2:00 PM sharp: the ceremony begins at 2:20 PM on the dot and, once it has started, no one can enter the venue until it's over.",
+          "Please be on time!",
+          "The party ends at around 11 PM.",
+        ],
       },
       {
         q: "Is there a shuttle?",
