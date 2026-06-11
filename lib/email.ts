@@ -240,22 +240,23 @@ function buildEmail(
   const subject = variant === "updated" ? t.subjectUpdated : t.subject;
   const confirmed = variant === "updated" ? t.confirmedUpdated : t.confirmed;
 
+  // Secondary info: small, muted lines under the details table.
   const calLink = (href: string, label: string) =>
-    `<a href="${escapeHtml(href)}" style="font-family:${LABEL_FONT};font-size:12px;text-decoration:underline;color:#40513c">${escapeHtml(label)}</a>`;
+    `<a href="${escapeHtml(href)}" style="font-family:${LABEL_FONT};font-size:11px;text-decoration:underline;color:#6f7166">${escapeHtml(label)}</a>`;
 
   const calendarBlock = `
-                  <p style="margin:20px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.calendarTitle)}:
+                  <p style="margin:20px 0 0;font-size:12px;line-height:1.7;color:#9a958a">${escapeHtml(t.calendarTitle)}:
                     ${calLink(googleUrl, "Google Calendar")}${icsUrl ? ` · ${calLink(icsUrl, t.calApple)}` : ""}</p>`;
 
   const editBlock = editUrl
     ? `
-                  <p style="margin:10px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.editLead)}
+                  <p style="margin:8px 0 0;font-size:12px;line-height:1.7;color:#9a958a">${escapeHtml(t.editLead)}
                     ${calLink(editUrl, t.editLinkLabel)}</p>`
     : "";
 
   const faqBlock = faqUrl
     ? `
-                  <p style="margin:10px 0 0;font-size:13px;line-height:1.7;color:#6f7166">${escapeHtml(t.faqLead)}
+                  <p style="margin:8px 0 0;font-size:12px;line-height:1.7;color:#9a958a">${escapeHtml(t.faqLead)}
                     ${calLink(faqUrl, t.faqLinkLabel)}</p>`
     : "";
 

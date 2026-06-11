@@ -1214,22 +1214,28 @@ img {
 .success-calendar-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 18px;
 }
+/* Discreet text links — saving the date is secondary to the confirmation itself. */
 .button.calendar {
-  padding: 11px 20px;
-  font-size: 0.74rem;
+  min-height: 0;
+  padding: 2px 0;
+  font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--sage-deep);
-  background: var(--white);
-  border: 1px solid rgba(111, 128, 98, 0.4);
-  border-radius: 999px;
+  color: var(--sage-dark);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .button.calendar:hover {
-  background: var(--sage-deep);
-  color: #f3efe4;
-  border-color: var(--sage-deep);
+  transform: none;
+  background: transparent;
+  color: var(--sage-deep);
+  box-shadow: none;
 }
 
 .error {
