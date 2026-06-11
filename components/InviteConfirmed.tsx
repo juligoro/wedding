@@ -2,7 +2,7 @@ import { Sprig } from "@/components/Botanical";
 import { buildGoogleCalendarUrl, getEventWhen } from "@/lib/calendar";
 import type { Locale } from "@/lib/types";
 
-const copy: Record<Locale, {
+interface ConfirmedCopy {
   title: string;
   body: string;
   calTitle: string;
@@ -12,7 +12,11 @@ const copy: Record<Locale, {
   editOpen: string;
   editButton: string;
   faq: string;
-}> = {
+}
+
+// Spanish needs a plural variant for multi-person households; English "you"
+// already covers both.
+const copy: Record<string, ConfirmedCopy> = {
   es: {
     title: "¡Ya confirmaste!",
     body: "Gracias por confirmar. Te esperamos para celebrar juntos este día tan especial.",
@@ -21,6 +25,17 @@ const copy: Record<Locale, {
     apple: "Apple · Outlook",
     edit: "Si necesitás editar algo de tu respuesta, escribinos y lo actualizamos.",
     editOpen: "¿Cambió algo? Podés editar tu respuesta hasta el 31 de octubre.",
+    editButton: "Editar respuesta",
+    faq: "Preguntas frecuentes",
+  },
+  "es-plural": {
+    title: "¡Ya confirmaron!",
+    body: "Gracias por confirmar. Los esperamos para celebrar juntos este día tan especial.",
+    calTitle: "Agendá la fecha",
+    google: "Google Calendar",
+    apple: "Apple · Outlook",
+    edit: "Si necesitan editar algo de su respuesta, escríbannos y lo actualizamos.",
+    editOpen: "¿Cambió algo? Pueden editar su respuesta hasta el 31 de octubre.",
     editButton: "Editar respuesta",
     faq: "Preguntas frecuentes",
   },
@@ -42,13 +57,15 @@ export default function InviteConfirmed({
   locale = "es",
   token,
   canEdit = false,
+  plural = false,
 }: {
   greeting: string;
   locale?: Locale;
   token?: string;
   canEdit?: boolean;
+  plural?: boolean;
 }) {
-  const text = copy[locale] || copy.es;
+  const text = copy[locale === "es" && plural ? "es-plural" : locale] || copy.es;
   const hello = locale === "en" ? `Hi ${greeting}` : `¡Hola ${greeting}!`;
 
   return (

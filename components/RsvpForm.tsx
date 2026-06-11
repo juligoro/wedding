@@ -31,11 +31,18 @@ const copy: Record<string, Record<string, string>> = {
     busNo: "Queda anotado que no necesitan micro.",
     attendingSuccess:
       "¡Qué alegría que vengas!|Te enviamos un correo con la confirmación y la dirección completa.|Movilidad: {microText}",
+    attendingSuccessPlural:
+      "¡Qué alegría que vengan!|Les enviamos un correo con la confirmación y la dirección completa.|Movilidad: {microText}",
     declinedSuccess: "Gracias por avisarnos.|Te vamos a extrañar muchísimo ese día.",
+    declinedSuccessPlural: "Gracias por avisarnos.|Los vamos a extrañar muchísimo ese día.",
     updatedAttendingSuccess:
       "¡Listo! Actualizamos tu respuesta.|Te reenviamos el correo con la confirmación.|Movilidad: {microText}",
+    updatedAttendingSuccessPlural:
+      "¡Listo! Actualizamos su respuesta.|Les reenviamos el correo con la confirmación.|Movilidad: {microText}",
     updatedDeclinedSuccess:
       "Listo, actualizamos tu respuesta.|Te vamos a extrañar muchísimo ese día.",
+    updatedDeclinedSuccessPlural:
+      "Listo, actualizamos su respuesta.|Los vamos a extrañar muchísimo ese día.",
     calTitle: "Agendá la fecha",
     calGoogle: "Google Calendar",
     calApple: "Apple · Outlook",
@@ -81,7 +88,7 @@ const copy: Record<string, Record<string, string>> = {
     allergiesFor: "Alergias o comentarios de {name}",
     needName: "Completá el nombre de cada invitado.",
     needContact: "Completá tu email y WhatsApp.",
-    needEmail: "Completá el email de cada invitado que asiste (ahí le llega la confirmación).",
+    needEmail: "Completá el email de al menos una persona que asiste (ahí llega la confirmación).",
     needBus: "Indicá si necesitan micro.",
   },
   en: {
@@ -90,10 +97,17 @@ const copy: Record<string, Record<string, string>> = {
     busNo: "We noted that you do not need the shuttle.",
     attendingSuccess:
       "Yay! We can't wait to see you.|We've just emailed you a confirmation with the full address.|Transportation: {microText}",
+    attendingSuccessPlural:
+      "Yay! We can't wait to see you.|We've just emailed you a confirmation with the full address.|Transportation: {microText}",
     declinedSuccess: "Thank you for letting us know.|We will miss you so much that day.",
+    declinedSuccessPlural: "Thank you for letting us know.|We will miss you so much that day.",
     updatedAttendingSuccess:
       "Done! Your reply was updated.|We've re-sent your confirmation email.|Transportation: {microText}",
+    updatedAttendingSuccessPlural:
+      "Done! Your reply was updated.|We've re-sent your confirmation email.|Transportation: {microText}",
     updatedDeclinedSuccess:
+      "Done, your reply was updated.|We will miss you so much that day.",
+    updatedDeclinedSuccessPlural:
       "Done, your reply was updated.|We will miss you so much that day.",
     calTitle: "Save the date",
     calGoogle: "Google Calendar",
@@ -140,7 +154,7 @@ const copy: Record<string, Record<string, string>> = {
     allergiesFor: "Allergies or notes for {name}",
     needName: "Please enter each guest's name.",
     needContact: "Please enter your email and WhatsApp.",
-    needEmail: "Please enter an email for each attending guest (that's where their confirmation goes).",
+    needEmail: "Please enter an email for at least one attending guest (that's where the confirmation goes).",
     needBus: "Please tell us whether you need the shuttle.",
   },
 };
@@ -262,15 +276,29 @@ export default function RsvpForm({
     );
   }
 
-  function showSuccess(attending: boolean, needsBus: boolean) {
+  function showSuccess(attending: boolean, needsBus: boolean, plural = false) {
     if (attending) {
       const microText = needsBus ? text.busYes : text.busNo;
-      const template = isEditing ? text.updatedAttendingSuccess : text.attendingSuccess;
+      const template = isEditing
+        ? plural
+          ? text.updatedAttendingSuccessPlural
+          : text.updatedAttendingSuccess
+        : plural
+          ? text.attendingSuccessPlural
+          : text.attendingSuccess;
 
       setSuccessMessage(format(template, { microText }));
       setShowCalendar(true);
     } else {
-      setSuccessMessage(isEditing ? text.updatedDeclinedSuccess : text.declinedSuccess);
+      const template = isEditing
+        ? plural
+          ? text.updatedDeclinedSuccessPlural
+          : text.updatedDeclinedSuccess
+        : plural
+          ? text.declinedSuccessPlural
+          : text.declinedSuccess;
+
+      setSuccessMessage(template);
       setShowCalendar(false);
     }
   }
@@ -311,9 +339,11 @@ export default function RsvpForm({
       return;
     }
 
-    const anyAttending = cleanMembers.some((member) => member.attending);
+    const attendingMembers = cleanMembers.filter((member) => member.attending);
+    const anyAttending = attendingMembers.length > 0;
 
-    if (anyAttending && cleanMembers.some((member) => member.attending && !member.email)) {
+    // One contact email for the group is enough — the rest are optional.
+    if (anyAttending && !attendingMembers.some((member) => member.email)) {
       setErrorMessage(text.needEmail);
       return;
     }
@@ -336,7 +366,11 @@ export default function RsvpForm({
         members: cleanMembers,
       });
 
-      showSuccess(anyAttending, busChoice === "si");
+      showSuccess(
+        anyAttending,
+        busChoice === "si",
+        anyAttending ? attendingMembers.length > 1 : cleanMembers.length > 1,
+      );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : text.saveError);
     } finally {
@@ -499,7 +533,6 @@ export default function RsvpForm({
                               autoComplete="email"
                               value={member.email}
                               onChange={(event) => updateMember(index, { email: event.target.value })}
-                              required
                             />
                           </label>
                           <label>

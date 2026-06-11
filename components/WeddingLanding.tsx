@@ -176,6 +176,13 @@ export default function WeddingLanding({
 }) {
   const text = copy[locale] || copy.es;
   const faqHref = invitee ? `/i/${invitee.token}/faq` : locale === "en" ? "/en/faq" : "/faq";
+  // Spanish plural address for multi-person households (English "you" covers both).
+  const plural = locale !== "en" && (invitee?.members.length ?? 0) > 1;
+  const rsvpHeading = plural ? "Confirmen su asistencia" : text.rsvpHeading;
+  const rsvpText = plural
+    ? "Confirmen su asistencia hasta el 31 de octubre."
+    : text.rsvpText;
+  const rsvpSubtext = plural ? "Van a recibir los detalles por correo." : text.rsvpSubtext;
   const greeting = invitee
     ? locale === "en"
       ? `Hi ${invitee.greeting}!`
@@ -259,13 +266,13 @@ export default function WeddingLanding({
           </div>
         </section>
 
-        <section className="section section-rsvp" id="rsvp" aria-label={text.rsvpHeading}>
+        <section className="section section-rsvp" id="rsvp" aria-label={rsvpHeading}>
           <div className="wrap rsvp-layout">
             <Reveal as="aside" className="rsvp-intro">
               {greeting ? <p className="rsvp-greeting">{greeting}</p> : null}
-              <h2 id="rsvp-title">{text.rsvpHeading}</h2>
-              <p className="rsvp-lead">{text.rsvpText}</p>
-              <p className="rsvp-sub">{text.rsvpSubtext}</p>
+              <h2 id="rsvp-title">{rsvpHeading}</h2>
+              <p className="rsvp-lead">{rsvpText}</p>
+              <p className="rsvp-sub">{rsvpSubtext}</p>
               <Sprig className="rsvp-sprig" />
             </Reveal>
             <Reveal delay={120}>

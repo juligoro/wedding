@@ -101,6 +101,7 @@ export default async function InvitePage({
           locale={locale}
           token={invitee.token}
           canEdit={editOpen}
+          plural={context.members.length > 1}
         />
       </>
     );

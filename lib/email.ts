@@ -98,13 +98,26 @@ interface ReminderCopy {
   footer: string;
 }
 
-const REMINDER: Record<Locale, ReminderCopy> = {
+const REMINDER: Record<string, ReminderCopy> = {
   es: {
     subject: "¿Nos acompañás? Confirmá tu asistencia · Juli & Tomi",
     greeting: (name) => `¡Hola ${name}!`,
     intro:
-      "Todavía no recibimos la confirmación de tu grupo y nos encantaría saber si nos acompañan en nuestro casamiento.",
+      "Todavía no recibimos tu confirmación y nos encantaría saber si nos acompañás en nuestro casamiento.",
     deadline: "Podés confirmar hasta el 31 de octubre desde tu link personalizado:",
+    button: "Confirmar asistencia",
+    closing: "Cualquier duda, respondé este correo.",
+    signature: "Con cariño, Juli & Tomi",
+    banner: "¡Nos vemos para celebrar!",
+    footer: "Recibís este correo porque estás en la lista de invitados de juli-tomi.wedding",
+  },
+  // Multi-person household: the reader is one person, but the RSVP is the group's.
+  "es-plural": {
+    subject: "¿Nos acompañan? Confirmen su asistencia · Juli & Tomi",
+    greeting: (name) => `¡Hola ${name}!`,
+    intro:
+      "Todavía no recibimos la confirmación de tu grupo y nos encantaría saber si nos acompañan en nuestro casamiento.",
+    deadline: "Pueden confirmar hasta el 31 de octubre desde su link personalizado:",
     button: "Confirmar asistencia",
     closing: "Cualquier duda, respondé este correo.",
     signature: "Con cariño, Juli & Tomi",
@@ -378,7 +391,7 @@ export function buildRsvpReminderEmail(invitee: Invitee, baseUrl = ""): Reminder
   }
 
   const locale: Locale = invitee.locale === "en" ? "en" : "es";
-  const t = REMINDER[locale];
+  const t = REMINDER[locale === "es" && invitee.party > 1 ? "es-plural" : locale];
   const name = invitee.greeting || invitee.fullName;
   const inviteUrl = `${(process.env.EMAIL_ASSET_BASE_URL || baseUrl).replace(/\/$/, "")}/i/${invitee.token}`;
 

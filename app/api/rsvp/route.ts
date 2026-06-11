@@ -73,10 +73,10 @@ async function handleInviteRsvp(payload: InviteRsvpPayload, request: Request): P
 
   const anyAttending = members.some((member) => member.attending);
 
-  // Each attending guest needs an email so their own confirmation reaches them.
-  if (anyAttending && members.some((member) => member.attending && !member.email)) {
+  // At least one attending guest needs an email so the confirmation reaches the group.
+  if (anyAttending && !members.some((member) => member.attending && member.email)) {
     return NextResponse.json(
-      { error: "Falta el email de algún invitado que asiste." },
+      { error: "Falta el email de al menos una persona que asiste." },
       { status: 400 },
     );
   }
