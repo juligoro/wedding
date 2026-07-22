@@ -10,18 +10,18 @@
 // ════════════════════════════════════════════════════════════════════════
 const EVENT = {
   date: { year: 2026, month: 12, day: 6 }, // month is 1-based (12 = December)
-  start: { hour: 14, minute: 0 }, // 24h local time
+  start: { hour: 16, minute: 0 }, // 24h local time
   end: { hour: 23, minute: 0, dayOffset: 0 }, // ends ~23:00 the same day
   utcOffset: -3, // Argentina, fixed (no DST)
 
   // What guests read. Phrase these to match `date`/`start` above.
   when: {
-    es: "Domingo 6 de diciembre de 2026 · desde las 14 hs.",
-    en: "Sunday, December 6, 2026 · from 2:00 PM",
+    es: "Domingo 6 de diciembre de 2026 · desde las 16 hs.",
+    en: "Sunday, December 6, 2026 · from 4:00 PM",
   },
   timePhrase: {
-    es: "desde las 14 hs",
-    en: "from 2:00 PM",
+    es: "desde las 16 hs",
+    en: "from 4:00 PM",
   },
 };
 // ════════════════════════════════════════════════════════════════════════
@@ -88,7 +88,7 @@ function getCopy(locale: string): { title: string; description: string } {
   return { title, description };
 }
 
-// Human-readable "when" line, e.g. "Domingo 6 de diciembre de 2026 · desde las 14 hs."
+// Human-readable "when" line, e.g. "Domingo 6 de diciembre de 2026 · desde las 16 hs."
 export function getEventWhen(locale: string = "es"): string {
   return EVENT.when[pickLocale(locale)];
 }

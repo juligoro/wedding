@@ -108,6 +108,14 @@ const icons: Record<string, ReactNode> = {
       <circle cx="16" cy="19" r="1.6" />
     </>
   ),
+  music: (
+    <>
+      <path d="M9 18 V6 l10 -2 v12" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <circle cx="16.5" cy="16" r="2.5" />
+      <path d="M9 8 l10 -2" strokeOpacity="0.5" />
+    </>
+  ),
 };
 
 export function Icon({ name, className = "" }: { name: string; className?: string }) {

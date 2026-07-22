@@ -30,6 +30,10 @@ interface LandingCopy {
   detailsAria: string;
   cards: LandingCard[];
   faqLinkLabel: string;
+  playlistAria: string;
+  playlistHeading: string;
+  playlistText: string;
+  playlistCta: string;
   rsvpHeading: string;
   rsvpText: string;
   rsvpSubtext: string;
@@ -39,6 +43,9 @@ interface LandingCopy {
   footerThanks: string;
   footerBack: string;
 }
+
+// Collaborative Spotify playlist guests add their song suggestions to.
+const PLAYLIST_URL = "https://open.spotify.com/playlist/3xePf5OkeL3bLO4UmR6EtZ";
 
 const couplePhotos: GalleryPhoto[] = [
   { src: "/couple-photos/img-6634.jpg", alt: "Juli y Tomi abrazados frente al mar", position: "45% 72%" },
@@ -82,7 +89,7 @@ const copy: Record<string, LandingCopy> = {
       {
         icon: "calendar",
         title: "Ceremonia + Fiesta",
-        lines: ["Domingo 6 de diciembre de 2026", "Desde las 14 hs."],
+        lines: ["Domingo 6 de diciembre de 2026", "Desde las 16 hs."],
       },
       {
         icon: "pin",
@@ -100,6 +107,11 @@ const copy: Record<string, LandingCopy> = {
       },
     ],
     faqLinkLabel: "¿Dudas? Mirá las preguntas frecuentes",
+    playlistAria: "Nuestra playlist",
+    playlistHeading: "Sumá tu canción",
+    playlistText:
+      "¿Qué tema no puede faltar en la fiesta? Sumá tus canciones a nuestra playlist colaborativa de Spotify y ayudanos a armar la música de la noche.",
+    playlistCta: "Agregar canciones en Spotify",
     rsvpHeading: "Confirmá tu asistencia",
     rsvpText: "Confirmá tu asistencia y la de tu grupo familiar hasta el 31 de octubre.",
     rsvpSubtext: "Vas a recibir los detalles por correo.",
@@ -135,7 +147,7 @@ const copy: Record<string, LandingCopy> = {
       {
         icon: "calendar",
         title: "Ceremony + Party",
-        lines: ["Sunday, December 6, 2026", "From 2:00 PM."],
+        lines: ["Sunday, December 6, 2026", "From 4:00 PM."],
       },
       {
         icon: "pin",
@@ -153,6 +165,11 @@ const copy: Record<string, LandingCopy> = {
       },
     ],
     faqLinkLabel: "Questions? Read the FAQ",
+    playlistAria: "Our playlist",
+    playlistHeading: "Add your song",
+    playlistText:
+      "Which song can't be missing from the party? Add your tracks to our collaborative Spotify playlist and help us build the soundtrack for the night.",
+    playlistCta: "Add songs on Spotify",
     rsvpHeading: "Confirm your attendance",
     rsvpText: "Please confirm your attendance and your family group's attendance by October 31.",
     rsvpSubtext: "You will receive the details by email.",
@@ -262,6 +279,27 @@ export default function WeddingLanding({
               <a className="faq-link" href={faqHref}>
                 {text.faqLinkLabel}
               </a>
+            </Reveal>
+          </div>
+        </section>
+
+        <section className="section section-playlist" id="playlist" aria-label={text.playlistAria}>
+          <div className="wrap">
+            <Reveal className="playlist-card">
+              <span className="detail-icon playlist-icon">
+                <Icon name="music" />
+              </span>
+              <h2 className="playlist-heading">{text.playlistHeading}</h2>
+              <p className="playlist-lead">{text.playlistText}</p>
+              <a
+                className="playlist-cta"
+                href={PLAYLIST_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {text.playlistCta}
+              </a>
+              <Sprig className="playlist-sprig" />
             </Reveal>
           </div>
         </section>

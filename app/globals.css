@@ -793,6 +793,72 @@ img {
 }
 
 /* ==========================================================================
+   Playlist (collaborative Spotify song suggestions)
+   ========================================================================== */
+
+.section-playlist {
+  background:
+    radial-gradient(80% 60% at 20% 0%, rgba(111, 128, 98, 0.1), transparent 60%);
+}
+.playlist-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: min(100%, 640px);
+  margin: 0 auto;
+  padding: clamp(34px, 4vw, 52px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(170deg, rgba(255, 253, 248, 0.9), rgba(246, 240, 222, 0.6));
+  box-shadow: var(--shadow-sm);
+}
+.playlist-icon {
+  margin-bottom: 20px;
+}
+.playlist-heading {
+  margin: 0 0 14px;
+  font-family: var(--display-font);
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  font-weight: 500;
+  color: var(--sage-deep);
+}
+.playlist-lead {
+  margin: 0 0 26px;
+  max-width: 46ch;
+  color: var(--muted);
+  line-height: 1.75;
+}
+.playlist-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 30px;
+  border-radius: 999px;
+  background: linear-gradient(160deg, var(--sage-dark), var(--sage-deep));
+  color: var(--white);
+  font-family: var(--label-font);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+.playlist-cta:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+.playlist-sprig {
+  position: absolute;
+  right: -20px;
+  bottom: -26px;
+  width: 128px;
+  color: rgba(111, 128, 98, 0.12);
+}
+
+/* ==========================================================================
    RSVP
    ========================================================================== */
 

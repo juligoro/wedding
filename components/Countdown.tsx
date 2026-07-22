@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-const weddingTime = new Date("2026-12-06T17:00:00.000Z").getTime();
+const weddingTime = new Date("2026-12-06T19:00:00.000Z").getTime();
 
 const labels: Record<string, Record<string, string>> = {
   es: {
