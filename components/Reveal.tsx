@@ -35,12 +35,27 @@ export default function Reveal({
 
     if (
       typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      (window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        typeof IntersectionObserver === "undefined")
     ) {
       setVisible(true);
       return undefined;
     }
 
+    // Never let the entrance animation hide content that's about to fill the
+    // screen. A block at least as tall as the viewport (e.g. the RSVP form on a
+    // phone) can't reliably satisfy a ratio-based observer and is content the
+    // user must always see — reveal it right away, no observer needed.
+    if (el.offsetHeight >= window.innerHeight) {
+      setVisible(true);
+      return undefined;
+    }
+
+    // Reveal as soon as the element enters the viewport (threshold 0). A prior
+    // 0.15 threshold silently broke on elements taller than ~6.5× the viewport
+    // — 15% of them can never be on screen at once, so the observer never fired
+    // and they stayed at opacity 0. The negative bottom rootMargin keeps the
+    // "reveal a touch after it scrolls in" feel for normal-height elements.
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -52,7 +67,7 @@ export default function Reveal({
           }
         });
       },
-      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" },
+      { threshold: 0, rootMargin: "0px 0px -10% 0px" },
     );
 
     observer.observe(el);
