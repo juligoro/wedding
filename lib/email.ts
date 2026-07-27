@@ -100,10 +100,10 @@ interface ReminderCopy {
 
 const REMINDER: Record<string, ReminderCopy> = {
   es: {
-    subject: "¿Nos acompañás? Confirmá tu asistencia · Juli & Tomi",
+    subject: "¿Nos acompañás el 6/12? Nos encantaría 🥰 · Juli & Tomi",
     greeting: (name) => `¡Hola ${name}!`,
     intro:
-      "Todavía no recibimos tu confirmación y nos encantaría saber si nos acompañás en nuestro casamiento.",
+      "Todavía no recibimos tu confirmación y nos encantaría muchísimo que nos acompañes en nuestro casamiento el 6 de diciembre. Es un paso super importante para nosotros y queremos que seas parte 🥰",
     deadline: "Podés confirmar hasta el 31 de octubre desde tu link personalizado:",
     button: "Confirmar asistencia",
     closing: "Cualquier duda, respondé este correo.",
@@ -113,10 +113,10 @@ const REMINDER: Record<string, ReminderCopy> = {
   },
   // Multi-person household: the reader is one person, but the RSVP is the group's.
   "es-plural": {
-    subject: "¿Nos acompañan? Confirmen su asistencia · Juli & Tomi",
+    subject: "¿Nos acompañan el 6/12? Nos encantaría 🥰 · Juli & Tomi",
     greeting: (name) => `¡Hola ${name}!`,
     intro:
-      "Todavía no recibimos la confirmación de tu grupo y nos encantaría saber si nos acompañan en nuestro casamiento.",
+      "Todavía no recibimos la confirmación de tu grupo y nos encantaría muchísimo que nos acompañen en nuestro casamiento el 6 de diciembre. Es un paso super importante para nosotros y queremos que sean parte 🥰",
     deadline: "Pueden confirmar hasta el 31 de octubre desde su link personalizado:",
     button: "Confirmar asistencia",
     closing: "Cualquier duda, respondé este correo.",
@@ -125,10 +125,10 @@ const REMINDER: Record<string, ReminderCopy> = {
     footer: "Recibís este correo porque estás en la lista de invitados de juli-tomi.wedding",
   },
   en: {
-    subject: "Will you join us? Please RSVP · Juli & Tomi",
+    subject: "Will you join us on Dec 6? We'd love that 🥰 · Juli & Tomi",
     greeting: (name) => `Hi ${name}!`,
     intro:
-      "We haven't received your group's RSVP yet and we'd love to know if you can join us at our wedding.",
+      "We haven't heard from you yet and we'd truly love for you to join us at our wedding on December 6th. It's such an important step for us and we'd love for you to be part of it! 🥰",
     deadline: "You can RSVP until October 31 using your personal link:",
     button: "RSVP now",
     closing: "Any questions, just reply to this email.",

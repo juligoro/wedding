@@ -122,10 +122,15 @@ export default function FollowUpView() {
   function messageFor(item: ReconcileItem): string {
     const greeting = item.greeting || item.fullName;
     const link = linkFor(item);
+    const plural = item.party > 1;
 
-    return item.locale === "en"
-      ? `Hi ${greeting}! We'd love for you to join us at our wedding. Please RSVP here: ${link}`
-      : `¡Hola ${greeting}! Nos encantaría que nos acompañen en nuestro casamiento. Confirmá tu asistencia acá: ${link}`;
+    if (item.locale === "en") {
+      return `Hi ${greeting}! We'd love for you to join us at our wedding on December 6th 🥰 It's such an important step for us and we'd love for you to be part of it! RSVP and see all the details here: ${link}`;
+    }
+
+    return plural
+      ? `¡Hola ${greeting}! Nos encantaría muchísimo que nos acompañen en nuestro casamiento el 6 de diciembre 🥰 Es un paso super importante para nosotros y queremos que sean parte. Confirmen su asistencia y miren todos los detalles acá: ${link}`
+      : `¡Hola ${greeting}! Nos encantaría muchísimo que nos acompañes en nuestro casamiento el 6 de diciembre 🥰 Es un paso super importante para nosotros y queremos que seas parte. Confirmá tu asistencia y mirá todos los detalles acá: ${link}`;
   }
 
   async function copyText(text: string, label: string) {
