@@ -11,7 +11,7 @@
 const EVENT = {
   date: { year: 2026, month: 12, day: 6 }, // month is 1-based (12 = December)
   start: { hour: 16, minute: 0 }, // 24h local time
-  end: { hour: 23, minute: 0, dayOffset: 0 }, // ends ~23:00 the same day
+  end: { hour: 1, minute: 0, dayOffset: 1 }, // ends ~01:00 the next day
   utcOffset: -3, // Argentina, fixed (no DST)
 
   // What guests read. Phrase these to match `date`/`start` above.

@@ -29,7 +29,7 @@ const copy: Record<string, { items: FaqItem[] }> = {
         a: [
           "Empieza a las 16 hs en punto: la ceremonia comienza 16:20 puntual y, una vez comenzada, no se puede ingresar al establecimiento hasta que termine.",
           "¡Te pedimos puntualidad!",
-          "La fiesta termina aproximadamente a las 23 hs.",
+          "La fiesta termina aproximadamente a la 1 de la madrugada.",
         ],
       },
       {
@@ -86,7 +86,7 @@ const copy: Record<string, { items: FaqItem[] }> = {
         a: [
           "It starts at 4:00 PM sharp: the ceremony begins at 4:20 PM on the dot and, once it has started, no one can enter the venue until it's over.",
           "Please be on time!",
-          "The party ends at around 11 PM.",
+          "The party ends at around 1 AM.",
         ],
       },
       {
