@@ -30,7 +30,7 @@ const FILTERS: { id: string; label: string }[] = [
   { id: "all", label: "Todos" },
 ];
 
-const COL_COUNT = 6;
+const COL_COUNT = 7;
 
 interface DraftMember {
   firstName: string;
@@ -95,6 +95,13 @@ export default function FollowUpView() {
     clearInvitees,
     sendReminders,
     isReminding,
+    selectedInviteeIds,
+    selectedInviteeCount,
+    allVisibleInviteesSelected,
+    toggleInvitee,
+    toggleVisibleInvitees,
+    archiveSelectedInvitees,
+    setSelectedInviteeIds,
   } = useAdmin();
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -203,6 +210,16 @@ export default function FollowUpView() {
 
     if (fileRef.current) {
       fileRef.current.value = "";
+    }
+  }
+
+  function handleArchiveSelected() {
+    if (
+      window.confirm(
+        `¿Archivar ${selectedInviteeCount} hogar(es)? Salen de la lista pero podés restaurarlos desde la Papelera.`,
+      )
+    ) {
+      archiveSelectedInvitees();
     }
   }
 
@@ -411,8 +428,10 @@ export default function FollowUpView() {
           <div className="stat-card">
             <div className="stat-body">
               <span className="stat-label">En la lista</span>
-              <strong className="stat-value">{stats.total}</strong>
-              <span className="stat-hint">Hogares cargados</span>
+              <strong className="stat-value">{stats.people}</strong>
+              <span className="stat-hint">
+                {stats.people} personas · {stats.total} hogares
+              </span>
             </div>
           </div>
           <div className="stat-card tone-ok">
@@ -429,7 +448,8 @@ export default function FollowUpView() {
               <span className="stat-label">Sin responder</span>
               <strong className="stat-value">{stats.pending}</strong>
               <span className="stat-hint">
-                {stats.contacted} ya contactados · {stats.openedPending} abrieron el link
+                {stats.peoplePending} personas · {stats.contacted} contactados ·{" "}
+                {stats.openedPending} abrieron
               </span>
             </div>
           </div>
@@ -487,10 +507,34 @@ export default function FollowUpView() {
         </p>
       )}
 
+      {selectedInviteeCount > 0 ? (
+        <div className="bulk-bar" role="region" aria-label="Acciones en lote sobre hogares">
+          <strong className="bulk-count">{selectedInviteeCount} hogar(es) seleccionados</strong>
+          <div className="bulk-group">
+            <button type="button" className="danger-button" onClick={handleArchiveSelected}>
+              Archivar seleccionados
+            </button>
+          </div>
+          <button type="button" className="bulk-clear" onClick={() => setSelectedInviteeIds([])}>
+            Limpiar
+          </button>
+        </div>
+      ) : null}
+
       <div className="table-wrap">
         <table className="guest-table">
           <thead>
             <tr>
+              <th className="col-check">
+                {hasList ? (
+                  <input
+                    type="checkbox"
+                    aria-label="Seleccionar todos los visibles"
+                    checked={allVisibleInviteesSelected}
+                    onChange={toggleVisibleInvitees}
+                  />
+                ) : null}
+              </th>
               <th>Nombre</th>
               <th>Estado</th>
               <th>Link personalizado</th>
@@ -502,7 +546,15 @@ export default function FollowUpView() {
           <tbody>
             {filteredInvitees.map((item) => (
               <Fragment key={item.id}>
-                <tr>
+                <tr className={selectedInviteeIds.includes(item.id) ? "is-selected" : undefined}>
+                  <td className="col-check">
+                    <input
+                      type="checkbox"
+                      aria-label={`Seleccionar ${item.fullName}`}
+                      checked={selectedInviteeIds.includes(item.id)}
+                      onChange={() => toggleInvitee(item.id)}
+                    />
+                  </td>
                   <td>
                     <div className="invitee-name">
                       <strong>{item.fullName}</strong>

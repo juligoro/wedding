@@ -2,12 +2,22 @@
 
 import { useAdmin } from "../AdminContext";
 import { formatDateTime } from "../lib/format";
-import type { SerializedGuest, SerializedSubmission } from "../types";
+import type { SerializedGuest, SerializedInvitee, SerializedSubmission } from "../types";
 
 export default function TrashView() {
-  const { trash, crudMessage, restoreRsvp, restoreGuest, purgeRsvp, purgeGuest } = useAdmin();
+  const {
+    trash,
+    crudMessage,
+    restoreRsvp,
+    restoreGuest,
+    purgeRsvp,
+    purgeGuest,
+    restoreInvitee,
+    purgeInvitee,
+  } = useAdmin();
 
-  const hasItems = trash.rsvps.length > 0 || trash.guests.length > 0;
+  const hasItems =
+    trash.rsvps.length > 0 || trash.guests.length > 0 || trash.invitees.length > 0;
 
   function confirmPurgeRsvp(rsvp: SerializedSubmission) {
     if (
@@ -29,12 +39,23 @@ export default function TrashView() {
     }
   }
 
+  function confirmPurgeInvitee(invitee: SerializedInvitee) {
+    if (
+      window.confirm(
+        `Eliminar para siempre el hogar de ${invitee.fullName} (y su link). Esta acción no se puede deshacer. ¿Continuar?`,
+      )
+    ) {
+      purgeInvitee(invitee.id);
+    }
+  }
+
   return (
     <div className="view view-trash">
       <header className="view-header">
         <h2>Papelera</h2>
         <span className="muted">
-          {trash.rsvps.length} envíos · {trash.guests.length} invitados
+          {trash.rsvps.length} envíos · {trash.guests.length} invitados · {trash.invitees.length}{" "}
+          hogares
         </span>
       </header>
 
@@ -112,6 +133,45 @@ export default function TrashView() {
                         type="button"
                         className="danger-button"
                         onClick={() => confirmPurgeGuest(guest)}
+                      >
+                        Eliminar definitivamente
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {trash.invitees.length > 0 ? (
+            <section className="panel">
+              <div className="panel-head">
+                <h3>Hogares archivados</h3>
+                <span className="muted">{trash.invitees.length}</span>
+              </div>
+              <div className="trash-list">
+                {trash.invitees.map((invitee) => (
+                  <article className="trash-card" key={`invitee-${invitee.id}`}>
+                    <div className="trash-info">
+                      <div className="trash-title">
+                        <strong>{invitee.fullName}</strong>
+                        <span className="badge subtle">
+                          {invitee.party} {invitee.party === 1 ? "persona" : "personas"}
+                        </span>
+                      </div>
+                      {invitee.household ? (
+                        <span className="cell-sub">Grupo {invitee.household}</span>
+                      ) : null}
+                      <span className="cell-sub">Archivado {formatDateTime(invitee.deletedAt)}</span>
+                    </div>
+                    <div className="trash-actions">
+                      <button type="button" onClick={() => restoreInvitee(invitee.id)}>
+                        Restaurar
+                      </button>
+                      <button
+                        type="button"
+                        className="danger-button"
+                        onClick={() => confirmPurgeInvitee(invitee)}
                       >
                         Eliminar definitivamente
                       </button>

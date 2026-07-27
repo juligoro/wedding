@@ -30,6 +30,7 @@ export type SerializedSeatingTable = SerializedTable & {
 export interface Trash {
   rsvps: SerializedSubmission[];
   guests: SerializedGuest[];
+  invitees: SerializedInvitee[];
 }
 
 // Optimistic per-guest edits held in the admin context (id -> overrides).
@@ -95,6 +96,9 @@ export interface ReconcileStats {
   contacted: number;
   openedPending: number;
   extras: number;
+  // People (not households): sum of each household's party size.
+  people: number;
+  peoplePending: number;
 }
 
 export interface ReconcileResult {

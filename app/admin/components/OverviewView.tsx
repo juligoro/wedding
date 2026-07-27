@@ -22,7 +22,10 @@ export default function OverviewView() {
     setActiveSection,
     setMealFilter,
     setStatusFilter,
+    reconciliation,
   } = useAdmin();
+
+  const { stats } = reconciliation;
 
   function openMeal(meal: string) {
     setMealFilter(meal);
@@ -37,6 +40,14 @@ export default function OverviewView() {
       </header>
 
       <div className="stat-grid">
+        {stats.total > 0 ? (
+          <StatCard
+            label="Invitados"
+            value={stats.people}
+            hint={`${stats.people} personas · ${stats.total} hogares`}
+            onClick={() => setActiveSection("follow")}
+          />
+        ) : null}
         <StatCard
           label="Confirmados"
           value={acceptedCount}

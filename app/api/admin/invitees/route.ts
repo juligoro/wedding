@@ -86,6 +86,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Invitado inválido." }, { status: 400 });
     }
 
+    if (data.action === "restore") {
+      const invitee = await prisma.invitee.update({ where: { id }, data: { deletedAt: null } });
+
+      return NextResponse.json({ invitee });
+    }
+
     const update: Prisma.InviteeUpdateInput = {};
 
     if (typeof data.contacted === "boolean") {
@@ -156,8 +162,31 @@ export async function DELETE(request: Request) {
   try {
     const data = await request.json().catch(() => ({}));
 
+    // "Vaciar lista": permanently drop every household.
     if (data.all === true) {
       const result = await prisma.invitee.deleteMany({});
+
+      return NextResponse.json({ deleted: result.count });
+    }
+
+    // Bulk: { ids: [...] } — archive (soft delete) by default, or purge when permanent.
+    if (Array.isArray(data.ids)) {
+      const ids = Array.from(new Set<number>(data.ids.map(Number).filter(Number.isInteger)));
+
+      if (ids.length === 0) {
+        return NextResponse.json({ error: "No hay hogares seleccionados." }, { status: 400 });
+      }
+
+      if (data.permanent === true) {
+        const result = await prisma.invitee.deleteMany({ where: { id: { in: ids } } });
+
+        return NextResponse.json({ deleted: result.count });
+      }
+
+      const result = await prisma.invitee.updateMany({
+        where: { id: { in: ids } },
+        data: { deletedAt: new Date() },
+      });
 
       return NextResponse.json({ deleted: result.count });
     }
@@ -168,7 +197,13 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Invitado inválido." }, { status: 400 });
     }
 
-    await prisma.invitee.delete({ where: { id } });
+    if (data.permanent === true) {
+      await prisma.invitee.delete({ where: { id } });
+
+      return NextResponse.json({ deleted: 1 });
+    }
+
+    await prisma.invitee.update({ where: { id }, data: { deletedAt: new Date() } });
 
     return NextResponse.json({ deleted: 1 });
   } catch (error) {

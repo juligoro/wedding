@@ -1,4 +1,5 @@
-import { normalizeName } from "@/lib/guests";
+import { normalizeName, parseJson } from "@/lib/guests";
+import type { InviteeMember } from "@/lib/types";
 
 import type {
   InviteeStatus,
@@ -156,6 +157,11 @@ export function reconcile(invitees: SerializedInvitee[], rows: Row[]): Reconcile
   // Guests who responded but aren't on the uploaded list.
   const extras = rows.filter((row) => !matchedGuestIds.has(row.id));
 
+  // People per household: trust the stored `party`, falling back to the members
+  // array length (and a floor of 1) so a household never counts as zero people.
+  const partyOf = (item: ReconcileItem): number =>
+    item.party || parseJson<InviteeMember[]>(item.members, []).length || 1;
+
   const stats = {
     total: items.length,
     accepted: items.filter((item) => item.status === "accepted").length,
@@ -164,6 +170,10 @@ export function reconcile(invitees: SerializedInvitee[], rows: Row[]): Reconcile
     contacted: items.filter((item) => item.status === "pending" && item.contacted).length,
     openedPending: items.filter((item) => item.status === "pending" && item.firstOpenedAt).length,
     extras: extras.length,
+    people: items.reduce((sum, item) => sum + partyOf(item), 0),
+    peoplePending: items
+      .filter((item) => item.status === "pending")
+      .reduce((sum, item) => sum + partyOf(item), 0),
   };
 
   return { items, extras, stats };

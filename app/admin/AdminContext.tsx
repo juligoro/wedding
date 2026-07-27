@@ -48,7 +48,7 @@ function useAdminValue({
   submissions,
   tables,
   invitees = [],
-  trash = { rsvps: [], guests: [] },
+  trash = { rsvps: [], guests: [], invitees: [] },
 }: AdminProviderData) {
   const router = useRouter();
   const [activeSection, setActiveSectionState] = useState("overview");
@@ -81,6 +81,7 @@ function useAdminValue({
   const [summaryView, setSummaryView] = useState("accepted");
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   const [selectedGuestIds, setSelectedGuestIds] = useState<number[]>([]);
+  const [selectedInviteeIds, setSelectedInviteeIds] = useState<number[]>([]);
   const [localTables, setLocalTables] = useState<SerializedSeatingTable[]>(tables);
   const [tableAssignments, setTableAssignments] = useState<Record<number, number | null>>({});
   const [guestEdits, setGuestEdits] = useState<Record<number, GuestEdit>>({});
@@ -197,6 +198,11 @@ function useAdminValue({
       return a.fullName.localeCompare(b.fullName);
     });
   const pendingInvitees = reconciliation.items.filter((item) => item.status === "pending");
+  const visibleInviteeIds = filteredInvitees.map((item) => item.id);
+  const allVisibleInviteesSelected =
+    visibleInviteeIds.length > 0 &&
+    visibleInviteeIds.every((inviteeId) => selectedInviteeIds.includes(inviteeId));
+  const selectedInviteeCount = selectedInviteeIds.length;
   const acceptedPercent =
     acceptedCount + declinedCount > 0
       ? Math.round((acceptedCount / (acceptedCount + declinedCount)) * 100)
@@ -684,6 +690,62 @@ function useAdminValue({
     return ok;
   }
 
+  function toggleInvitee(inviteeId: number) {
+    setSelectedInviteeIds((current) =>
+      current.includes(inviteeId)
+        ? current.filter((id) => id !== inviteeId)
+        : [...current, inviteeId],
+    );
+  }
+
+  function toggleVisibleInvitees() {
+    setSelectedInviteeIds((current) => {
+      if (allVisibleInviteesSelected) {
+        return current.filter((inviteeId) => !visibleInviteeIds.includes(inviteeId));
+      }
+
+      return Array.from(new Set([...current, ...visibleInviteeIds]));
+    });
+  }
+
+  async function archiveSelectedInvitees(): Promise<boolean> {
+    const ids = Array.from(new Set(selectedInviteeIds.map(Number).filter(Number.isInteger)));
+
+    if (ids.length === 0) {
+      setInviteeMessage("Seleccioná al menos un hogar.");
+      return false;
+    }
+
+    const ok = await runCrud(
+      "/api/admin/invitees",
+      { method: "DELETE", ...jsonBody({ ids }) },
+      `${ids.length} hogar(es) archivados.`,
+    );
+
+    if (ok) {
+      setInviteeMessage(`${ids.length} hogar(es) archivados. Podés restaurarlos desde la Papelera.`);
+      setSelectedInviteeIds([]);
+    }
+
+    return ok;
+  }
+
+  async function restoreInvitee(inviteeId: number) {
+    return runCrud(
+      "/api/admin/invitees",
+      { method: "PATCH", ...jsonBody({ id: inviteeId, action: "restore" }) },
+      "Hogar restaurado.",
+    );
+  }
+
+  async function purgeInvitee(inviteeId: number) {
+    return runCrud(
+      "/api/admin/invitees",
+      { method: "DELETE", ...jsonBody({ id: inviteeId, permanent: true }) },
+      "Hogar eliminado definitivamente.",
+    );
+  }
+
   async function importInvitees(file: File | null | undefined) {
     if (!file) {
       setInviteeMessage("Elegí un archivo .xlsx o .csv.");
@@ -970,7 +1032,7 @@ function useAdminValue({
     isReminding,
     // trash / crud
     trash,
-    trashCount: trash.rsvps.length + trash.guests.length,
+    trashCount: trash.rsvps.length + trash.guests.length + trash.invitees.length,
     crudMessage,
     setCrudMessage,
     softDeleteGuest,
@@ -980,6 +1042,16 @@ function useAdminValue({
     purgeGuest,
     purgeRsvp,
     softDeleteSelected,
+    // invitee bulk selection + archive
+    selectedInviteeIds,
+    setSelectedInviteeIds,
+    selectedInviteeCount,
+    allVisibleInviteesSelected,
+    toggleInvitee,
+    toggleVisibleInvitees,
+    archiveSelectedInvitees,
+    restoreInvitee,
+    purgeInvitee,
     // derived
     rowsWithTableNames,
     acceptedRows,

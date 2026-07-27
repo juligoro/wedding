@@ -242,6 +242,7 @@ export async function POST(request: Request) {
     // when there's no group) so we can UPDATE in place and keep each token/link
     // alive across re-imports, instead of recreating.
     const existing = await prisma.invitee.findMany({
+      where: { deletedAt: null },
       select: { id: true, token: true, household: true, members: true },
     });
 

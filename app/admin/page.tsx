@@ -1,4 +1,4 @@
-import type { Guest, Rsvp, SeatingTable } from "@prisma/client";
+import type { Guest, Invitee, Rsvp, SeatingTable } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
@@ -56,6 +56,18 @@ function serializeRsvp(rsvp: RsvpWithGuests): SerializedSubmission {
   return { ...serializeRsvpShallow(rsvp), guests: rsvp.guests.map(serializeGuest) };
 }
 
+function serializeInvitee(invitee: Invitee): SerializedInvitee {
+  return {
+    ...invitee,
+    firstOpenedAt: iso(invitee.firstOpenedAt),
+    lastOpenedAt: iso(invitee.lastOpenedAt),
+    lastRemindedAt: iso(invitee.lastRemindedAt),
+    deletedAt: iso(invitee.deletedAt),
+    createdAt: iso(invitee.createdAt),
+    updatedAt: iso(invitee.updatedAt),
+  };
+}
+
 export default async function AdminPage() {
   const rsvps = await prisma.rsvp.findMany({
     where: { deletedAt: null },
@@ -78,7 +90,12 @@ export default async function AdminPage() {
     orderBy: { name: "asc" },
   });
   const inviteeRecords = await prisma.invitee.findMany({
+    where: { deletedAt: null },
     orderBy: { fullName: "asc" },
+  });
+  const deletedInvitees = await prisma.invitee.findMany({
+    where: { deletedAt: { not: null } },
+    orderBy: { deletedAt: "desc" },
   });
   const deletedRsvps = await prisma.rsvp.findMany({
     where: { deletedAt: { not: null } },
@@ -96,17 +113,11 @@ export default async function AdminPage() {
     ...(serializeTable(table) as SerializedTable),
     guests: table.guests.map(serializeGuest),
   }));
-  const invitees: SerializedInvitee[] = inviteeRecords.map((invitee) => ({
-    ...invitee,
-    firstOpenedAt: iso(invitee.firstOpenedAt),
-    lastOpenedAt: iso(invitee.lastOpenedAt),
-    lastRemindedAt: iso(invitee.lastRemindedAt),
-    createdAt: iso(invitee.createdAt),
-    updatedAt: iso(invitee.updatedAt),
-  }));
+  const invitees: SerializedInvitee[] = inviteeRecords.map(serializeInvitee);
   const trash = {
     rsvps: deletedRsvps.map(serializeRsvp),
     guests: deletedGuests.map(serializeGuest),
+    invitees: deletedInvitees.map(serializeInvitee),
   };
 
   return (
