@@ -89,7 +89,8 @@ const copy: Record<string, LandingCopy> = {
       {
         icon: "calendar",
         title: "Ceremonia + Fiesta",
-        lines: ["Domingo 6 de diciembre de 2026", "Desde las 16 hs."],
+        lines: ["Domingo 6 de diciembre de 2026", "Ceremonia a las 15 hs"],
+        note: "Llegá entre las 14:30 y las 14:45: la ceremonia empieza puntual y no se puede ingresar una vez comenzada.",
       },
       {
         icon: "pin",
@@ -147,7 +148,8 @@ const copy: Record<string, LandingCopy> = {
       {
         icon: "calendar",
         title: "Ceremony + Party",
-        lines: ["Sunday, December 6, 2026", "From 4:00 PM."],
+        lines: ["Sunday, December 6, 2026", "Ceremony at 3:00 PM"],
+        note: "Arrive between 2:30 and 2:45 PM: the ceremony starts on time and you can't come in once it has begun.",
       },
       {
         icon: "pin",

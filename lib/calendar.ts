@@ -10,18 +10,18 @@
 // ════════════════════════════════════════════════════════════════════════
 const EVENT = {
   date: { year: 2026, month: 12, day: 6 }, // month is 1-based (12 = December)
-  start: { hour: 16, minute: 0 }, // 24h local time
+  start: { hour: 15, minute: 0 }, // 24h local time — ceremony start (sharp)
   end: { hour: 1, minute: 0, dayOffset: 1 }, // ends ~01:00 the next day
   utcOffset: -3, // Argentina, fixed (no DST)
 
   // What guests read. Phrase these to match `date`/`start` above.
   when: {
-    es: "Domingo 6 de diciembre de 2026 · desde las 16 hs.",
-    en: "Sunday, December 6, 2026 · from 4:00 PM",
+    es: "Domingo 6 de diciembre de 2026 · ceremonia a las 15 hs (llegá 14:30–14:45)",
+    en: "Sunday, December 6, 2026 · ceremony at 3:00 PM (arrive 2:30–2:45)",
   },
   timePhrase: {
-    es: "desde las 16 hs",
-    en: "from 4:00 PM",
+    es: "a las 15 hs en punto — llegá entre las 14:30 y las 14:45",
+    en: "at 3:00 PM sharp — please arrive between 2:30 and 2:45 PM",
   },
 };
 // ════════════════════════════════════════════════════════════════════════
@@ -159,6 +159,10 @@ export function buildIcs(locale: string = "es"): string {
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
     `UID:${UID}`,
+    // Same UID + a bumped SEQUENCE tells calendar apps this is a revision of a
+    // previously-added event (the time moved earlier), so a re-add updates the
+    // existing entry instead of duplicating it, where the client honours it.
+    "SEQUENCE:1",
     `DTSTAMP:${DTSTAMP}`,
     `DTSTART:${START_UTC}`,
     `DTEND:${END_UTC}`,
