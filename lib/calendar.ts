@@ -10,7 +10,9 @@
 // ════════════════════════════════════════════════════════════════════════
 const EVENT = {
   date: { year: 2026, month: 12, day: 6 }, // month is 1-based (12 = December)
-  start: { hour: 15, minute: 0 }, // 24h local time — ceremony start (sharp)
+  start: { hour: 14, minute: 45 }, // 24h local — calendar anchored at the latest
+  // arrival so it nudges guests to be there early; ceremony itself is 15:00 sharp
+  // (see the when/timePhrase strings and the site copy).
   end: { hour: 1, minute: 0, dayOffset: 1 }, // ends ~01:00 the next day
   utcOffset: -3, // Argentina, fixed (no DST)
 
